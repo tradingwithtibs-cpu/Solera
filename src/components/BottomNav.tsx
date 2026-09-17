@@ -1,10 +1,11 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FeedIcon, MarketsIcon, TrophyIcon, WalletIcon } from "./icons";
+import { FeedIcon, MarketsIcon, RocketIcon, TrophyIcon, WalletIcon } from "./icons";
 export const TABS = [
   { href: "/", label: "Discover", Icon: FeedIcon },
   { href: "/markets", label: "Markets", Icon: MarketsIcon },
+  { href: "/pre-ipo", label: "Pre-IPO", Icon: RocketIcon },
   { href: "/leaderboard", label: "Leaderboard", Icon: TrophyIcon },
   { href: "/portfolio", label: "Portfolio", Icon: WalletIcon },
 ] as const;
