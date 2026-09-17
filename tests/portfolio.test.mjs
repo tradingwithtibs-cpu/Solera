@@ -13,7 +13,7 @@ load.extensions[".ts"] = (module, filename) =>
     filename,
   );
 const { applyFill, DUST_SHARES } = load("../src/lib/ledger.ts");
-const { computeHoldings, computePortfolioPerformance, computeStocklanaScore, isPumping } =
+const { computeHoldings, computePortfolioPerformance, computeSoleraScore, isPumping } =
   load("../src/lib/portfolio.ts");
 const { TICKERS } = load("../src/lib/mock-data.ts");
 const { executeTrade } = load("../src/lib/trade.ts");
@@ -82,8 +82,8 @@ test("portfolio returns exclude unknown cost basis and score penalties remain un
     { ticker: "AAPLx", shares: 10 },
   ]);
   near(computePortfolioPerformance(h), ((TICKERS.TSLAx.price - 200) / 200) * 100);
-  near(computeStocklanaScore([{ allocationPct: 60 }], 20), 4);
-  near(computeStocklanaScore([{ allocationPct: 40 }], 20), 20);
+  near(computeSoleraScore([{ allocationPct: 60 }], 20), 4);
+  near(computeSoleraScore([{ allocationPct: 40 }], 20), 20);
   near(computePortfolioPerformance([]), 0);
   assert.equal(isPumping("TSLAx"), true);
   assert.equal(isPumping("AAPLx"), false);

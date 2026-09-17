@@ -43,11 +43,11 @@ export function AssetModeSection({ ticker, holders }: { ticker: TickerSymbol; ho
         <>
           <div className="px-5 pb-1 pt-6">
             <h2 className="text-sm font-semibold text-neutral-900">Held by</h2>
-            <p className="text-xs text-neutral-400">Investors on Stocklana holding {ticker}</p>
+            <p className="text-xs text-neutral-400">Investors on Solera holding {ticker}</p>
           </div>
 
           {holders.length === 0 ? (
-            <p className="px-5 pb-6 text-xs text-neutral-400">No investors on Stocklana hold this yet.</p>
+            <p className="px-5 pb-6 text-xs text-neutral-400">No investors on Solera hold this yet.</p>
           ) : (
             <div className="flex-1 divide-y divide-neutral-100 px-5 pb-6">
               {holders.map(({ investor, holding }) => (

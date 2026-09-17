@@ -6,8 +6,7 @@ import { computeHoldings } from "@/lib/portfolio";
 import type { TickerSymbol } from "@/lib/types";
 import { TopBar } from "@/components/TopBar";
 import { TickerBadge } from "@/components/TickerBadge";
-import { PriceChart } from "@/components/PriceChart";
-import { PerformanceBadge } from "@/components/PerformanceBadge";
+import { AssetPriceChart } from "@/components/AssetPriceChart";
 import { OwnedPumpingBadge } from "@/components/OwnedPumpingBadge";
 import { WatchlistStarButton } from "@/components/WatchlistStarButton";
 import { EffectivePriceDisplay } from "@/components/EffectivePriceDisplay";
@@ -17,9 +16,6 @@ export default async function AssetDetailPage({ params }: { params: Promise<{ ti
   const { ticker: symbol } = await params;
   const ticker = TICKERS[symbol as TickerSymbol];
   if (!ticker) notFound();
-
-  const changePct =
-    ((ticker.history[ticker.history.length - 1] - ticker.history[0]) / ticker.history[0]) * 100;
 
   const holders = INVESTORS.map((investor) => ({
     investor,
@@ -50,7 +46,7 @@ export default async function AssetDetailPage({ params }: { params: Promise<{ ti
           <OwnedPumpingBadge ticker={ticker.symbol} />
         </div>
         <EffectivePriceDisplay ticker={ticker.symbol} />
-        <PerformanceBadge value={changePct} />
+        <AssetPriceChart ticker={ticker.symbol} color={ticker.color} />
         <Link
           href={`/asset/${ticker.symbol}/chat`}
           className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-3.5 py-1.5 text-xs font-semibold text-violet-600 active:bg-violet-100"
@@ -58,11 +54,6 @@ export default async function AssetDetailPage({ params }: { params: Promise<{ ti
           <ChatIcon className="h-3.5 w-3.5" />
           {ticker.symbol} chat
         </Link>
-      </div>
-
-      <div className="mx-5 mt-3 rounded-3xl border border-neutral-100 p-4">
-        <PriceChart history={ticker.history} color={ticker.color} />
-        <p className="mt-2 text-center text-xs text-neutral-400">Simulated price, trailing period</p>
       </div>
 
       <AssetModeSection ticker={ticker.symbol} holders={holders} />

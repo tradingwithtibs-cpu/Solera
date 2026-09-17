@@ -1,4 +1,4 @@
-// Core domain types for Stocklana.
+// Core domain types for Solera.
 //
 // These shapes are intentionally decoupled from where the data comes from.
 // Right now everything is populated from `mock-data.ts`; later this can be
@@ -105,7 +105,7 @@ export interface OptionContract {
  * so there's no assignment risk to model. Kept separate from
  * `HoldingPosition` (equity shares) rather than merged in, since options
  * expire and settle completely differently and shouldn't feed into the
- * Stocklana Score or cost-basis math built for shares.
+ * Solera Score or cost-basis math built for shares.
  */
 export interface OptionPosition extends OptionContract {
   /** Stable identity for one contract spec: `${underlying}-${side}-${strike}-${expiration}`. */

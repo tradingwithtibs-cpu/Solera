@@ -43,7 +43,7 @@ export default function OpengraphImage() {
             color: "transparent",
           }}
         >
-          Stocklana
+          Solera
         </div>
         <div style={{ display: "flex", marginTop: 18, fontSize: 32, color: "#525252" }}>
           Follow real investors. Copy with one tap.

@@ -8,9 +8,9 @@ import {
   buildPortfolioHistory,
   computeHoldings,
   computePortfolioPerformance,
-  computeStocklanaScore,
-  describeStocklanaScore,
-  normalizeStocklanaScore,
+  computeSoleraScore,
+  describeSoleraScore,
+  normalizeSoleraScore,
 } from "@/lib/portfolio";
 import { contractCost, daysToExpiration, formatExpiration } from "@/lib/options";
 import { getEffectivePrice, getLivePrices, subscribeLivePrices } from "@/lib/live-prices";
@@ -49,7 +49,7 @@ export default function PortfolioPage() {
   // Displayed as a bounded 0–100 score (see portfolio.ts) rather than the
   // raw, unbounded, possibly-negative value — a bare signed number reads
   // as "broken" to a consumer, not "moderately concentrated".
-  const stocklanaScore = normalizeStocklanaScore(computeStocklanaScore(holdings, performancePct));
+  const soleraScore = normalizeSoleraScore(computeSoleraScore(holdings, performancePct));
 
   const heldTickers = new Set(rawHoldings.map((h) => h.ticker));
   const otherMarkets = TICKER_LIST.filter((t) => !heldTickers.has(t.symbol));
@@ -109,16 +109,16 @@ export default function PortfolioPage() {
           {holdings.length > 0 && (
             <span className="flex items-baseline gap-1.5">
               <span className="font-mono text-sm font-semibold">
-                {Math.round(stocklanaScore)}
+                {Math.round(soleraScore)}
                 <span className="text-xs font-normal text-neutral-500">/100</span>
               </span>
-              <span className="text-xs font-medium text-neutral-500">{describeStocklanaScore(stocklanaScore)}</span>
+              <span className="text-xs font-medium text-neutral-500">{describeSoleraScore(soleraScore)}</span>
             </span>
           )}
         </div>
         <p className="mt-2 text-sm leading-relaxed text-neutral-600">
           {holdings.length
-            ? `${holdings[0].ticker} is your largest holding at ${holdings[0].allocationPct.toFixed(1)}% of invested value. ${holdings[0].allocationPct > 40 ? "This concentration reduces your Stocklana Score." : "No position exceeds the score’s 40% concentration threshold."}`
+            ? `${holdings[0].ticker} is your largest holding at ${holdings[0].allocationPct.toFixed(1)}% of invested value. ${holdings[0].allocationPct > 40 ? "This concentration reduces your Solera Score." : "No position exceeds the score’s 40% concentration threshold."}`
             : isLive
               ? "Your portfolio perspective will appear once this wallet holds a tokenized stock."
               : "Your portfolio perspective will appear after your first practice investment."}
@@ -162,7 +162,7 @@ export default function PortfolioPage() {
           <div className="px-5 pb-1 pt-6">
             <h2 className="text-sm font-semibold text-neutral-900">Your options</h2>
             <p className="text-xs text-neutral-400">
-              Kept separate from your shares — options don&apos;t count toward your Stocklana Score.
+              Kept separate from your shares — options don&apos;t count toward your Solera Score.
             </p>
           </div>
           <div className="divide-y divide-neutral-100 px-5">

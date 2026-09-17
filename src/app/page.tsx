@@ -6,7 +6,7 @@ export default function FeedPage() {
     <div className="flex flex-1 flex-col">
       <header className="page-heading">
         <h1>
-          Stocklana<span className="text-violet-500">.</span>
+          Solera<span className="text-violet-500">.</span>
         </h1>
         <p>Welcome, {MY_PROFILE.name.split(" ")[0]}.</p>
       </header>

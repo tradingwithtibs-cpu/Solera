@@ -25,18 +25,18 @@ const DESCRIPTION = "Follow real investors, see their real holdings, copy with o
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: "Stocklana",
+  title: "Solera",
   description: DESCRIPTION,
   openGraph: {
-    title: "Stocklana",
+    title: "Solera",
     description: DESCRIPTION,
     url: SITE_URL,
-    siteName: "Stocklana",
+    siteName: "Solera",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Stocklana",
+    title: "Solera",
     description: DESCRIPTION,
   },
 };

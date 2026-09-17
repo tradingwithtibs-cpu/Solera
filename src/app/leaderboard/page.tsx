@@ -2,7 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { INVESTORS } from "@/lib/mock-data";
-import { computeHoldings, computeStocklanaScore, describeStocklanaScore, normalizeStocklanaScore } from "@/lib/portfolio";
+import { computeHoldings, computeSoleraScore, describeSoleraScore, normalizeSoleraScore } from "@/lib/portfolio";
 import { Avatar } from "@/components/Avatar";
 import { PerformanceBadge } from "@/components/PerformanceBadge";
 import { FollowButton } from "@/components/FollowButton";
@@ -14,8 +14,8 @@ export default function LeaderboardPage() {
     // one below, so ranking is identical either way) — display the
     // normalized 0–100 version instead, since a bare signed number reads
     // as broken rather than "moderately concentrated". See portfolio.ts.
-    const rawScore = computeStocklanaScore(computeHoldings(investor.holdings), investor.performancePct);
-    return { investor, rawScore, score: normalizeStocklanaScore(rawScore) };
+    const rawScore = computeSoleraScore(computeHoldings(investor.holdings), investor.performancePct);
+    return { investor, rawScore, score: normalizeSoleraScore(rawScore) };
   }).sort((a, b) =>
     sortMode === "score" ? b.rawScore - a.rawScore : b.investor.performancePct - a.investor.performancePct,
   );
@@ -36,7 +36,7 @@ export default function LeaderboardPage() {
           value={sortMode}
           onChange={setSortMode}
           options={[
-            { value: "score", label: "Stocklana Score" },
+            { value: "score", label: "Solera Score" },
             { value: "performance", label: "Monthly return" },
           ]}
         />
@@ -48,7 +48,7 @@ export default function LeaderboardPage() {
       </div>
       <div className="flex-1 space-y-3 px-5 pb-7 sm:px-7">
         {ranked.map(({ investor, score }, index) => {
-          const scoreLabel = describeStocklanaScore(score);
+          const scoreLabel = describeSoleraScore(score);
           return (
             <article key={investor.id} className="rank-card">
               <span className="font-mono text-lg text-neutral-400">{String(index + 1).padStart(2, "0")}</span>

@@ -1,5 +1,5 @@
-import { INVESTORS, TICKERS } from "./mock-data";
-import { getEffectivePrice } from "./live-prices";
+import { INVESTORS } from "./mock-data";
+import { getEffectiveHistory, getEffectivePrice } from "./live-prices";
 import type { HoldingPosition, TickerSymbol } from "./types";
 
 export interface HoldingWithValue extends HoldingPosition {
@@ -127,12 +127,12 @@ const SCORE_CONCENTRATION_PENALTY_RATE = 0.8;
  * This raw value is unbounded and can go negative (e.g. a profitable but
  * heavily concentrated position can still net below zero) — that's fine
  * for sorting, but a bare signed number reads as "broken" to a consumer,
- * not "moderately concentrated". See `normalizeStocklanaScore` below for
+ * not "moderately concentrated". See `normalizeSoleraScore` below for
  * the bounded, display-facing version. Keep this raw function as the sort
  * key: it's monotonic with the normalized version, so ranking never
  * differs between the two.
  */
-export function computeStocklanaScore(holdings: HoldingWithValue[], performancePct: number): number {
+export function computeSoleraScore(holdings: HoldingWithValue[], performancePct: number): number {
   const maxAllocationPct = holdings.reduce((max, h) => Math.max(max, h.allocationPct), 0);
   const penalty = Math.max(0, maxAllocationPct - SCORE_CONCENTRATION_THRESHOLD_PCT) * SCORE_CONCENTRATION_PENALTY_RATE;
   return performancePct - penalty;
@@ -153,12 +153,12 @@ const SCORE_NORMALIZATION_SCALE = 20;
  * so it never changes the leaderboard's ranking, only how the number is
  * displayed.
  */
-export function normalizeStocklanaScore(rawScore: number): number {
+export function normalizeSoleraScore(rawScore: number): number {
   return 100 / (1 + Math.exp(-rawScore / SCORE_NORMALIZATION_SCALE));
 }
 
-/** A short, plain-English read on a normalized (0–100) Stocklana Score. */
-export function describeStocklanaScore(normalizedScore: number): string {
+/** A short, plain-English read on a normalized (0–100) Solera Score. */
+export function describeSoleraScore(normalizedScore: number): string {
   if (normalizedScore >= 80) return "Strong";
   if (normalizedScore >= 60) return "Solid";
   if (normalizedScore >= 40) return "Fair";
@@ -166,21 +166,23 @@ export function describeStocklanaScore(normalizedScore: number): string {
   return "Struggling";
 }
 
-/** A ticker is "pumping" once its trailing (simulated) history is up at least this much. */
+/** A ticker is "pumping" once its trailing 7-day history is up at least this much. */
 const PUMPING_THRESHOLD_PCT = 15;
 
-export function tickerChangePct(ticker: TickerSymbol): number {
-  const history = TICKERS[ticker].history;
+/** Percent change across the ticker's trailing series (real 7-day closes when fetched). */
+export function trailingChangePct(ticker: TickerSymbol): number {
+  const history = getEffectiveHistory(ticker);
+  if (history.length < 2 || history[0] <= 0) return 0;
   return ((history[history.length - 1] - history[0]) / history[0]) * 100;
 }
 
+/** @deprecated alias kept for older call sites — same as `trailingChangePct`. */
+export const tickerChangePct = trailingChangePct;
+
 /**
- * Real (if simulated) signal, not a random decoration: true whenever a
- * ticker's own trailing price history — the same data backing its Asset
- * page chart — is up 15%+. No live ticking yet (see the trade-offs
- * discussed for day-trading support), so this only moves when the mock
- * history itself changes.
+ * True whenever a ticker's own trailing price history — the same series
+ * backing its chart — is up 15%+ over the last 7 days.
  */
 export function isPumping(ticker: TickerSymbol): boolean {
-  return tickerChangePct(ticker) >= PUMPING_THRESHOLD_PCT;
+  return trailingChangePct(ticker) >= PUMPING_THRESHOLD_PCT;
 }

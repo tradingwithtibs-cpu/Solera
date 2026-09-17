@@ -3,7 +3,7 @@ import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { TICKER_LIST } from "@/lib/mock-data";
 import { computeTrendingTickers, tickerChangePct } from "@/lib/portfolio";
-import { getEffectivePrice, getLivePrices, isLivePriced, subscribeLivePrices } from "@/lib/live-prices";
+import { getEffectiveHistory, getEffectivePrice, getLivePrices, isLivePriced, subscribeLivePrices } from "@/lib/live-prices";
 import { formatCurrency } from "@/lib/format";
 import { useWatchlist } from "@/hooks/use-watchlist";
 import { TickerBadge } from "@/components/TickerBadge";
@@ -66,8 +66,8 @@ export default function MarketsPage() {
         />
         <div className="flex items-center justify-between gap-3">
           <span className="text-xs text-neutral-500" aria-live="polite">
-            <span className="font-mono">{visible.length}</span> {visible.length === 1 ? "asset" : "assets"} ·
-            Simulated data
+            <span className="font-mono">{visible.length}</span> {visible.length === 1 ? "asset" : "assets"} ·{" "}
+            {visible.some((t) => isLivePriced(t.symbol)) ? "Live Solana prices · 7-day charts" : "Loading live prices…"}
           </span>
           <select
             aria-label="Sort markets"
@@ -111,7 +111,7 @@ export default function MarketsPage() {
                     <p className="truncate text-xs text-neutral-500">{ticker.name}</p>
                   </div>
                   <div className="market-spark">
-                    <PriceChart history={ticker.history} color={ticker.color} />
+                    <PriceChart history={getEffectiveHistory(ticker.symbol)} color={ticker.color} />
                   </div>
                   <div className="shrink-0 text-right">
                     <p className="mb-1 font-mono text-sm font-semibold">
@@ -142,7 +142,7 @@ export default function MarketsPage() {
           </div>
         )}
         <p className="mt-4 text-xs text-neutral-500">
-          Price changes cover each asset’s simulated trailing period.
+          Price changes cover the trailing 7 days of Solana DEX trading.
         </p>
       </div>
     </div>

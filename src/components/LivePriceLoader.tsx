@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { setLivePrice, setSolPrice, setUnderlyingQuote } from "@/lib/live-prices";
+import { setHistory, setLivePrice, setSolPrice, setUnderlyingQuote } from "@/lib/live-prices";
 import type { TickerSymbol } from "@/lib/types";
 
 /**
@@ -10,6 +10,13 @@ import type { TickerSymbol } from "@/lib/types";
  * (the route also caches for 5s, so this is the effective floor).
  */
 const POLL_INTERVAL_MS = 5_000;
+/**
+ * 7-day charts barely move, and the route caches them for 15 minutes, so
+ * this mostly returns cached data — polling every minute is what lets
+ * tickers the server is still back-filling (see app/api/price-history)
+ * show up soon after first load.
+ */
+const HISTORY_INTERVAL_MS = 60_000;
 
 interface LivePricesPayload {
   prices?: Record<string, number>;
@@ -47,11 +54,28 @@ export function LivePriceLoader() {
       }
     }
 
+    async function pollHistory() {
+      try {
+        const res = await fetch("/api/price-history");
+        if (!res.ok) return;
+        const data = (await res.json()) as { history?: Record<string, number[]> };
+        if (cancelled) return;
+        for (const [ticker, closes] of Object.entries(data.history ?? {})) {
+          if (Array.isArray(closes) && closes.length >= 2) setHistory(ticker as TickerSymbol, closes);
+        }
+      } catch {
+        // Ignore — charts keep their placeholder series.
+      }
+    }
+
     poll();
+    pollHistory();
     const interval = setInterval(poll, POLL_INTERVAL_MS);
+    const historyInterval = setInterval(pollHistory, HISTORY_INTERVAL_MS);
     return () => {
       cancelled = true;
       clearInterval(interval);
+      clearInterval(historyInterval);
     };
   }, []);
 

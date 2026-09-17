@@ -28,9 +28,11 @@ export interface LiveSnapshot {
   underlying: Partial<Record<TickerSymbol, UnderlyingQuote>>;
   /** SOL/USD — needed to size SOL-paid trades and value a wallet's SOL in dollars. */
   solUsd?: number;
+  /** Real trailing 7-day closes per ticker, oldest → newest (see app/api/price-history). */
+  history: Partial<Record<TickerSymbol, number[]>>;
 }
 
-let snapshot: LiveSnapshot = { prices: {}, underlying: {} };
+let snapshot: LiveSnapshot = { prices: {}, underlying: {}, history: {} };
 
 export function setSolPrice(solUsd: number) {
   commit({ ...snapshot, solUsd });
@@ -39,6 +41,25 @@ export function setSolPrice(solUsd: number) {
 /** SOL/USD, or undefined before the first price fetch. */
 export function getSolPrice(): number | undefined {
   return snapshot.solUsd;
+}
+
+export function setHistory(ticker: TickerSymbol, closes: number[]) {
+  commit({ ...snapshot, history: { ...snapshot.history, [ticker]: closes } });
+}
+
+/**
+ * The trailing price series to chart: the real 7-day DEX closes once
+ * fetched, the hand-written placeholder series from mock-data.ts before
+ * that (or if the history source is down). Same fallback contract as
+ * `getEffectivePrice`.
+ */
+export function getEffectiveHistory(ticker: TickerSymbol): number[] {
+  return snapshot.history[ticker] ?? TICKERS[ticker]?.history ?? [];
+}
+
+/** Whether `ticker`'s chart is drawn from real market data. */
+export function isLiveHistory(ticker: TickerSymbol): boolean {
+  return snapshot.history[ticker] !== undefined;
 }
 const listeners = new Set<() => void>();
 

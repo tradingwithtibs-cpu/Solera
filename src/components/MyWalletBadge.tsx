@@ -12,7 +12,7 @@ function truncateAddress(address: string): string {
 }
 
 /**
- * The one genuinely on-chain thing in Stocklana: a real, read-only Solana
+ * The user's wallet: a real Solana
  * wallet connection and a real mainnet balance read (see SolanaProvider.tsx).
  * Deliberately separate from OnChainBadge, which shows *other* investors'
  * mock wallet addresses — there's no "connect" story for someone else's
@@ -87,7 +87,7 @@ export function MyWalletBadge() {
         <p className="font-semibold">{chosen === "live" ? "Live trading" : "Practice mode"}</p>
         <p className="mt-2 text-sm leading-relaxed text-neutral-600">
           {chosen === "live"
-            ? "Trades are real swaps on Solana mainnet through Jupiter, paid in USDC from this wallet. Your portfolio shows what this wallet actually holds."
+            ? "Trades are real swaps on Solana mainnet through Jupiter, paid in SOL or USDC from this wallet. Your portfolio shows what this wallet actually holds."
             : "Trades are simulated with practice funds. Nothing touches this wallet. Switch to live when you're ready to trade for real."}
         </p>
         <div className="mt-3 flex rounded-full bg-neutral-100 p-1 text-xs font-semibold">
