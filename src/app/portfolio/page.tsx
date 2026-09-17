@@ -24,11 +24,24 @@ import { PerformanceBadge } from "@/components/PerformanceBadge";
 import { AllocationBar } from "@/components/AllocationBar";
 import { PriceChart } from "@/components/PriceChart";
 import { MyWalletBadge } from "@/components/MyWalletBadge";
+import { usePreIpo } from "@/hooks/use-pre-ipo";
+import { COMPANIES, PRE_IPO_MINTS } from "@/lib/pre-ipo";
 
 const RECENT_ACTIVITY_LIMIT = 3;
 
 export default function PortfolioPage() {
-  const { mode, cashBalance, holdings: rawHoldings, transactions, isLoaded } = useActivePortfolio();
+  const { mode, cashBalance, holdings: rawHoldings, preIpoHoldings, transactions, isLoaded } = useActivePortfolio();
+  // Pre-IPO tokens held in the wallet (live mode only), valued at Jupiter's price.
+  const { tokens: preIpoTokens } = usePreIpo();
+  const preIpoPositions = Object.entries(preIpoHoldings)
+    .map(([mint, amount]) => {
+      const info = PRE_IPO_MINTS[mint];
+      const quote = preIpoTokens.find((t) => t.mint === mint);
+      return info ? { mint, info, amount, price: quote?.tokenPrice, value: quote ? amount * quote.tokenPrice : 0 } : null;
+    })
+    .filter((p): p is NonNullable<typeof p> => p !== null)
+    .sort((a, b) => b.value - a.value);
+  const preIpoValue = preIpoPositions.reduce((sum, p) => sum + p.value, 0);
   // Options are practice-only for now, so they always come from the practice store.
   const { optionPositions } = usePortfolio();
   const isLive = mode === "live";
@@ -38,7 +51,7 @@ export default function PortfolioPage() {
   useSyncExternalStore(subscribeLivePrices, getLivePrices, getLivePrices);
   const holdings = computeHoldings(rawHoldings);
   const holdingsValue = holdings.reduce((sum, h) => sum + h.value, 0);
-  const totalValue = holdingsValue + cashBalance;
+  const totalValue = holdingsValue + preIpoValue + cashBalance;
 
   // Real, computed return on what's currently held — vs. what was actually
   // paid for it — rather than a hardcoded "all time" number. This is also
@@ -155,6 +168,46 @@ export default function PortfolioPage() {
             />
           ))}
         </div>
+      )}
+
+      {preIpoPositions.length > 0 && (
+        <>
+          <div className="px-5 pb-1 pt-6">
+            <div className="flex items-baseline justify-between">
+              <h2 className="text-sm font-semibold text-neutral-900">Your pre-IPO tokens</h2>
+              <span className="font-mono text-xs text-neutral-400">{formatCurrency(preIpoValue)}</span>
+            </div>
+            <p className="text-xs text-neutral-400">Private-company exposure held in this wallet.</p>
+          </div>
+          <div className="divide-y divide-neutral-100 px-5">
+            {preIpoPositions.map((p) => (
+              <div key={p.mint} className="flex items-center gap-3 py-4">
+                <span
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white ${COMPANIES[p.info.company].color}`}
+                >
+                  {COMPANIES[p.info.company].short}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold">
+                    {COMPANIES[p.info.company].name} <span className="text-neutral-400">· {p.info.symbol}</span>
+                  </p>
+                  <p className="text-xs text-neutral-500">
+                    {p.info.issuer} · <span className="font-mono">{p.amount.toFixed(4)}</span> tokens
+                    {p.price !== undefined && (
+                      <>
+                        {" "}
+                        at <span className="font-mono">{formatCurrency(p.price)}</span>
+                      </>
+                    )}
+                  </p>
+                </div>
+                <p className="shrink-0 font-mono text-sm font-semibold">
+                  {p.price !== undefined ? formatCurrency(p.value) : "—"}
+                </p>
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       {optionPositions.length > 0 && (

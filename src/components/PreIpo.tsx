@@ -4,11 +4,33 @@ import {
   COMPANIES,
   formatCompactUsd,
   formatValuation,
-  jupiterSwapUrl,
   type CompanyComparison,
   type PreIpoToken,
 } from "@/lib/pre-ipo";
 import { formatCurrency } from "@/lib/format";
+import { useState } from "react";
+import { PreIpoBuySheet } from "./PreIpoBuySheet";
+
+/** A Buy button that opens the in-app buy sheet for `token`. */
+function BuyButton({ token, primary = false }: { token: PreIpoToken; primary?: boolean }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className={
+          primary
+            ? "btn-primary mt-3 block w-full rounded-full py-2 text-center text-xs font-semibold"
+            : "rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-600 active:bg-violet-100"
+        }
+      >
+        Buy {primary ? token.issuer : ""}
+      </button>
+      {open && <PreIpoBuySheet token={token} onClose={() => setOpen(false)} />}
+    </>
+  );
+}
 
 function CompanyBadge({ company, size = "sm" }: { company: PreIpoToken["company"]; size?: "sm" | "lg" }) {
   const c = COMPANIES[company];
@@ -80,14 +102,7 @@ export function PreIpoRow({ token }: { token: PreIpoToken }) {
             </>
           )}
         </span>
-        <a
-          href={jupiterSwapUrl(token.mint)}
-          target="_blank"
-          rel="noreferrer"
-          className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-600 active:bg-violet-100"
-        >
-          Buy on Jupiter ↗
-        </a>
+        <BuyButton token={token} />
       </div>
     </article>
   );
@@ -153,16 +168,13 @@ export function CompanyComparisonCard({ comparison }: { comparison: CompanyCompa
                 </div>
               )}
             </dl>
-            <a
-              href={jupiterSwapUrl(t.mint)}
-              target="_blank"
-              rel="noreferrer"
-              className={`mt-3 block rounded-full py-2 text-center text-xs font-semibold ${
-                t === cheapest ? "btn-primary" : "border border-neutral-200 text-neutral-700"
-              }`}
-            >
-              Buy {t.issuer} ↗
-            </a>
+            {t === cheapest ? (
+              <BuyButton token={t} primary />
+            ) : (
+              <div className="mt-3">
+                <BuyButton token={t} />
+              </div>
+            )}
           </div>
         ))}
       </div>

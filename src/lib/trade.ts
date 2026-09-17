@@ -87,33 +87,35 @@ async function executePracticeTrade({ ticker, side, quantity }: TradeParams): Pr
   };
 }
 
-async function executeLiveTrade(
-  { ticker, side, quantity, totalValue, payWith = "SOL" }: TradeParams,
-  wallet: TradeWallet,
-): Promise<TradeResult> {
-  const token = XSTOCK_TOKENS[ticker];
-  const settle = SETTLEMENT[payWith];
-  const isBuy = side === "buy";
-  const input = isBuy ? settle : token;
-  const output = isBuy ? token : settle;
+export interface SwapFill {
+  signature: string;
+  /** Base units actually moved, as reported by Jupiter once landed. */
+  inUnits: string;
+  outUnits: string;
+  /** Jupiter's USD valuation of the input/output legs at order time, when given. */
+  inUsd?: number;
+  outUsd?: number;
+}
 
-  // A buy is sized in dollars on screen; convert to the settlement currency.
-  const solUsd = getSolPrice();
-  if (payWith === "SOL" && !solUsd) throw new Error("SOL price unavailable right now. Try again in a moment.");
-  const settleUnitsPerDollar = payWith === "SOL" ? 1 / solUsd! : 1;
-  const amount = isBuy
-    ? toBaseUnits(totalValue * settleUnitsPerDollar, settle.decimals)
-    : toBaseUnits(quantity, token.decimals);
-  if (amount === "0") throw new Error("That amount is too small to trade.");
+/**
+ * The one place a real swap happens: build the order with Jupiter Ultra,
+ * have the wallet sign, submit. Used by xStock trades and pre-IPO buys
+ * alike. Throws on any failure; a thrown error means nothing was spent.
+ */
+export async function executeLiveSwap(
+  params: { inputMint: string; outputMint: string; amountBaseUnits: string },
+  wallet: TradeWallet,
+): Promise<SwapFill> {
+  if (params.amountBaseUnits === "0") throw new Error("That amount is too small to trade.");
 
   const order = await getUltraOrder({
-    inputMint: input.mint,
-    outputMint: output.mint,
-    amount,
+    inputMint: params.inputMint,
+    outputMint: params.outputMint,
+    amount: params.amountBaseUnits,
     taker: wallet.publicKey.toBase58(),
   });
   if (!order.transaction) {
-    throw new Error(`Jupiter could not build a transaction for this order. Check your ${payWith} balance.`);
+    throw new Error("Jupiter could not build a transaction for this order. Check your balance.");
   }
 
   const tx = VersionedTransaction.deserialize(Buffer.from(order.transaction, "base64"));
@@ -124,17 +126,52 @@ async function executeLiveTrade(
   if (result.status !== "Success" || !result.signature) {
     throw new Error(result.error ? `Swap failed: ${result.error}` : "Swap failed. Nothing was spent.");
   }
+  return {
+    signature: result.signature,
+    inUnits: result.inputAmountResult ?? order.inAmount,
+    outUnits: result.outputAmountResult ?? order.outAmount,
+    inUsd: order.inUsdValue,
+    outUsd: order.outUsdValue,
+  };
+}
 
-  // Prefer the amounts that actually landed; fall back to the order's quote.
-  const inUnits = result.inputAmountResult ?? order.inAmount;
-  const outUnits = result.outputAmountResult ?? order.outAmount;
-  const shares = fromBaseUnits(isBuy ? outUnits : inUnits, token.decimals);
-  const settledAmount = fromBaseUnits(isBuy ? inUnits : outUnits, settle.decimals);
+/** Converts a dollar amount into base units of the settlement currency. */
+export function settlementBaseUnits(dollars: number, payWith: SettlementCurrency): string {
+  const solUsd = getSolPrice();
+  if (payWith === "SOL" && !solUsd) throw new Error("SOL price unavailable right now. Try again in a moment.");
+  const settle = SETTLEMENT[payWith];
+  return toBaseUnits(payWith === "SOL" ? dollars / solUsd! : dollars, settle.decimals);
+}
+
+async function executeLiveTrade(
+  { ticker, side, quantity, totalValue, payWith = "SOL" }: TradeParams,
+  wallet: TradeWallet,
+): Promise<TradeResult> {
+  const token = XSTOCK_TOKENS[ticker];
+  const settle = SETTLEMENT[payWith];
+  const isBuy = side === "buy";
+
+  const fill = await executeLiveSwap(
+    {
+      inputMint: isBuy ? settle.mint : token.mint,
+      outputMint: isBuy ? token.mint : settle.mint,
+      amountBaseUnits: isBuy ? settlementBaseUnits(totalValue, payWith) : toBaseUnits(quantity, token.decimals),
+    },
+    wallet,
+  );
+
+  const shares = fromBaseUnits(isBuy ? fill.outUnits : fill.inUnits, token.decimals);
+  const settledAmount = fromBaseUnits(isBuy ? fill.inUnits : fill.outUnits, settle.decimals);
   // Dollar value: Jupiter's own USD valuation of the leg when it gives one,
-  // otherwise the settlement amount at the price we sized against.
-  const jupiterUsd = isBuy ? order.inUsdValue : order.outUsdValue;
+  // otherwise the settlement amount at the live SOL price.
+  const jupiterUsd = isBuy ? fill.inUsd : fill.outUsd;
+  const solUsd = getSolPrice() ?? 0;
   const dollars =
-    typeof jupiterUsd === "number" && jupiterUsd > 0 ? jupiterUsd : settledAmount / settleUnitsPerDollar;
+    typeof jupiterUsd === "number" && jupiterUsd > 0
+      ? jupiterUsd
+      : payWith === "SOL"
+        ? settledAmount * solUsd
+        : settledAmount;
 
   return {
     success: true,
@@ -144,7 +181,7 @@ async function executeLiveTrade(
     quantity: shares,
     pricePerShare: shares > 0 ? dollars / shares : 0,
     totalValue: dollars,
-    txId: result.signature,
+    txId: fill.signature,
     timestamp: Date.now(),
     settledIn: payWith,
     settledAmount,

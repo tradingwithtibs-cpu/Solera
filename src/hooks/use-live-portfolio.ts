@@ -5,6 +5,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { getUltraBalances } from "@/lib/jupiter";
 import { getLivePrices, getSolPrice, subscribeLivePrices } from "@/lib/live-prices";
 import { USDC, tickerForMint } from "@/lib/tokens";
+import { PRE_IPO_MINTS } from "@/lib/pre-ipo";
 import { costBasisFromTrades } from "@/lib/live-ledger";
 import type { HoldingPosition, TickerSymbol, TradeSide, Transaction } from "@/lib/types";
 
@@ -71,6 +72,8 @@ export function useLivePortfolio() {
     sol: number;
     usdc: number;
     shares: Partial<Record<TickerSymbol, number>>;
+    /** Pre-IPO tokens held, by mint. */
+    preIpo: Record<string, number>;
   } | null>(null);
   // SOL is valued in dollars at the live SOL/USD price, so re-render when it moves.
   useSyncExternalStore(subscribeLivePrices, getLivePrices, getLivePrices);
@@ -81,15 +84,19 @@ export function useLivePortfolio() {
     try {
       const data = await getUltraBalances(address);
       const shares: Partial<Record<TickerSymbol, number>> = {};
+      const preIpo: Record<string, number> = {};
       for (const [mint, entry] of Object.entries(data)) {
+        if (!entry || entry.uiAmount <= 0) continue;
         const ticker = tickerForMint(mint);
-        if (ticker && entry && entry.uiAmount > 0) shares[ticker] = entry.uiAmount;
+        if (ticker) shares[ticker] = entry.uiAmount;
+        else if (PRE_IPO_MINTS[mint]) preIpo[mint] = entry.uiAmount;
       }
       setBalances({
         address,
         sol: data.SOL?.uiAmount ?? 0,
         usdc: data[USDC.mint]?.uiAmount ?? 0,
         shares,
+        preIpo,
       });
     } catch {
       // Keep whatever we had; the next poll will retry.
@@ -158,6 +165,8 @@ export function useLivePortfolio() {
     usdcBalance,
     solUsd,
     holdings,
+    /** Pre-IPO tokens in the wallet: mint → amount. Priced by the caller via /api/pre-ipo. */
+    preIpoHoldings: current?.preIpo ?? {},
     transactions,
     isLoaded: !!current,
     recordTrade: record,

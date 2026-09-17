@@ -67,6 +67,37 @@ export const TESSERA_CODES: Record<string, CompanyId> = {
   tSpaceX: "spacex",
 };
 
+/**
+ * Static registry of every pre-IPO mint, so a wallet's balances can be
+ * labelled and valued without waiting for the issuer feeds. Mints don't
+ * change; prices come from /api/pre-ipo.
+ */
+export interface PreIpoMintInfo {
+  mint: string;
+  symbol: string;
+  issuer: Issuer;
+  company: CompanyId;
+  decimals: number;
+}
+
+export const PRE_IPO_MINTS: Record<string, PreIpoMintInfo> = Object.fromEntries(
+  (
+    [
+      ["PreweJYECqtQwBtpxHL171nL2K6umo692gTm7Q3rpgF", "OPENAI", "PreStocks", "openai"],
+      ["Pren1FvFX6J3E4kXhJuCiAD5aDmGEb7qJRncwA8Lkhw", "ANTHROPIC", "PreStocks", "anthropic"],
+      ["PreANxuXjsy2pvisWWMNB6YaJNzr7681wJJr2rHsfTh", "SPACEX", "PreStocks", "spacex"],
+      ["PreLWGkkeqG1s4HEfFZSy9moCrJ7btsHuUtfcCeoRua", "KALSHI", "PreStocks", "kalshi"],
+      ["PresTj4Yc2bAR197Er7wz4UUKSfqt6FryBEdAriBoQB", "ANDURIL", "PreStocks", "anduril"],
+      ["PrekqLJvJ3qVdXmBGDiexvwUTF4rLFDa6HWS4HJbw9S", "NEURALINK", "PreStocks", "neuralink"],
+      ["Pre8AREmFPtoJFT8mQSXQLh56cwJmM7CFDRuoGBZiUP", "POLYMARKET", "PreStocks", "polymarket"],
+      ["PreZad18qfPtbxNpMtMuAuX2zVpvkEU8DnJx56faCWd", "FIGUREAI", "PreStocks", "figureai"],
+      ["oPAiAikWTaFj9RYoRFD35ccfwhnMcB3ThgBZRHSkjTZ", "T-OpenAI", "Tessera", "openai"],
+      ["TKLSidmLVt3cqGaaodG8tyRzoANfQwoh67AccjmubeZ", "T-Kalshi", "Tessera", "kalshi"],
+      ["TSPXcLV76s6V2zDiZQ18kBfcbnjaE2ZzNT3ga2Pd99v", "T-SpaceX", "Tessera", "spacex"],
+    ] as [string, string, Issuer, CompanyId][]
+  ).map(([mint, symbol, issuer, company]) => [mint, { mint, symbol, issuer, company, decimals: 9 }]),
+);
+
 export interface PreIpoToken {
   issuer: Issuer;
   company: CompanyId;
