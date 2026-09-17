@@ -11,6 +11,7 @@ import { OwnedPumpingBadge } from "@/components/OwnedPumpingBadge";
 import { WatchlistStarButton } from "@/components/WatchlistStarButton";
 import { EffectivePriceDisplay } from "@/components/EffectivePriceDisplay";
 import { ChatIcon } from "@/components/icons";
+import { NewsList } from "@/components/NewsList";
 
 export default async function AssetDetailPage({ params }: { params: Promise<{ ticker: string }> }) {
   const { ticker: symbol } = await params;
@@ -57,6 +58,12 @@ export default async function AssetDetailPage({ params }: { params: Promise<{ ti
       </div>
 
       <AssetModeSection ticker={ticker.symbol} holders={holders} />
+
+      <section className="mx-5 mb-6 mt-2 rounded-2xl border border-neutral-200 bg-white p-4">
+        <h2 className="text-sm font-semibold text-neutral-900">{ticker.name} news</h2>
+        <p className="mb-1 text-xs text-neutral-400">Last 7 days, about the listed company behind {ticker.symbol}.</p>
+        <NewsList scope={{ kind: "ticker", ticker: ticker.symbol }} limit={5} />
+      </section>
     </div>
   );
 }

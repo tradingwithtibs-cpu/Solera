@@ -10,6 +10,7 @@ import {
 import { formatCurrency } from "@/lib/format";
 import { useState } from "react";
 import { PreIpoBuySheet } from "./PreIpoBuySheet";
+import { NewsList } from "./NewsList";
 
 /** A Buy button that opens the in-app buy sheet for `token`. */
 function BuyButton({ token, primary = false }: { token: PreIpoToken; primary?: boolean }) {
@@ -182,6 +183,12 @@ export function CompanyComparisonCard({ comparison }: { comparison: CompanyCompa
         Implied valuation scales each issuer&apos;s own mark-to-valuation ratio by the live token price, so the two
         tokens are compared on what they value the company at, not on their raw prices.
       </p>
+      <details className="mt-3 rounded-2xl bg-neutral-50 px-4 py-2">
+        <summary className="cursor-pointer text-xs font-semibold text-neutral-700">Latest on {company.name}</summary>
+        <div className="pb-1">
+          <NewsList scope={{ kind: "company", company: company.id }} limit={3} />
+        </div>
+      </details>
     </section>
   );
 }
