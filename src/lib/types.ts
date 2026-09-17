@@ -43,13 +43,15 @@ export interface InvestorSocials {
 
 export interface Investor {
   id: string;
+  /** "wallet": a real on-chain holder. "sample": a hand-written placeholder shown until real data loads. */
+  kind?: "wallet" | "sample";
   name: string;
   handle: string;
   initials: string;
   /** Tailwind background color class for the avatar. */
   avatarColor: string;
   bio: string;
-  /** Fake but realistic-looking performance figure for the trailing month. */
+  /** For wallets: value-weighted 7-day price move of their holdings. For samples: a made-up monthly figure. */
   performancePct: number;
   holdings: HoldingPosition[];
   socials?: InvestorSocials;

@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { INVESTORS } from "@/lib/mock-data";
+import { useInvestors } from "@/hooks/use-investors";
 import { computeHoldings, computeSoleraScore, describeSoleraScore, normalizeSoleraScore } from "@/lib/portfolio";
 import { Avatar } from "@/components/Avatar";
 import { PerformanceBadge } from "@/components/PerformanceBadge";
@@ -9,6 +9,7 @@ import { FollowButton } from "@/components/FollowButton";
 import { SegmentedControl } from "@/components/SegmentedControl";
 export default function LeaderboardPage() {
   const [sortMode, setSortMode] = useState<"performance" | "score">("score");
+  const { investors: INVESTORS, source } = useInvestors();
   const ranked = INVESTORS.map((investor) => {
     // Sort by the raw score (unbounded, but monotonic with the normalized
     // one below, so ranking is identical either way) — display the
@@ -37,13 +38,15 @@ export default function LeaderboardPage() {
           onChange={setSortMode}
           options={[
             { value: "score", label: "Solera Score" },
-            { value: "performance", label: "Monthly return" },
+            { value: "performance", label: source === "chain" ? "7-day move" : "Monthly return" },
           ]}
         />
         <div className="mt-4 rounded-2xl bg-[#ece7fb] p-4 text-xs leading-relaxed text-neutral-600">
           {sortMode === "score"
             ? "A 0–100 score that rewards steady, well-sized positions over concentrated bets — a high return with one oversized position scores lower than the same return spread out. A concentration indicator, not a complete measure of risk. Index holdings are treated like any other position."
-            : "Ranks the sample investors by their simulated monthly return. Past returns do not predict future results."}
+            : source === "chain"
+              ? "Ranks real wallets by how the market moved what they hold over the last 7 days, value-weighted. Not what they earned since buying — the chain doesn't say what they paid. Past moves do not predict future results."
+              : "Ranks the sample investors by their simulated monthly return. Past returns do not predict future results."}
         </div>
       </div>
       <div className="flex-1 space-y-3 px-5 pb-7 sm:px-7">
@@ -76,7 +79,11 @@ export default function LeaderboardPage() {
             </article>
           );
         })}
-        <p className="py-3 text-xs text-neutral-500">All profiles and performance figures are simulated.</p>
+        <p className="py-3 text-xs text-neutral-500">
+          {source === "chain"
+            ? "Wallets are the largest non-custodial holders of each tokenized stock, read from public Solana data. Identities are unknown."
+            : "Sample profiles shown while on-chain holders load."}
+        </p>
       </div>
     </div>
   );

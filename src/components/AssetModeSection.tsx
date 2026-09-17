@@ -6,15 +6,11 @@ import { SegmentedControl } from "./SegmentedControl";
 import { AssetPosition } from "./AssetPosition";
 import { OptionsChain } from "./OptionsChain";
 import { Avatar } from "./Avatar";
-import type { HoldingWithValue } from "@/lib/portfolio";
-import type { Investor, TickerSymbol } from "@/lib/types";
+import { computeHoldings } from "@/lib/portfolio";
+import { useInvestors } from "@/hooks/use-investors";
+import type { TickerSymbol } from "@/lib/types";
 
 type AssetMode = "shares" | "options";
-
-interface HolderEntry {
-  investor: Investor;
-  holding: HoldingWithValue;
-}
 
 /**
  * Shares/Options toggle for the asset page. Kept as one client component
@@ -22,8 +18,13 @@ interface HolderEntry {
  * doesn't need a navigation — the "held by" list is server-computed and
  * passed in as a prop, since it only applies to the shares view.
  */
-export function AssetModeSection({ ticker, holders }: { ticker: TickerSymbol; holders: HolderEntry[] }) {
+export function AssetModeSection({ ticker }: { ticker: TickerSymbol }) {
   const [mode, setMode] = useState<AssetMode>("shares");
+  const { investors, source } = useInvestors();
+  const holders = investors
+    .map((investor) => ({ investor, holding: computeHoldings(investor.holdings).find((h) => h.ticker === ticker) }))
+    .filter((e): e is { investor: (typeof investors)[number]; holding: NonNullable<typeof e.holding> } => !!e.holding)
+    .sort((a, b) => b.holding.allocationPct - a.holding.allocationPct);
 
   return (
     <>
@@ -43,11 +44,11 @@ export function AssetModeSection({ ticker, holders }: { ticker: TickerSymbol; ho
         <>
           <div className="px-5 pb-1 pt-6">
             <h2 className="text-sm font-semibold text-neutral-900">Held by</h2>
-            <p className="text-xs text-neutral-400">Investors on Solera holding {ticker}</p>
+            <p className="text-xs text-neutral-400">{source === "chain" ? `Largest wallets holding ${ticker} on Solana` : `Sample investors holding ${ticker}`}</p>
           </div>
 
           {holders.length === 0 ? (
-            <p className="px-5 pb-6 text-xs text-neutral-400">No investors on Solera hold this yet.</p>
+            <p className="px-5 pb-6 text-xs text-neutral-400">No wallets to show for {ticker} yet.</p>
           ) : (
             <div className="flex-1 divide-y divide-neutral-100 px-5 pb-6">
               {holders.map(({ investor, holding }) => (

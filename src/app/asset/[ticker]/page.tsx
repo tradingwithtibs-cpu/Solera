@@ -1,8 +1,7 @@
 import { AssetModeSection } from "@/components/AssetModeSection";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { INVESTORS, TICKERS } from "@/lib/mock-data";
-import { computeHoldings } from "@/lib/portfolio";
+import { TICKERS } from "@/lib/mock-data";
 import type { TickerSymbol } from "@/lib/types";
 import { TopBar } from "@/components/TopBar";
 import { TickerBadge } from "@/components/TickerBadge";
@@ -17,18 +16,6 @@ export default async function AssetDetailPage({ params }: { params: Promise<{ ti
   const { ticker: symbol } = await params;
   const ticker = TICKERS[symbol as TickerSymbol];
   if (!ticker) notFound();
-
-  const holders = INVESTORS.map((investor) => ({
-    investor,
-    holding: computeHoldings(investor.holdings).find((h) => h.ticker === ticker.symbol),
-  }))
-    .filter(
-      (
-        entry,
-      ): entry is { investor: (typeof INVESTORS)[number]; holding: NonNullable<typeof entry.holding> } =>
-        entry.holding !== undefined,
-    )
-    .sort((a, b) => b.holding.allocationPct - a.holding.allocationPct);
 
   return (
     <div className="flex flex-1 flex-col">
@@ -57,7 +44,7 @@ export default async function AssetDetailPage({ params }: { params: Promise<{ ti
         </Link>
       </div>
 
-      <AssetModeSection ticker={ticker.symbol} holders={holders} />
+      <AssetModeSection ticker={ticker.symbol} />
 
       <section className="mx-5 mb-6 mt-2 rounded-2xl border border-neutral-200 bg-white p-4">
         <h2 className="text-sm font-semibold text-neutral-900">{ticker.name} news</h2>

@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import { INVESTORS, TICKERS } from "@/lib/mock-data";
+import { TICKERS } from "@/lib/mock-data";
+import { useInvestors } from "@/hooks/use-investors";
 import { useFollowedInvestors } from "@/hooks/use-followed-investors";
 import { InvestorCard } from "./InvestorCard";
 import { SearchIcon } from "./icons";
@@ -9,6 +10,7 @@ export function FeedList() {
   const [query, setQuery] = useState("");
   const [view, setView] = useState<"all" | "following">("all");
   const { isFollowing } = useFollowedInvestors();
+  const { investors: INVESTORS, source } = useInvestors();
   const q = query.trim().toLowerCase();
   const filtered = INVESTORS.filter(
     (i) =>
@@ -44,7 +46,7 @@ export function FeedList() {
             ]}
           />
           <span className="font-mono text-xs text-neutral-500" aria-live="polite">
-            {filtered.length} {filtered.length === 1 ? "investor" : "investors"}
+            {filtered.length} {source === "chain" ? (filtered.length === 1 ? "wallet" : "wallets") : filtered.length === 1 ? "investor" : "investors"}
           </span>
         </div>
       </div>

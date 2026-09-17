@@ -1,12 +1,14 @@
 "use client";
 import Link from "next/link";
 import { useActivePortfolio } from "@/hooks/use-active-portfolio";
+import { useInvestors } from "@/hooks/use-investors";
 import { computeHoldings, computeTrendingTickers } from "@/lib/portfolio";
 import { TICKERS } from "@/lib/mock-data";
 import { formatCurrency } from "@/lib/format";
 import { TickerBadge } from "./TickerBadge";
 export function DiscoveryRail() {
   const { mode, cashBalance, holdings, isLoaded } = useActivePortfolio();
+  const { investors, source } = useInvestors();
   const total = computeHoldings(holdings).reduce((sum, h) => sum + h.value, cashBalance);
   return (
     <aside className="discovery-rail">
@@ -28,9 +30,9 @@ export function DiscoveryRail() {
             ↗
           </span>
         </div>
-        <p className="mt-1 text-xs text-neutral-500">By total demo holdings</p>
+        <p className="mt-1 text-xs text-neutral-500">{source === "chain" ? "By value held across top on-chain wallets" : "By total sample holdings"}</p>
         <div className="mt-4 divide-y divide-neutral-100">
-          {computeTrendingTickers()
+          {computeTrendingTickers(investors)
             .slice(0, 3)
             .map((t) => (
               <Link key={t.ticker} href={`/asset/${t.ticker}`} className="flex items-center gap-3 py-3">

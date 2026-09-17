@@ -1,4 +1,6 @@
-import { INVESTORS, TICKERS } from "@/lib/mock-data";
+"use client";
+import { TICKERS } from "@/lib/mock-data";
+import { useInvestor } from "@/hooks/use-investors";
 import { formatCurrency, formatRelativeTime, formatShares } from "@/lib/format";
 import type { Transaction } from "@/lib/types";
 import { TickerBadge } from "./TickerBadge";
@@ -7,9 +9,7 @@ import { solscanTxUrl } from "@/lib/jupiter";
 export function TransactionRow({ transaction }: { transaction: Transaction }) {
   const ticker = TICKERS[transaction.ticker];
   const side = transaction.side ?? "buy"; // older logged transactions predate sell support
-  const copiedFrom = transaction.copiedFromInvestorId
-    ? INVESTORS.find((i) => i.id === transaction.copiedFromInvestorId)
-    : undefined;
+  const copiedFrom = useInvestor(transaction.copiedFromInvestorId);
 
   return (
     <div className="flex items-center gap-3 py-4">

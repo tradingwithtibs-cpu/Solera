@@ -1,6 +1,5 @@
-import { INVESTORS } from "./mock-data";
 import { getEffectiveHistory, getEffectivePrice } from "./live-prices";
-import type { HoldingPosition, TickerSymbol } from "./types";
+import type { HoldingPosition, Investor, TickerSymbol } from "./types";
 
 export interface HoldingWithValue extends HoldingPosition {
   /** Current simulated market value of this position, in USD. */
@@ -96,10 +95,10 @@ export interface TrendingTicker {
  * real (if mock) aggregate holdings data already in the app, largest
  * platform-wide position first.
  */
-export function computeTrendingTickers(): TrendingTicker[] {
+export function computeTrendingTickers(investors: Investor[]): TrendingTicker[] {
   const totals = new Map<TickerSymbol, TrendingTicker>();
 
-  for (const investor of INVESTORS) {
+  for (const investor of investors) {
     for (const holding of investor.holdings) {
       const entry = totals.get(holding.ticker) ?? { ticker: holding.ticker, totalValue: 0, holderCount: 0 };
       entry.totalValue += holding.shares * getEffectivePrice(holding.ticker);

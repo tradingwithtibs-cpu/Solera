@@ -1,8 +1,21 @@
 "use client";
 import { useId } from "react";
 import { ChainIcon } from "./icons";
-export function OnChainBadge({ walletAddress }: { walletAddress: string }) {
+export function OnChainBadge({ walletAddress, verified = false }: { walletAddress: string; verified?: boolean }) {
   const id = useId();
+  if (verified) {
+    return (
+      <a
+        href={`https://solscan.io/account/${walletAddress}`}
+        target="_blank"
+        rel="noreferrer"
+        className="bg-gradient-solana inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold text-white"
+      >
+        <ChainIcon className="h-3 w-3" />
+        On-chain · Solscan ↗
+      </a>
+    );
+  }
   return (
     <span className="inline-block">
       <button

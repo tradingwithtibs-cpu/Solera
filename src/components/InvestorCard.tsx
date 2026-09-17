@@ -23,7 +23,7 @@ export function InvestorCard({ investor }: { investor: Investor }) {
       <div className="mt-5 flex items-center justify-between">
         <p className="eyebrow">Top holdings</p>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-neutral-500">Month</span>
+          <span className="text-xs text-neutral-500">{investor.kind === "wallet" ? "7 days" : "Month"}</span>
           <PerformanceBadge value={investor.performancePct} />
         </div>
       </div>
@@ -43,7 +43,8 @@ export function InvestorCard({ investor }: { investor: Investor }) {
       </div>
       <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-neutral-100 pt-4">
         <span className="text-xs text-neutral-500">
-          <span className="font-mono">{holdings.length}</span> positions · Sample portfolio
+          <span className="font-mono">{holdings.length}</span> positions ·{" "}
+          {investor.kind === "wallet" ? "Live on-chain" : "Sample portfolio"}
         </span>
         <Link href={`/investor/${investor.id}`} className="text-sm font-semibold text-indigo-600">
           View portfolio <span aria-hidden="true">↗</span>

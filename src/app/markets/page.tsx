@@ -6,6 +6,7 @@ import { computeTrendingTickers, tickerChangePct } from "@/lib/portfolio";
 import { getEffectiveHistory, getEffectivePrice, getLivePrices, isLivePriced, subscribeLivePrices } from "@/lib/live-prices";
 import { formatCurrency } from "@/lib/format";
 import { useWatchlist } from "@/hooks/use-watchlist";
+import { useInvestors } from "@/hooks/use-investors";
 import { TickerBadge } from "@/components/TickerBadge";
 import { PriceChart } from "@/components/PriceChart";
 import { OwnedPumpingBadge } from "@/components/OwnedPumpingBadge";
@@ -19,11 +20,12 @@ export default function MarketsPage() {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState("community");
   const { isWatched } = useWatchlist();
+  const { investors, source: investorSource } = useInvestors();
   // Subscribed once here (rather than per-row via a hook, which the .map()
   // below can't do) so the whole list re-renders when a live price updates;
   // getEffectivePrice/isLivePriced are then just plain reads per ticker.
   useSyncExternalStore(subscribeLivePrices, getLivePrices, getLivePrices);
-  const totals = new Map(computeTrendingTickers().map((t) => [t.ticker, t]));
+  const totals = new Map(computeTrendingTickers(investors).map((t) => [t.ticker, t]));
   const q = query.trim().toLowerCase();
   const visible = TICKER_LIST.filter(
     (t) =>
@@ -128,8 +130,8 @@ export default function MarketsPage() {
                 <WatchlistStarButton ticker={ticker.symbol} />
                 <div className="market-meta">
                   <span>
-                    {totals.get(ticker.symbol)?.holderCount ?? 0} sample{" "}
-                    {totals.get(ticker.symbol)?.holderCount === 1 ? "investor" : "investors"} ·{" "}
+                    {totals.get(ticker.symbol)?.holderCount ?? 0} {investorSource === "chain" ? "top" : "sample"}{" "}
+                    {totals.get(ticker.symbol)?.holderCount === 1 ? "wallet" : "wallets"} ·{" "}
                     <span className="font-mono">
                       {formatCurrency(totals.get(ticker.symbol)?.totalValue ?? 0)}
                     </span>{" "}
