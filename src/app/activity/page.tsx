@@ -2,12 +2,12 @@
 import { LoadingState } from "@/components/LoadingState";
 
 import Link from "next/link";
-import { usePortfolio } from "@/hooks/use-portfolio";
+import { useActivePortfolio } from "@/hooks/use-active-portfolio";
 import { TopBar } from "@/components/TopBar";
 import { TransactionRow } from "@/components/TransactionRow";
 
 export default function ActivityPage() {
-  const { transactions, isLoaded } = usePortfolio();
+  const { transactions, isLoaded } = useActivePortfolio();
 
   return (
     <div className="flex flex-1 flex-col">

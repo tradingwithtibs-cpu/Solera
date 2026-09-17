@@ -16,6 +16,7 @@ import { contractCost, daysToExpiration, formatExpiration } from "@/lib/options"
 import { getEffectivePrice, getLivePrices, subscribeLivePrices } from "@/lib/live-prices";
 import { formatCurrency } from "@/lib/format";
 import { usePortfolio } from "@/hooks/use-portfolio";
+import { useActivePortfolio } from "@/hooks/use-active-portfolio";
 import { HoldingRow } from "@/components/HoldingRow";
 import { MarketRow } from "@/components/MarketRow";
 import { TransactionRow } from "@/components/TransactionRow";
@@ -27,7 +28,10 @@ import { MyWalletBadge } from "@/components/MyWalletBadge";
 const RECENT_ACTIVITY_LIMIT = 3;
 
 export default function PortfolioPage() {
-  const { cashBalance, holdings: rawHoldings, transactions, optionPositions, isLoaded } = usePortfolio();
+  const { mode, cashBalance, holdings: rawHoldings, transactions, isLoaded } = useActivePortfolio();
+  // Options are practice-only for now, so they always come from the practice store.
+  const { optionPositions } = usePortfolio();
+  const isLive = mode === "live";
   // Subscribed here so equity/options values below re-render when a live
   // price updates — computeHoldings and getEffectivePrice already read the
   // live price internally, they just need something to trigger a re-read.
@@ -67,7 +71,7 @@ export default function PortfolioPage() {
         <h1>
           Your portfolio<span className="text-violet-500">.</span>
         </h1>
-        <p>A clear picture of your practice investments.</p>
+        <p>{isLive ? "Your real holdings, straight from your wallet." : "A clear picture of your practice investments."}</p>
       </header>
       <div className="px-5 pb-2">
         <div className="portfolio-balance">
@@ -75,7 +79,7 @@ export default function PortfolioPage() {
             aria-hidden
             className="bg-gradient-brand pointer-events-none absolute -right-10 -top-14 h-40 w-40 rounded-full opacity-[0.16] blur-2xl"
           />
-          <p className="eyebrow">Total practice balance</p>
+          <p className="eyebrow">{isLive ? "Total balance · on-chain" : "Total practice balance"}</p>
           <p className="mt-1 font-mono text-4xl font-semibold tracking-tight tabular-nums">
             {formatCurrency(totalValue)}
           </p>
@@ -91,7 +95,7 @@ export default function PortfolioPage() {
           </div>
 
           <div className="mt-2 flex items-center justify-between rounded-2xl bg-white/70 px-4 py-3">
-            <span className="text-sm text-neutral-500">Cash available</span>
+            <span className="text-sm text-neutral-500">{isLive ? "SOL + USDC to invest" : "Cash available"}</span>
             <span className="font-mono text-sm font-semibold tabular-nums text-neutral-900">
               {formatCurrency(cashBalance)}
             </span>
@@ -115,7 +119,9 @@ export default function PortfolioPage() {
         <p className="mt-2 text-sm leading-relaxed text-neutral-600">
           {holdings.length
             ? `${holdings[0].ticker} is your largest holding at ${holdings[0].allocationPct.toFixed(1)}% of invested value. ${holdings[0].allocationPct > 40 ? "This concentration reduces your Stocklana Score." : "No position exceeds the score’s 40% concentration threshold."}`
-            : "Your portfolio perspective will appear after your first practice investment."}
+            : isLive
+              ? "Your portfolio perspective will appear once this wallet holds a tokenized stock."
+              : "Your portfolio perspective will appear after your first practice investment."}
         </p>
         <Link href="/leaderboard" className="mt-3 inline-block text-xs font-semibold text-indigo-600">
           How the score works →

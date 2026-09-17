@@ -1,11 +1,11 @@
 "use client";
 import Link from "next/link";
-import { usePortfolio } from "@/hooks/use-portfolio";
+import { useActivePortfolio } from "@/hooks/use-active-portfolio";
 import { computeHoldings } from "@/lib/portfolio";
 import { formatCurrency, formatShares } from "@/lib/format";
 import type { TickerSymbol } from "@/lib/types";
 export function AssetPosition({ ticker }: { ticker: TickerSymbol }) {
-  const { holdings, isLoaded } = usePortfolio();
+  const { holdings, isLoaded } = useActivePortfolio();
   const owned = computeHoldings(holdings).find((h) => h.ticker === ticker);
   return (
     <div className="mx-5 my-4 rounded-2xl border border-neutral-200 bg-white p-5">

@@ -1,26 +1,24 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { ConnectionProvider, WalletProvider } from "@solana/wallet-adapter-react";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import { PhantomWalletAdapter, SolflareWalletAdapter } from "@solana/wallet-adapter-wallets";
+import type { WalletError } from "@solana/wallet-adapter-base";
 import { clusterApiUrl } from "@solana/web3.js";
 
 // Default styles for the wallet selection modal — overridden in globals.css
-// to match Stocklana's own palette rather than the library's default purple.
+// to match the app's own palette rather than the library's default purple.
 import "@solana/wallet-adapter-react-ui/styles.css";
 
 /**
- * Real Solana connectivity, wrapping the whole app. This is the first genuinely
- * on-chain thing in Stocklana: a real read-only wallet connection and a real
- * balance read (see OnChainBadge.tsx) — everything else in the app (holdings,
- * prices, trades) is still simulated, and stays that way. Connecting a wallet
- * here never touches the mock portfolio; it's a separate, honest layer.
+ * Real Solana connectivity, wrapping the whole app. A connected wallet is
+ * what makes trading live: swaps are signed here (see lib/trade.ts) and the
+ * portfolio reads this wallet's real balances (see use-live-portfolio.ts).
+ * With no wallet connected the app runs in practice mode.
  *
- * mainnet-beta because reading a balance is a free, harmless, read-only RPC
- * call — no transaction, no risk — and a real wallet's real balance is more
- * convincing than a devnet one. The devnet memo-transaction step (later) is
- * a different, additive concern and will use its own connection.
+ * mainnet-beta throughout: live trades settle on mainnet, and a real
+ * wallet's real balance is what a user (or judge) expects to see.
  */
 export function SolanaProvider({ children }: { children: React.ReactNode }) {
   const endpoint = useMemo(() => clusterApiUrl("mainnet-beta"), []);
@@ -29,9 +27,18 @@ export function SolanaProvider({ children }: { children: React.ReactNode }) {
   // adapter listed here at all.
   const wallets = useMemo(() => [new PhantomWalletAdapter(), new SolflareWalletAdapter()], []);
 
+  // Without this the adapter console.error()s every wallet error, and a user
+  // simply closing the Phantom popup ("User rejected the request") surfaces
+  // as a red overlay in dev. Declining to connect is a choice, not a fault:
+  // the app just stays in practice mode. Anything else is still worth a log.
+  const onError = useCallback((error: WalletError) => {
+    if (/user rejected|rejected the request/i.test(error.message)) return;
+    console.warn(`Wallet: ${error.name}: ${error.message}`);
+  }, []);
+
   return (
     <ConnectionProvider endpoint={endpoint}>
-      <WalletProvider wallets={wallets} autoConnect>
+      <WalletProvider wallets={wallets} autoConnect onError={onError}>
         <WalletModalProvider>{children}</WalletModalProvider>
       </WalletProvider>
     </ConnectionProvider>

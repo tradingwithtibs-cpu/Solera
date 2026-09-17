@@ -1,20 +1,20 @@
 "use client";
 import Link from "next/link";
-import { usePortfolio } from "@/hooks/use-portfolio";
+import { useActivePortfolio } from "@/hooks/use-active-portfolio";
 import { computeHoldings, computeTrendingTickers } from "@/lib/portfolio";
 import { TICKERS } from "@/lib/mock-data";
 import { formatCurrency } from "@/lib/format";
 import { TickerBadge } from "./TickerBadge";
 export function DiscoveryRail() {
-  const { cashBalance, holdings, isLoaded } = usePortfolio();
+  const { mode, cashBalance, holdings, isLoaded } = useActivePortfolio();
   const total = computeHoldings(holdings).reduce((sum, h) => sum + h.value, cashBalance);
   return (
     <aside className="discovery-rail">
       <div className="rail-card">
-        <p className="eyebrow">Your practice portfolio</p>
+        <p className="eyebrow">{mode === "live" ? "Your portfolio · live" : "Your practice portfolio"}</p>
         <p className="mt-4 font-mono text-2xl font-semibold">{isLoaded ? formatCurrency(total) : "—"}</p>
         <div className="mt-4 flex justify-between text-xs text-neutral-500">
-          <span>Available cash</span>
+          <span>{mode === "live" ? "SOL + USDC to invest" : "Available cash"}</span>
           <span className="font-mono">{isLoaded ? formatCurrency(cashBalance) : "—"}</span>
         </div>
         <Link href="/portfolio" className="btn-secondary mt-5 w-full">

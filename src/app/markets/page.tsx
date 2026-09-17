@@ -11,6 +11,7 @@ import { PriceChart } from "@/components/PriceChart";
 import { OwnedPumpingBadge } from "@/components/OwnedPumpingBadge";
 import { WatchlistStarButton } from "@/components/WatchlistStarButton";
 import { PerformanceBadge } from "@/components/PerformanceBadge";
+import { PremiumBadge } from "@/components/PremiumBadge";
 import { SegmentedControl } from "@/components/SegmentedControl";
 import { SearchIcon } from "@/components/icons";
 export default function MarketsPage() {
@@ -117,7 +118,9 @@ export default function MarketsPage() {
                       {formatCurrency(getEffectivePrice(ticker.symbol))}
                     </p>
                     {isLivePriced(ticker.symbol) && (
-                      <p className="mb-1 text-[10px] font-medium text-emerald-600">Live</p>
+                      <p className="mb-1 text-[10px] font-medium text-emerald-600">
+                        Live <PremiumBadge ticker={ticker.symbol} compact />
+                      </p>
                     )}
                     <PerformanceBadge value={tickerChangePct(ticker.symbol)} />
                   </div>

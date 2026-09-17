@@ -76,6 +76,8 @@ export interface Transaction {
   timestamp: number;
   /** Set when this trade was placed via "Copy" from an investor's holding. */
   copiedFromInvestorId?: string;
+  /** Solana transaction signature — present only for live (on-chain) trades. */
+  signature?: string;
 }
 
 export type OptionSide = "call" | "put";

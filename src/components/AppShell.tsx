@@ -4,6 +4,7 @@ import { Logo } from "./Logo";
 import { MY_PROFILE } from "@/lib/mock-data";
 import { Avatar } from "./Avatar";
 import { DiscoveryRail } from "./DiscoveryRail";
+import { ModeStrip } from "./ModeStrip";
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="app-shell">
@@ -31,19 +32,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Avatar initials={MY_PROFILE.initials} colorClass={MY_PROFILE.avatarColor} size="sm" />
             <div>
               <p className="text-sm font-semibold">{MY_PROFILE.name}</p>
-              <p className="text-xs text-neutral-500">Practice account</p>
+              <p className="text-xs text-neutral-500">Solera account</p>
             </div>
           </Link>
         </div>
       </aside>
       <div className="content-column">
-        <div className="demo-strip">
-          <span>
-            <span className="status-dot" />
-            Interactive demo
-          </span>
-          <span>Simulated prices & funds</span>
-        </div>
+        <ModeStrip />
         <main id="main-content" tabIndex={-1}>
           {children}
         </main>

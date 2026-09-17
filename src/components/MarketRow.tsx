@@ -3,6 +3,7 @@ import type { TickerInfo } from "@/lib/types";
 import { formatCurrency } from "@/lib/format";
 import { useEffectivePrice } from "@/hooks/use-effective-price";
 import { TickerBadge } from "./TickerBadge";
+import { PremiumBadge } from "./PremiumBadge";
 
 /**
  * A row for the "Markets" list — a ticker the user may not hold yet, with a
@@ -26,6 +27,7 @@ export function MarketRow({ ticker }: { ticker: TickerInfo }) {
           {formatCurrency(price)}
         </span>
         {isLive && <span className="block text-[10px] font-medium text-emerald-600">Live</span>}
+        <PremiumBadge ticker={ticker.symbol} compact />
       </p>
       <Link
         href={`/buy/${ticker.symbol}`}

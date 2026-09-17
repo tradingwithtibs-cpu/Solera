@@ -1,6 +1,6 @@
 "use client";
 
-import { usePortfolio } from "@/hooks/use-portfolio";
+import { useActivePortfolio } from "@/hooks/use-active-portfolio";
 import { isPumping } from "@/lib/portfolio";
 import type { TickerSymbol } from "@/lib/types";
 import { PumpingBadge } from "./PumpingBadge";
@@ -14,7 +14,7 @@ import { PumpingBadge } from "./PumpingBadge";
  * against the signed-in user's own portfolio.
  */
 export function OwnedPumpingBadge({ ticker }: { ticker: TickerSymbol }) {
-  const { holdings, isLoaded } = usePortfolio();
+  const { holdings, isLoaded } = useActivePortfolio();
 
   if (!isLoaded) return null;
   const owns = holdings.some((h) => h.ticker === ticker);

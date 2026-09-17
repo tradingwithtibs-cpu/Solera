@@ -9,8 +9,10 @@ import { computeHoldings } from "@/lib/portfolio";
 import { formatCurrency, formatShares } from "@/lib/format";
 import { useExecuteTrade } from "@/hooks/use-execute-trade";
 import { useEffectivePrice } from "@/hooks/use-effective-price";
-import { usePortfolio } from "@/hooks/use-portfolio";
+import { useActivePortfolio } from "@/hooks/use-active-portfolio";
+import { solscanTxUrl } from "@/lib/jupiter";
 import { celebrateTrade } from "@/lib/celebrate";
+import { SOL_FEE_RESERVE, type SettlementCurrency } from "@/lib/tokens";
 import type { TickerSymbol, TradeSide } from "@/lib/types";
 import { TopBar } from "./TopBar";
 import { TickerBadge } from "./TickerBadge";
@@ -28,7 +30,7 @@ export function TradeScreen() {
 
   const symbol = params.ticker as TickerSymbol;
   const ticker = TICKERS[symbol];
-  const { price: livePrice, isLive } = useEffectivePrice(symbol);
+  const { price: livePrice, isLive: isLivePrice } = useEffectivePrice(symbol);
   const refInvestor = refId ? INVESTORS.find((i) => i.id === refId) : undefined;
 
   const [reviewing, setReviewing] = useState(false);
@@ -37,8 +39,11 @@ export function TradeScreen() {
   // $0 by default whenever the amount wasn't suggested by context (copying
   // someone, or selling) — $100 only for a cold-start "just browsing" buy.
   const [amount, setAmount] = useState(initialSide === "sell" || refInvestor ? "0" : "100");
-  const { status, result, error, run, reset } = useExecuteTrade();
-  const { cashBalance, holdings: rawHoldings, recordTrade, isLoaded } = usePortfolio();
+  // Live trades settle in SOL by default — it's what every Solana wallet holds.
+  const [payWith, setPayWith] = useState<SettlementCurrency>("SOL");
+  const { status, result, error, run, reset, isLive } = useExecuteTrade();
+  const { cashBalance, solBalance, usdcBalance, solUsd, holdings: rawHoldings, recordTrade, isLoaded } =
+    useActivePortfolio();
 
   if (!ticker) {
     return (
@@ -80,7 +85,16 @@ export function TradeScreen() {
       : livePrice > 0
         ? numericAmount / livePrice
         : 0;
-  const maxAvailable = side === "buy" ? cashBalance : ownedValue;
+  // What a buy can be capped at, in dollars: in live mode only the chosen
+  // settlement currency counts (SOL keeps a small reserve for network fees);
+  // in practice mode it's the practice cash balance.
+  const spendable = !isLive
+    ? cashBalance
+    : payWith === "SOL"
+      ? Math.max(0, solBalance - SOL_FEE_RESERVE) * solUsd
+      : usdcBalance;
+  const spendableLabel = !isLive ? "cash available" : payWith === "SOL" ? "in SOL available" : "in USDC available";
+  const maxAvailable = side === "buy" ? spendable : ownedValue;
   const exceedsMax = numericAmount > maxAvailable;
   const canSubmit =
     Number.isFinite(numericAmount) && numericAmount > 0 && !exceedsMax && (side === "buy" || ownedShares > 0);
@@ -105,16 +119,20 @@ export function TradeScreen() {
 
   const handleConfirm = async () => {
     if (!canSubmit || status === "pending") return;
-    const tradeResult = await run({ ticker: symbol, side, quantity: estimatedShares }, (fill) => {
-      recordTrade({
-        ticker: fill.ticker,
-        side: fill.side,
-        quantity: fill.quantity,
-        pricePerShare: fill.pricePerShare,
-        totalValue: fill.totalValue,
-        copiedFromInvestorId: side === "buy" ? refInvestor?.id : undefined,
-      });
-    });
+    const tradeResult = await run(
+      { ticker: symbol, side, quantity: estimatedShares, totalValue: numericAmount, payWith },
+      (fill) => {
+        recordTrade({
+          ticker: fill.ticker,
+          side: fill.side,
+          quantity: fill.quantity,
+          pricePerShare: fill.pricePerShare,
+          totalValue: fill.totalValue,
+          txId: fill.txId,
+          copiedFromInvestorId: side === "buy" ? refInvestor?.id : undefined,
+        });
+      },
+    );
     if (tradeResult) {
       celebrateTrade();
     }
@@ -125,11 +143,22 @@ export function TradeScreen() {
       <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
         <CheckCircleIcon className="h-16 w-16 text-emerald-500" />
         <div>
-          <h1 className="text-lg font-semibold text-neutral-900">Demo order complete</h1>
+          <h1 className="text-lg font-semibold text-neutral-900">
+            {result.mode === "live" ? "Order filled on Solana" : "Practice order complete"}
+          </h1>
           <p className="mt-1 text-sm text-neutral-500">
             You {result.side === "buy" ? "bought" : "sold"}{" "}
             <span className="font-mono">{formatCurrency(result.totalValue)}</span> of {result.ticker} (≈{" "}
             <span className="font-mono">{formatShares(result.quantity)}</span> shares)
+            {result.settledIn && result.settledAmount !== undefined && (
+              <>
+                {" "}
+                {result.side === "buy" ? "for" : "and received"}{" "}
+                <span className="font-mono">
+                  {result.settledAmount.toFixed(result.settledIn === "SOL" ? 4 : 2)} {result.settledIn}
+                </span>
+              </>
+            )}
           </p>
         </div>
 
@@ -140,9 +169,20 @@ export function TradeScreen() {
               {formatCurrency(result.pricePerShare)}
             </span>
           </div>
-          <div className="flex justify-between py-1 text-neutral-400">
-            <span>Reference</span>
-            <span className="font-mono font-medium text-neutral-600">{result.txId}</span>
+          <div className="flex justify-between gap-3 py-1 text-neutral-400">
+            <span>{result.mode === "live" ? "Transaction" : "Reference"}</span>
+            {result.mode === "live" ? (
+              <a
+                href={solscanTxUrl(result.txId)}
+                target="_blank"
+                rel="noreferrer"
+                className="truncate font-mono font-medium text-violet-600 underline"
+              >
+                {result.txId.slice(0, 8)}…{result.txId.slice(-6)} ↗
+              </a>
+            ) : (
+              <span className="font-mono font-medium text-neutral-600">{result.txId}</span>
+            )}
           </div>
         </div>
 
@@ -182,7 +222,7 @@ export function TradeScreen() {
         <div className="page-heading">
           <p className="eyebrow">A moment of perspective</p>
           <h1>Review your {side}.</h1>
-          <p>Check how this practice order fits your portfolio.</p>
+          <p>{isLive ? "Check how this order fits your portfolio." : "Check how this practice order fits your portfolio."}</p>
         </div>
         <div className="mx-5 rounded-3xl border border-neutral-200 bg-white p-6">
           <div className="flex items-center gap-3">
@@ -192,7 +232,11 @@ export function TradeScreen() {
                 {ticker.name} · {symbol}
               </h2>
               <p className="text-xs text-neutral-500">
-                {side === "buy" && refInvestor ? `Copying ${refInvestor.name}’s holding` : "Practice order"}
+                {side === "buy" && refInvestor
+                  ? `Copying ${refInvestor.name}’s holding`
+                  : isLive
+                    ? "Live order · settles on Solana"
+                    : "Practice order"}
               </p>
             </div>
           </div>
@@ -200,11 +244,22 @@ export function TradeScreen() {
           <p className="mt-2 text-sm text-neutral-500">
             ≈ <span className="font-mono">{formatShares(estimatedShares)}</span> shares at{" "}
             <span className="font-mono">{formatCurrency(livePrice)}</span>
-            {isLive && <span className="text-emerald-600"> · live</span>}
+            {isLivePrice && <span className="text-emerald-600"> · live</span>}
           </p>
           <dl className="mt-6 space-y-4 border-t border-neutral-100 pt-5 text-sm">
+            {isLive && (
+              <div className="flex justify-between gap-3">
+                <dt>{side === "buy" ? "Paid in" : "Receive"}</dt>
+                <dd className="font-mono">
+                  {payWith}
+                  {payWith === "SOL" && solUsd > 0 && (
+                    <span className="text-neutral-500"> · ≈ {(numericAmount / solUsd).toFixed(4)} SOL</span>
+                  )}
+                </dd>
+              </div>
+            )}
             <div className="flex justify-between gap-3">
-              <dt>Cash after order</dt>
+              <dt>{isLive ? "To invest after order" : "Cash after order"}</dt>
               <dd className="font-mono">{formatCurrency(Math.max(0, afterCash))}</dd>
             </div>
             <div className="flex justify-between gap-3">
@@ -214,8 +269,8 @@ export function TradeScreen() {
               </dd>
             </div>
             <div className="flex justify-between gap-3">
-              <dt>Demo fees</dt>
-              <dd className="font-mono">$0.00</dd>
+              <dt>{isLive ? "Fees" : "Practice fees"}</dt>
+              <dd className="font-mono">{isLive ? "0.10% + network" : "$0.00"}</dd>
             </div>
           </dl>
           <p className="mt-4 text-xs leading-relaxed text-neutral-500">
@@ -230,8 +285,9 @@ export function TradeScreen() {
         </div>
         <div className="mt-auto p-5">
           <p className="mb-4 text-xs leading-relaxed text-neutral-500">
-            Simulated funds and prices. No real order is placed. Copying a holding does not guarantee a
-            return.
+            {isLive
+              ? "This is a real swap through Jupiter on Solana mainnet. Your wallet will ask you to sign. The final amount can differ slightly from the estimate. Copying a holding does not guarantee a return."
+              : "Simulated funds and prices. No real order is placed. Copying a holding does not guarantee a return."}
           </p>
           {error && (
             <p role="alert" className="mb-4 text-sm text-rose-700">
@@ -243,7 +299,13 @@ export function TradeScreen() {
             onClick={handleConfirm}
             disabled={!canSubmit || status === "pending"}
           >
-            {status === "pending" ? "Placing demo order…" : `Confirm demo ${side}`}
+            {status === "pending"
+              ? isLive
+                ? "Waiting for your wallet…"
+                : "Placing practice order…"
+              : isLive
+                ? `Confirm ${side} · sign in wallet`
+                : `Confirm practice ${side}`}
           </button>
           <button
             className="btn-secondary mt-3 w-full"
@@ -271,7 +333,7 @@ export function TradeScreen() {
         </h1>
         <p className="text-xs text-neutral-400">
           <span className="font-mono">{formatCurrency(livePrice)}</span> per share{" "}
-          {isLive ? <span className="font-medium text-emerald-600">· live</span> : "(simulated)"}
+          {isLivePrice ? <span className="font-medium text-emerald-600">· live</span> : "(simulated)"}
         </p>
       </div>
 
@@ -287,6 +349,24 @@ export function TradeScreen() {
             ]}
           />
         </div>
+
+        {isLive && (
+          <div className="mx-5 mt-3 flex items-center justify-between gap-3 text-xs">
+            <span className="text-neutral-500">{side === "buy" ? "Pay with" : "Receive"}</span>
+            <div className="flex rounded-full bg-neutral-100 p-0.5 font-semibold">
+              {(["SOL", "USDC"] as const).map((currency) => (
+                <button
+                  key={currency}
+                  type="button"
+                  onClick={() => setPayWith(currency)}
+                  className={`rounded-full px-3 py-1 ${payWith === currency ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500"}`}
+                >
+                  {currency}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {side === "buy" && refInvestor && (
           <div className="mx-5 mb-2 mt-2 rounded-xl bg-violet-50 px-4 py-2.5 text-center text-xs text-violet-700">
@@ -363,7 +443,7 @@ export function TradeScreen() {
                     <button
                       key={quick}
                       type="button"
-                      disabled={quick > cashBalance}
+                      disabled={quick > spendable}
                       onClick={() => setAmount(String(quick))}
                       className="rounded-full bg-neutral-100 px-3.5 py-1.5 text-xs font-semibold text-neutral-600 active:bg-neutral-200"
                     >
@@ -386,7 +466,7 @@ export function TradeScreen() {
               {side === "buy" && (
                 <button
                   type="button"
-                  onClick={() => setAmount(String(Math.floor(cashBalance * 100) / 100))}
+                  onClick={() => setAmount(String(Math.floor(spendable * 100) / 100))}
                   className="rounded-full bg-neutral-100 px-3.5 py-1.5 text-xs font-semibold text-neutral-600 active:bg-neutral-200"
                 >
                   Max
@@ -395,7 +475,12 @@ export function TradeScreen() {
             </div>
             <p className="relative mt-3 text-xs text-neutral-400">
               <span className="font-mono">{formatCurrency(maxAvailable)}</span>{" "}
-              {side === "buy" ? "cash available" : "position value"}
+              {side === "buy" ? spendableLabel : "position value"}
+              {side === "buy" && isLive && payWith === "SOL" && (
+                <span className="block">
+                  <span className="font-mono">{solBalance.toFixed(4)} SOL</span> in wallet · 0.01 kept for fees
+                </span>
+              )}
             </p>
           </div>
         )}
@@ -403,7 +488,7 @@ export function TradeScreen() {
       {exceedsMax && (
         <p className="mx-5 mt-3 text-center text-xs text-rose-500">
           That&apos;s more than your <span className="font-mono">{formatCurrency(maxAvailable)}</span>{" "}
-          {side === "buy" ? "cash available" : "position"}.
+          {side === "buy" ? spendableLabel : "position"}.
         </p>
       )}
       {status === "error" && (
@@ -414,7 +499,9 @@ export function TradeScreen() {
 
       <div className="mt-auto px-5 pb-6 pt-4">
         <p className="mb-3 text-center text-xs text-neutral-500">
-          Practice trade · Simulated funds · No real order is placed
+          {isLive
+            ? `Live trade · Settles on Solana via Jupiter · ${side === "buy" ? "Paid in" : "Receive"} ${payWith}`
+            : "Practice trade · Simulated funds · No real order is placed"}
         </p>
         <button
           type="button"
