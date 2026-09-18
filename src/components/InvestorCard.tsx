@@ -43,7 +43,7 @@ export function InvestorCard({ investor }: { investor: Investor }) {
       </div>
       <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-neutral-100 pt-4">
         <span className="text-xs text-neutral-500">
-          <span className="font-mono">{holdings.length}</span> positions ·{" "}
+          <span className="font-mono">{holdings.length}</span> {holdings.length === 1 ? "position" : "positions"} ·{" "}
           {investor.kind === "wallet" ? "Live on-chain" : "Sample portfolio"}
         </span>
         <Link href={`/investor/${investor.id}`} className="text-sm font-semibold text-indigo-600">

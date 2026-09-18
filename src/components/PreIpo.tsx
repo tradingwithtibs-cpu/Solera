@@ -130,38 +130,39 @@ export function CompanyComparisonCard({ comparison }: { comparison: CompanyCompa
 
       {/* Two honest answers to "which is cheaper?", labelled so they can't be confused. */}
       <div className="mt-4 space-y-2">
-        <p className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm leading-relaxed text-emerald-900">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-emerald-700">By company valuation</span>
-          <br />
-          <span className="font-semibold">{cheapest.issuer}</span> values {company.name} at{" "}
-          <span className="font-mono font-semibold">{formatValuation(cheapest.impliedValuation)}</span>,{" "}
-          <span className="font-mono font-semibold">{cheaperByPct.toFixed(0)}%</span> lower than {priciest.issuer}&apos;s{" "}
-          <span className="font-mono">{formatValuation(priciest.impliedValuation)}</span>.
+        <p className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm leading-snug text-emerald-900">
+          <span className="block text-[10px] font-semibold uppercase tracking-wide text-emerald-700">Lower company valuation</span>
+          <span className="font-semibold">{cheapest.issuer}</span> · {formatValuation(cheapest.impliedValuation)} implied,{" "}
+          <span className="font-mono font-semibold">{cheaperByPct.toFixed(0)}%</span> below {priciest.issuer}&apos;s{" "}
+          {formatValuation(priciest.impliedValuation)}
         </p>
-        <p className="rounded-2xl bg-neutral-50 px-4 py-3 text-sm leading-relaxed text-neutral-700">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Against each issuer&apos;s own mark</span>
-          <br />
+        <p className="rounded-2xl bg-neutral-50 px-4 py-3 text-sm leading-snug text-neutral-700">
+          <span className="block text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Vs each issuer&apos;s own mark</span>
           {tokens.map((t, i) => (
             <span key={t.mint}>
               {i > 0 && " · "}
-              {t.issuer} trades{" "}
+              {t.issuer}{" "}
               <span className={`font-mono font-semibold ${t.premiumPct < 0 ? "text-emerald-700" : "text-amber-700"}`}>
                 {Math.abs(t.premiumPct).toFixed(0)}% {t.premiumPct < 0 ? "below" : "above"}
-              </span>{" "}
-              its mark
+              </span>
             </span>
           ))}
           {bestDiscountToMark !== cheapest && (
-            <>
-              . So {bestDiscountToMark.issuer} is the bigger discount to its issuer, while {cheapest.issuer} is the lower
-              valuation.
-            </>
+            <span className="block text-xs text-neutral-500">
+              {bestDiscountToMark.issuer} is the bigger discount to its own mark; {cheapest.issuer} is the lower valuation.
+            </span>
           )}
         </p>
         {marksDisagree && (
-          <p className="rounded-2xl bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-900">
-            The two issuers disagree on what {company.name} is worth ({tokens.map((t) => `${t.issuer} ${formatValuation(t.markValuation)}`).join(" vs ")}), so at least one mark is stale. Implied valuation compares what you actually pay for the company; discount-to-mark only says how each token trades against its own issuer&apos;s number.
-          </p>
+          <details className="rounded-2xl bg-amber-50 px-4 py-2 text-xs leading-relaxed text-amber-900">
+            <summary className="cursor-pointer font-semibold">
+              Issuers disagree on {company.name}&apos;s value ({tokens.map((t) => formatValuation(t.markValuation)).join(" vs ")})
+            </summary>
+            <p className="mt-1">
+              At least one mark is stale. Implied valuation compares what you actually pay for the company; discount-to-mark
+              only says how each token trades against its own issuer&apos;s number.
+            </p>
+          </details>
         )}
       </div>
 

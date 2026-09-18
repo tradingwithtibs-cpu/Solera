@@ -6,6 +6,7 @@ import Link from "next/link";
 import { TICKER_LIST } from "@/lib/mock-data";
 import {
   buildPortfolioHistory,
+  buildRealPortfolioHistory,
   computeHoldings,
   computePortfolioPerformance,
   computeSoleraScore,
@@ -57,7 +58,11 @@ export default function PortfolioPage() {
   // paid for it — rather than a hardcoded "all time" number. This is also
   // what drives the trailing chart below, so the two stay consistent.
   const performancePct = computePortfolioPerformance(holdings);
-  const history = buildPortfolioHistory(totalValue, performancePct);
+  // Real 7-day value of what's held (live or practice — both are real
+  // tokens at real prices); illustrative only until history has loaded.
+  const realHistory = buildRealPortfolioHistory(rawHoldings, cashBalance);
+  const history = realHistory ?? buildPortfolioHistory(totalValue, performancePct);
+  const weekChangePct = realHistory && realHistory[0] > 0 ? ((realHistory[realHistory.length - 1] - realHistory[0]) / realHistory[0]) * 100 : null;
 
   // Displayed as a bounded 0–100 score (see portfolio.ts) rather than the
   // raw, unbounded, possibly-negative value — a bare signed number reads
@@ -104,7 +109,11 @@ export default function PortfolioPage() {
 
           <div className="relative mt-3">
             <PriceChart history={history} color="portfolio" />
-            <p className="mt-2 text-xs text-neutral-500">Illustrative curve · Not your account history</p>
+            <p className="mt-2 text-xs text-neutral-500">
+              {realHistory
+                ? `Last 7 days at today's holdings${weekChangePct !== null ? ` · ${weekChangePct >= 0 ? "+" : ""}${weekChangePct.toFixed(1)}%` : ""}`
+                : "Illustrative curve · loading real history"}
+            </p>
           </div>
 
           <div className="mt-2 flex items-center justify-between rounded-2xl bg-white/70 px-4 py-3">

@@ -1,4 +1,4 @@
-import { getEffectiveHistory, getEffectivePrice, type HistoryWindow } from "./live-prices";
+import { getEffectiveHistory, getEffectivePrice, isLiveHistory, type HistoryWindow } from "./live-prices";
 import type { HoldingPosition, Investor, TickerSymbol } from "./types";
 
 export interface HoldingWithValue extends HoldingPosition {
@@ -78,6 +78,35 @@ export function buildPortfolioHistory(currentValue: number, changePct: number, p
 
   series[series.length - 1] = currentValue;
   return series;
+}
+
+/**
+ * The real trailing value of a set of holdings: each position's share count
+ * times its real price series, summed, plus cash. Only defined once every
+ * held ticker has real history (otherwise the picture would be half real).
+ * Uses today's holdings throughout — it's "what this portfolio was worth",
+ * not a record of past trades, and the caption says so.
+ */
+export function buildRealPortfolioHistory(
+  holdings: HoldingPosition[],
+  cashBalance: number,
+  window: HistoryWindow = "7d",
+): number[] | null {
+  if (holdings.length === 0) return null;
+  if (!holdings.every((h) => isLiveHistory(h.ticker))) return null;
+  const series = holdings.map((h) => getEffectiveHistory(h.ticker, window));
+  if (series.some((s) => s.length < 2)) return null;
+  const length = Math.min(...series.map((s) => s.length));
+  const out: number[] = [];
+  for (let i = 0; i < length; i++) {
+    let value = cashBalance;
+    holdings.forEach((h, j) => {
+      const s = series[j];
+      value += h.shares * s[s.length - length + i];
+    });
+    out.push(value);
+  }
+  return out;
 }
 
 export interface TrendingTicker {

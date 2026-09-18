@@ -58,13 +58,18 @@ export default function LeaderboardPage() {
             </div>
           </div>
         )}
-        <div className="mt-4 rounded-2xl bg-[#ece7fb] p-4 text-xs leading-relaxed text-neutral-600">
+        <details className="mt-4 rounded-2xl bg-[#ece7fb] px-4 py-3 text-xs leading-relaxed text-neutral-600">
+          <summary className="cursor-pointer font-semibold text-neutral-800">
+            {sortMode === "score" ? "How the Solera Score works" : "How market move is measured"}
+          </summary>
+          <p className="mt-2">
           {sortMode === "score"
             ? "A 0–100 score that rewards steady, well-sized positions over concentrated bets — a high return with one oversized position scores lower than the same return spread out. A concentration indicator, not a complete measure of risk. Index holdings are treated like any other position."
             : source === "chain"
               ? `Ranks real wallets by how the market moved what they hold over the last ${window === "30d" ? "30" : "7"} days, value-weighted. Not what they earned since buying — the chain doesn't say what they paid. Past moves do not predict future results.`
               : "Ranks the sample investors by their simulated monthly return. Past returns do not predict future results."}
-        </div>
+          </p>
+        </details>
       </div>
       <div className="flex-1 space-y-3 px-5 pb-7 sm:px-7">
         {!isLoaded &&
@@ -78,7 +83,7 @@ export default function LeaderboardPage() {
                 <Avatar initials={investor.initials} colorClass={investor.avatarColor} size="sm" />
                 <div className="min-w-0">
                   <h2 className="truncate text-sm font-semibold">{investor.name}</h2>
-                  <p className="text-xs text-neutral-500">{investor.holdings.length} positions</p>
+                  <p className="text-xs text-neutral-500">{investor.holdings.length} {investor.holdings.length === 1 ? "position" : "positions"}</p>
                 </div>
               </Link>
               <div className="flex flex-col items-end gap-2">
