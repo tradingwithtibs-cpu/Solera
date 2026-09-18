@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useSyncExternalStore } from "react";
-import { MY_CASH_BALANCE, MY_HOLDINGS, TICKERS } from "@/lib/mock-data";
+import { MY_CASH_BALANCE, MY_HOLDINGS } from "@/lib/mock-data";
+import { isKnownTicker } from "@/lib/catalog";
 import type {
   HoldingPosition,
   OptionContract,
@@ -57,7 +58,7 @@ function isValidOptionPosition(p: unknown): p is OptionPosition {
   return !!(
     pos &&
     typeof pos.id === "string" &&
-    Object.hasOwn(TICKERS, pos.underlying as TickerSymbol) &&
+    isKnownTicker(pos.underlying) &&
     ["call", "put"].includes(pos.side as string) &&
     Number.isFinite(pos.strike) &&
     typeof pos.expiration === "string" &&
@@ -72,7 +73,7 @@ function isValidOptionTransaction(t: unknown): t is OptionTransaction {
   return !!(
     txn &&
     typeof txn.id === "string" &&
-    Object.hasOwn(TICKERS, txn.underlying as TickerSymbol) &&
+    isKnownTicker(txn.underlying) &&
     ["call", "put"].includes(txn.side as string) &&
     Number.isFinite(txn.strike) &&
     typeof txn.expiration === "string" &&
@@ -100,7 +101,7 @@ function readFromStorage(): PortfolioState {
       !parsed.holdings.every(
         (h) =>
           h &&
-          Object.hasOwn(TICKERS, h.ticker) &&
+          isKnownTicker(h.ticker) &&
           Number.isFinite(h.shares) &&
           h.shares >= 0 &&
           (h.costBasis === undefined || (Number.isFinite(h.costBasis) && h.costBasis > 0)),
@@ -108,7 +109,7 @@ function readFromStorage(): PortfolioState {
       !parsed.transactions.every(
         (t) =>
           t &&
-          Object.hasOwn(TICKERS, t.ticker) &&
+          isKnownTicker(t.ticker) &&
           Number.isFinite(t.quantity) &&
           Number.isFinite(t.pricePerShare) &&
           Number.isFinite(t.timestamp),

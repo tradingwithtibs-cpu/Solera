@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
+import { findCatalogToken } from "@/lib/catalog-server";
 import { Connection } from "@solana/web3.js";
 import { PYTH_FEEDS, hermesPriceToNumber, isUnderlyingStale, type HermesPrice } from "@/lib/pyth-feeds";
 import { derivePriceUpdateAddress, parsePriceUpdateV2 } from "@/lib/pyth-onchain";
@@ -58,7 +59,32 @@ const TICKERS = Object.keys(PYTH_FEEDS) as TickerSymbol[];
  * the Pyth Pro plan unlocks), otherwise Pyth's on-chain push accounts plus
  * Jupiter — which is free and needs nothing configured at all.
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // Extra, non-featured tickers (from the catalog) requested by a page that
+  // has one open: priced through Jupiter on demand, no caching needed.
+  const extra = (request.nextUrl.searchParams.get("tickers") ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => s && !PYTH_FEEDS[s])
+    .slice(0, 20);
+  if (extra.length > 0) {
+    const prices: Partial<Record<TickerSymbol, number>> = {};
+    const tokens = (await Promise.all(extra.map(findCatalogToken))).filter((t) => !!t);
+    if (tokens.length > 0) {
+      try {
+        const res = await fetch(`${JUPITER_PRICE_URL}?ids=${tokens.map((t) => t.mint).join(",")}`, { cache: "no-store" });
+        const data = (await res.json()) as JupiterPriceResponse;
+        for (const t of tokens) {
+          const p = data[t.mint]?.usdPrice;
+          if (typeof p === "number" && p > 0) prices[t.symbol] = p;
+        }
+      } catch {
+        // Fall through with whatever priced.
+      }
+    }
+    return NextResponse.json({ source: "pyth-onchain", prices, underlying: {}, fetchedAt: Date.now() });
+  }
+
   if (cached && Date.now() - cached.at < CACHE_TTL_MS) {
     return NextResponse.json(cached.body);
   }

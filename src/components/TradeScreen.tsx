@@ -4,7 +4,8 @@ import { LoadingState } from "@/components/LoadingState";
 
 import { useState, type CSSProperties } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { TICKERS } from "@/lib/mock-data";
+import { getTickerInfo, isKnownTicker } from "@/lib/catalog";
+import { useLivePriceFor } from "@/hooks/use-live-price-for";
 import { useInvestor } from "@/hooks/use-investors";
 import { computeHoldings } from "@/lib/portfolio";
 import { formatCurrency, formatShares } from "@/lib/format";
@@ -30,8 +31,9 @@ export function TradeScreen() {
   const initialSide: TradeSide = searchParams.get("side") === "sell" ? "sell" : "buy";
 
   const symbol = params.ticker as TickerSymbol;
-  const ticker = TICKERS[symbol];
+  const ticker = isKnownTicker(symbol) ? getTickerInfo(symbol) : undefined;
   const { price: livePrice, isLive: isLivePrice } = useEffectivePrice(symbol);
+  useLivePriceFor(ticker?.symbol);
   const refInvestor = useInvestor(refId);
 
   const [reviewing, setReviewing] = useState(false);

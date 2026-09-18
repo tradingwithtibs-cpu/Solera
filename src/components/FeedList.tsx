@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { TICKERS } from "@/lib/mock-data";
+import { getTickerInfo } from "@/lib/catalog";
 import { useInvestors } from "@/hooks/use-investors";
 import { useFollowedInvestors } from "@/hooks/use-followed-investors";
 import { InvestorCard } from "./InvestorCard";
@@ -19,7 +19,7 @@ export function FeedList() {
         i.name.toLowerCase().includes(q) ||
         i.handle.toLowerCase().includes(q) ||
         i.holdings.some(
-          (h) => h.ticker.toLowerCase().includes(q) || TICKERS[h.ticker].name.toLowerCase().includes(q),
+          (h) => h.ticker.toLowerCase().includes(q) || getTickerInfo(h.ticker).name.toLowerCase().includes(q),
         )),
   );
   return (

@@ -1,4 +1,4 @@
-import { TICKERS } from "@/lib/mock-data";
+import { getTickerInfo } from "@/lib/catalog";
 import type { HoldingWithValue } from "@/lib/portfolio";
 
 /** A segmented bar giving a one-glance read of holdings mix, in ticker colors. */
@@ -10,7 +10,7 @@ export function AllocationBar({ holdings }: { holdings: HoldingWithValue[] }) {
       {holdings.map((h) => (
         <div
           key={h.ticker}
-          className={TICKERS[h.ticker].color}
+          className={getTickerInfo(h.ticker).color}
           style={{ width: `${h.allocationPct}%` }}
           title={`${h.ticker} · ${h.allocationPct.toFixed(0)}%`}
         />

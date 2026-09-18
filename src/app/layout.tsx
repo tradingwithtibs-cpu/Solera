@@ -4,6 +4,7 @@ import "./globals.css";
 import { AppShell } from "@/components/AppShell";
 import { SolanaProvider } from "@/components/SolanaProvider";
 import { LivePriceLoader } from "@/components/LivePriceLoader";
+import { CatalogLoader } from "@/components/CatalogLoader";
 
 // "Gradient Native" direction: Outfit for display/UI (rounder and warmer
 // than a plain grotesk), IBM Plex Mono for every price and balance — see
@@ -53,6 +54,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="h-full antialiased">
         <SolanaProvider>
           <LivePriceLoader />
+          <CatalogLoader />
           <AppShell>{children}</AppShell>
         </SolanaProvider>
       </body>

@@ -3,7 +3,7 @@ import { LoadingState } from "@/components/LoadingState";
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { TICKERS } from "@/lib/mock-data";
+import { getTickerInfo } from "@/lib/catalog";
 import { contractCost, daysToExpiration, findOptionContract, formatExpiration, isExpired } from "@/lib/options";
 import { formatCurrency } from "@/lib/format";
 import { useExecuteOptionsTrade } from "@/hooks/use-execute-options-trade";
@@ -25,7 +25,7 @@ export function OptionsTradeScreen() {
   const router = useRouter();
   const params = useParams<{ ticker: string; contractId: string }>();
   const symbol = params.ticker as TickerSymbol;
-  const ticker = TICKERS[symbol];
+  const ticker = getTickerInfo(symbol);
   const contract = ticker ? findOptionContract(symbol, params.contractId) : undefined;
 
   const [reviewing, setReviewing] = useState(false);

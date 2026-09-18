@@ -13,6 +13,7 @@ import { OwnedPumpingBadge } from "@/components/OwnedPumpingBadge";
 import { WatchlistStarButton } from "@/components/WatchlistStarButton";
 import { PerformanceBadge } from "@/components/PerformanceBadge";
 import { PremiumBadge } from "@/components/PremiumBadge";
+import { CatalogList } from "@/components/CatalogList";
 import { SegmentedControl } from "@/components/SegmentedControl";
 import { SearchIcon } from "@/components/icons";
 export default function MarketsPage() {
@@ -40,7 +41,7 @@ export default function MarketsPage() {
   return (
     <div className="flex flex-1 flex-col">
       <header className="page-heading">
-        <p className="eyebrow">Own a little of what’s next</p>
+        <p className="eyebrow">Featured · then every tokenized stock on Solana</p>
         <h1>
           Markets<span className="text-violet-500">.</span>
         </h1>
@@ -144,8 +145,9 @@ export default function MarketsPage() {
           </div>
         )}
         <p className="mt-4 text-xs text-neutral-500">
-          Price changes cover the trailing 7 days of Solana DEX trading.
+          Featured price changes cover the trailing 7 days of Solana DEX trading.
         </p>
+        <CatalogList query={query} watchlistOnly={view === "watchlist"} isWatched={isWatched} />
       </div>
     </div>
   );

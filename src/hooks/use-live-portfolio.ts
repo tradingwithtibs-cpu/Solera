@@ -4,7 +4,8 @@ import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { getUltraBalances } from "@/lib/jupiter";
 import { getLivePrices, getSolPrice, subscribeLivePrices } from "@/lib/live-prices";
-import { USDC, tickerForMint } from "@/lib/tokens";
+import { USDC } from "@/lib/tokens";
+import { symbolForMint } from "@/lib/catalog";
 import { PRE_IPO_MINTS } from "@/lib/pre-ipo";
 import { costBasisFromTrades } from "@/lib/live-ledger";
 import type { HoldingPosition, TickerSymbol, TradeSide, Transaction } from "@/lib/types";
@@ -87,7 +88,7 @@ export function useLivePortfolio() {
       const preIpo: Record<string, number> = {};
       for (const [mint, entry] of Object.entries(data)) {
         if (!entry || entry.uiAmount <= 0) continue;
-        const ticker = tickerForMint(mint);
+        const ticker = symbolForMint(mint);
         if (ticker) shares[ticker] = entry.uiAmount;
         else if (PRE_IPO_MINTS[mint]) preIpo[mint] = entry.uiAmount;
       }

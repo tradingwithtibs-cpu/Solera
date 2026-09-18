@@ -1,6 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { COMPANIES, type CompanyId } from "@/lib/pre-ipo";
-import { XSTOCK_TOKENS } from "@/lib/tokens";
 import { dedupeNews, finnhubSymbolFor, newsQueryForCompany, parseGoogleNewsRss, type NewsItem } from "@/lib/news";
 import type { TickerSymbol } from "@/lib/types";
 
@@ -33,7 +32,7 @@ export async function GET(request: NextRequest) {
   let key: string;
   let load: () => Promise<NewsResponse>;
   if (ticker) {
-    if (!Object.hasOwn(XSTOCK_TOKENS, ticker)) return NextResponse.json({ error: "Unknown ticker" }, { status: 404 });
+    if (!/^[A-Z0-9.]{1,12}x$/.test(ticker)) return NextResponse.json({ error: "Unknown ticker" }, { status: 404 });
     key = `ticker:${ticker}`;
     load = () => tickerNews(ticker as TickerSymbol);
   } else if (company) {

@@ -3,6 +3,7 @@
 import { formatCurrency } from "@/lib/format";
 import { useEffectivePrice } from "@/hooks/use-effective-price";
 import { PremiumBadge } from "./PremiumBadge";
+import { isFeatured } from "@/lib/catalog";
 import type { TickerSymbol } from "@/lib/types";
 
 /**
@@ -18,7 +19,11 @@ export function EffectivePriceDisplay({ ticker }: { ticker: TickerSymbol }) {
     <div>
       <p className="font-mono text-2xl font-semibold tabular-nums text-neutral-900">
         {formatCurrency(price)}
-        {isLive && <span className="ml-2 align-middle text-xs font-semibold text-emerald-600">Live · Pyth</span>}
+        {isLive && (
+          <span className="ml-2 align-middle text-xs font-semibold text-emerald-600">
+            {isFeatured(ticker) ? "Live · Pyth" : "Live · Jupiter"}
+          </span>
+        )}
       </p>
       <p className="mt-0.5 min-h-[1rem]">
         <PremiumBadge ticker={ticker} />

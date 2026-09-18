@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { TICKERS } from "@/lib/mock-data";
+import { getTickerInfo } from "@/lib/catalog";
 import { computeHoldings } from "@/lib/portfolio";
 import type { Investor } from "@/lib/types";
 import { Avatar } from "./Avatar";
@@ -31,7 +31,7 @@ export function InvestorCard({ investor }: { investor: Investor }) {
         {holdings.slice(0, 3).map((h) => (
           <Link key={h.ticker} href={`/asset/${h.ticker}`}>
             <span className="flex items-center gap-1.5 text-xs font-semibold">
-              <span className={`h-1.5 w-1.5 rounded-full ${TICKERS[h.ticker].color}`} />
+              <span className={`h-1.5 w-1.5 rounded-full ${getTickerInfo(h.ticker).color}`} />
               {h.ticker}
             </span>
             <span className="mt-1 font-mono text-sm">

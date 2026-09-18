@@ -1,4 +1,4 @@
-import type { TickerSymbol } from "./types";
+
 
 /**
  * Pyth price feed IDs (Hermes) for every ticker in the app. Two feeds per
@@ -35,7 +35,8 @@ export interface PythFeedPair {
   equityShard: number | null;
 }
 
-export const PYTH_FEEDS: Record<TickerSymbol, PythFeedPair> = {
+/** Pyth feeds exist only for the featured tickers; catalog tokens have no premium badge. */
+export const PYTH_FEEDS: Record<string, PythFeedPair> = {
   AAPLx: {
     xstock: "978e6cc68a119ce066aa830017318563a9ed04ec3a0a6439010fc11296a58675",
     equity: "49f6b65cb1de6b10eaf75e7c03ca029c306d0357e91b5311b175084a5ad55688",

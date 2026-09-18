@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { TICKERS } from "@/lib/mock-data";
+import { getTickerInfo } from "@/lib/catalog";
 import { formatCurrency, formatPercent, formatShares } from "@/lib/format";
 import type { HoldingWithValue } from "@/lib/portfolio";
 import { TickerBadge } from "./TickerBadge";
@@ -11,7 +11,7 @@ export function HoldingRow({
   holding: HoldingWithValue;
   actions?: { label: string; href: string }[];
 }) {
-  const info = TICKERS[holding.ticker];
+  const info = getTickerInfo(holding.ticker);
   return (
     <div className="holding-row">
       <div className="flex items-center gap-3">

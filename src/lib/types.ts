@@ -4,8 +4,12 @@
 // Right now everything is populated from `mock-data.ts`; later this can be
 // swapped for real on-chain/indexer data without touching the UI.
 
-/** The tokenized stocks featured in this build. */
-export type TickerSymbol = "TSLAx" | "AAPLx" | "SPYx" | "NVDAx" | "AMZNx" | "GOOGLx" | "METAx" | "COINx";
+/**
+ * A tokenized-stock symbol, e.g. "AAPLx". Eight are featured with curated
+ * data (see mock-data.ts); the rest come from the live catalog (see
+ * lib/catalog.ts), so this is an open string rather than a fixed union.
+ */
+export type TickerSymbol = string;
 
 export interface TickerInfo {
   symbol: TickerSymbol;
@@ -15,8 +19,10 @@ export interface TickerInfo {
   price: number;
   /** Tailwind background color class used for the ticker's accent dot/avatar. */
   color: string;
-  /** Fake trailing price series (oldest → newest, ending at `price`) for the asset chart. */
+  /** Placeholder trailing series (oldest → newest) shown until real history loads; empty for catalog tokens. */
   history: number[];
+  /** Solana mint, for catalog tokens (featured mints live in lib/tokens.ts). */
+  mint?: string;
 }
 
 /** A single position: how many (fractional) shares are held of a ticker. */

@@ -26,7 +26,8 @@ export const SETTLEMENT: Record<SettlementCurrency, TokenInfo> = { SOL, USDC };
 /** SOL kept back on a max-size buy so the wallet can still pay network fees afterwards. */
 export const SOL_FEE_RESERVE = 0.01;
 
-export const XSTOCK_TOKENS: Record<TickerSymbol, TokenInfo> = {
+/** Mints for the eight featured tickers; the rest are resolved through lib/catalog.ts. */
+export const XSTOCK_TOKENS: Record<string, TokenInfo> = {
   AAPLx: { mint: "XsbEhLAtcf6HdfpFZ5xEMdqW8nfAvcsP5bdudRLJzJp", decimals: 8 },
   TSLAx: { mint: "XsDoVfqeBukxuZHWhdvWHBhgEHjGNst4MLodqsJHzoB", decimals: 8 },
   SPYx: { mint: "XsoCS1TfEyfFhfvj8EtZ528L3CaKBDBRqRapnBbDF2W", decimals: 8 },
@@ -37,8 +38,8 @@ export const XSTOCK_TOKENS: Record<TickerSymbol, TokenInfo> = {
   COINx: { mint: "Xs7ZdzSHLU9ftNJsii5fCeJhoRWSC32SQGzGQtePxNu", decimals: 8 },
 };
 
-const MINT_TO_TICKER = new Map<string, TickerSymbol>(
-  (Object.entries(XSTOCK_TOKENS) as [TickerSymbol, TokenInfo][]).map(([t, info]) => [info.mint, t]),
+const MINT_TO_TICKER = new Map<string, string>(
+  Object.entries(XSTOCK_TOKENS).map(([t, info]) => [info.mint, t]),
 );
 
 export function tickerForMint(mint: string): TickerSymbol | undefined {

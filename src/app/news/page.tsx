@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { SegmentedControl } from "@/components/SegmentedControl";
 import { NewsList } from "@/components/NewsList";
-import { TICKER_LIST } from "@/lib/mock-data";
+import { getTickerInfo } from "@/lib/catalog";
 import { COMPANIES } from "@/lib/pre-ipo";
 import { useActivePortfolio } from "@/hooks/use-active-portfolio";
 import { PRE_IPO_MINTS } from "@/lib/pre-ipo";
@@ -52,7 +52,7 @@ export default function NewsPage() {
               {heldTickers.map((ticker) => (
                 <section key={ticker}>
                   <h2 className="mb-1 text-sm font-semibold text-neutral-900">
-                    {TICKER_LIST.find((t) => t.symbol === ticker)?.name} <span className="text-neutral-400">· {ticker}</span>
+                    {getTickerInfo(ticker).name} <span className="text-neutral-400">· {ticker}</span>
                   </h2>
                   <NewsList scope={{ kind: "ticker", ticker }} limit={4} />
                 </section>

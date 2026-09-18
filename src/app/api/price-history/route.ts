@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
+import { findCatalogToken } from "@/lib/catalog-server";
 import type { TickerSymbol } from "@/lib/types";
 
 /**
@@ -46,7 +47,25 @@ let cached: { at: number; body: PriceHistoryResponse } | null = null;
 
 let refreshing: Promise<PriceHistoryResponse | null> | null = null;
 
-export async function GET() {
+const single = new Map<string, { at: number; series: number[] }>();
+
+export async function GET(request: NextRequest) {
+  // One catalog ticker on demand (asset page), cached per ticker.
+  const one = request.nextUrl.searchParams.get("ticker");
+  if (one && !COINGECKO_IDS[one as TickerSymbol]) {
+    const hit = single.get(one);
+    if (hit && Date.now() - hit.at < CACHE_TTL_MS) return NextResponse.json({ source: "coingecko", history: { [one]: hit.series }, fetchedAt: hit.at });
+    const token = await findCatalogToken(one);
+    if (!token?.coingeckoId) return NextResponse.json({ error: "Unknown ticker" }, { status: 404 });
+    try {
+      const series = await fetchSeriesById(token.coingeckoId);
+      single.set(one, { at: Date.now(), series });
+      return NextResponse.json({ source: "coingecko", history: { [one]: series }, fetchedAt: Date.now() });
+    } catch {
+      return NextResponse.json({ error: "Price history unavailable" }, { status: 502 });
+    }
+  }
+
   const fresh = cached && Date.now() - cached.at < CACHE_TTL_MS;
   if (fresh) return NextResponse.json(cached!.body);
 
@@ -108,7 +127,11 @@ async function backfill() {
 }
 
 async function fetchSeries(ticker: TickerSymbol): Promise<number[]> {
-  const res = await fetch(`${COINGECKO}/${COINGECKO_IDS[ticker]}/market_chart?vs_currency=usd&days=${DAYS}`, {
+  return fetchSeriesById(COINGECKO_IDS[ticker]);
+}
+
+async function fetchSeriesById(coingeckoId: string): Promise<number[]> {
+  const res = await fetch(`${COINGECKO}/${coingeckoId}/market_chart?vs_currency=usd&days=${DAYS}`, {
     headers: { Accept: "application/json" },
     cache: "no-store",
     signal: AbortSignal.timeout(10_000),

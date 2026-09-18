@@ -1,4 +1,4 @@
-import type { HoldingPosition, Investor, TickerInfo, TickerSymbol } from "./types";
+import type { HoldingPosition, Investor, TickerInfo } from "./types";
 
 // ---------------------------------------------------------------------------
 // MOCK DATA
@@ -11,7 +11,8 @@ import type { HoldingPosition, Investor, TickerInfo, TickerSymbol } from "./type
 // the numbers came from.
 // ---------------------------------------------------------------------------
 
-export const TICKERS: Record<TickerSymbol, TickerInfo> = {
+/** The eight featured tickers: curated names, colors, Pyth feeds. Everything else comes from lib/catalog.ts. */
+export const TICKERS: Record<string, TickerInfo> = {
   TSLAx: {
     symbol: "TSLAx",
     name: "Tesla",

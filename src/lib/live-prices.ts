@@ -1,4 +1,4 @@
-import { TICKERS } from "./mock-data";
+import { getTickerInfo } from "./catalog";
 import { premiumPct } from "./pyth-feeds";
 import type { TickerSymbol } from "./types";
 
@@ -57,7 +57,7 @@ export type HistoryWindow = "7d" | "30d";
 
 export function getEffectiveHistory(ticker: TickerSymbol, window: HistoryWindow = "7d"): number[] {
   const real = snapshot.history[ticker];
-  if (!real) return TICKERS[ticker]?.history ?? [];
+  if (!real) return getTickerInfo(ticker).history;
   // The route returns 30 days at a steady cadence; the last ~quarter is 7 days.
   return window === "30d" ? real : real.slice(-Math.max(2, Math.round(real.length * 7 / 30)));
 }
@@ -103,7 +103,7 @@ export function getLivePrices(): LiveSnapshot {
  * return) get 0 back instead of a crash.
  */
 export function getEffectivePrice(ticker: TickerSymbol): number {
-  return snapshot.prices[ticker] ?? TICKERS[ticker]?.price ?? 0;
+  return snapshot.prices[ticker] ?? getTickerInfo(ticker).price;
 }
 
 /** Whether `ticker` currently has a real, live price behind it — for labeling in the UI. */

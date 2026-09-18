@@ -19,8 +19,10 @@ import type { TickerSymbol } from "@/lib/types";
  */
 export function PremiumBadge({ ticker, compact = false }: { ticker: TickerSymbol; compact?: boolean }) {
   const { isLive, underlying, premiumPct } = useEffectivePrice(ticker);
-  if (!isLive || !underlying) return null;
-  const vs = PYTH_FEEDS[ticker].equitySymbol;
+  const pair = PYTH_FEEDS[ticker];
+  // Only the featured tickers have a Pyth underlying feed.
+  if (!pair || !isLive || !underlying) return null;
+  const vs = pair.equitySymbol;
 
   if (underlying.stale || premiumPct === undefined) {
     return (

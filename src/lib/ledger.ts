@@ -1,5 +1,5 @@
 import type { HoldingPosition, OptionContract, OptionPosition, TickerSymbol, TradeSide } from "./types";
-import { TICKERS } from "./mock-data";
+import { isKnownTicker } from "./catalog";
 import { contractCost, isExpired, optionPositionId } from "./options";
 export const DUST_SHARES = 1e-6;
 export interface PortfolioBalances {
@@ -17,7 +17,7 @@ export interface Fill {
 /** Validate again at settlement; UI validation can become stale while a trade is pending. */
 export function applyFill(current: PortfolioBalances, params: Fill): PortfolioBalances {
   if (
-    !Object.hasOwn(TICKERS, params.ticker) ||
+    !isKnownTicker(params.ticker) ||
     !["buy", "sell"].includes(params.side) ||
     ![params.quantity, params.pricePerShare, params.totalValue].every((n) => Number.isFinite(n) && n > 0) ||
     Math.abs(params.quantity * params.pricePerShare - params.totalValue) > 1e-7
@@ -88,7 +88,7 @@ export function applyOptionsFill(
   { contract, contracts }: OptionsFill,
 ): OptionsPortfolioBalances {
   if (
-    !Object.hasOwn(TICKERS, contract.underlying) ||
+    !isKnownTicker(contract.underlying) ||
     !["call", "put"].includes(contract.side) ||
     ![contract.strike, contract.premium].every((n) => Number.isFinite(n) && n > 0) ||
     !Number.isInteger(contracts) ||

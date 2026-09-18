@@ -1,8 +1,8 @@
 import { VersionedTransaction } from "@solana/web3.js";
-import { TICKERS } from "./mock-data";
+import { getTokenForSymbol, isKnownTicker } from "./catalog";
 import { getEffectivePrice, getSolPrice } from "./live-prices";
 import { executeUltraOrder, getUltraOrder } from "./jupiter";
-import { SETTLEMENT, XSTOCK_TOKENS, fromBaseUnits, toBaseUnits, type SettlementCurrency } from "./tokens";
+import { SETTLEMENT, fromBaseUnits, toBaseUnits, type SettlementCurrency } from "./tokens";
 import type { TickerSymbol, TradeSide } from "./types";
 
 export type TradeMode = "live" | "practice";
@@ -43,7 +43,7 @@ export interface TradeResult {
 
 function validate({ ticker, side, quantity, totalValue }: TradeParams) {
   if (
-    !Object.hasOwn(TICKERS, ticker) ||
+    !isKnownTicker(ticker) ||
     !["buy", "sell"].includes(side) ||
     !Number.isFinite(quantity) ||
     quantity <= 0 ||
@@ -147,7 +147,8 @@ async function executeLiveTrade(
   { ticker, side, quantity, totalValue, payWith = "SOL" }: TradeParams,
   wallet: TradeWallet,
 ): Promise<TradeResult> {
-  const token = XSTOCK_TOKENS[ticker];
+  const token = getTokenForSymbol(ticker);
+  if (!token) throw new Error(`No Solana mint known for ${ticker} yet. Try again in a moment.`);
   const settle = SETTLEMENT[payWith];
   const isBuy = side === "buy";
 

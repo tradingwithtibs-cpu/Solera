@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useActivePortfolio } from "@/hooks/use-active-portfolio";
 import { useInvestors } from "@/hooks/use-investors";
 import { computeHoldings, computeTrendingTickers } from "@/lib/portfolio";
-import { TICKERS } from "@/lib/mock-data";
+import { getTickerInfo } from "@/lib/catalog";
 import { formatCurrency } from "@/lib/format";
 import { TickerBadge } from "./TickerBadge";
 export function DiscoveryRail() {
@@ -36,7 +36,7 @@ export function DiscoveryRail() {
             .slice(0, 3)
             .map((t) => (
               <Link key={t.ticker} href={`/asset/${t.ticker}`} className="flex items-center gap-3 py-3">
-                <TickerBadge ticker={TICKERS[t.ticker]} />
+                <TickerBadge ticker={getTickerInfo(t.ticker)} />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold">{t.ticker}</p>
                   <p className="text-xs text-neutral-500">{t.holderCount} investors</p>
