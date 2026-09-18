@@ -5,8 +5,10 @@ import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { COMPANIES, formatValuation, jupiterSwapUrl, type PreIpoToken } from "@/lib/pre-ipo";
 import { formatCurrency } from "@/lib/format";
 import { solscanTxUrl } from "@/lib/jupiter";
-import { SOL_FEE_RESERVE, type SettlementCurrency } from "@/lib/tokens";
+import { settlementBaseUnits } from "@/lib/trade";
+import { SETTLEMENT, SOL_FEE_RESERVE, fromBaseUnits, type SettlementCurrency } from "@/lib/tokens";
 import { usePreIpoBuy } from "@/hooks/use-pre-ipo-buy";
+import { useSwapQuote } from "@/hooks/use-swap-quote";
 import { useActivePortfolio } from "@/hooks/use-active-portfolio";
 import { celebrateTrade } from "@/lib/celebrate";
 import { CheckCircleIcon } from "./icons";
@@ -33,6 +35,19 @@ export function PreIpoBuySheet({ token, onClose }: { token: PreIpoToken; onClose
   const spendable = payWith === "SOL" ? Math.max(0, solBalance - SOL_FEE_RESERVE) * solUsd : usdcBalance;
   const exceeds = isLive && dollars > spendable;
   const canSubmit = isLive && dollars > 0 && !exceeds && status !== "pending";
+
+  // A real quote from Jupiter — this sheet has no separate review step, so
+  // it's requested as soon as there's a live amount to price.
+  const { quote, isLoading: quoteLoading } = useSwapQuote(
+    isLive && dollars > 0
+      ? {
+          inputMint: SETTLEMENT[payWith].mint,
+          outputMint: token.mint,
+          amountBaseUnits: settlementBaseUnits(dollars, payWith),
+        }
+      : null,
+  );
+  const quotedAmount = quote ? fromBaseUnits(quote.outAmount, token.decimals) : undefined;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-neutral-900/40 p-3 sm:items-center" onClick={onClose}>
@@ -131,7 +146,9 @@ export function PreIpoBuySheet({ token, onClose }: { token: PreIpoToken; onClose
                     />
                   </div>
                   <p className="mt-1 text-xs text-neutral-400">
-                    ≈ <span className="font-mono">{estimate.toFixed(4)}</span> {token.symbol}
+                    ≈ <span className="font-mono">{(quotedAmount ?? estimate).toFixed(4)}</span> {token.symbol}
+                    {quotedAmount !== undefined && <span className="text-emerald-600"> · Jupiter quote</span>}
+                    {quoteLoading && <span className="text-neutral-400"> · getting live quote…</span>}
                   </p>
                   <div className="mt-3 flex flex-wrap justify-center gap-2">
                     {QUICK_AMOUNTS.map((q) => (
@@ -150,6 +167,17 @@ export function PreIpoBuySheet({ token, onClose }: { token: PreIpoToken; onClose
                     <span className="font-mono">{isLoaded ? formatCurrency(spendable) : "—"}</span> in {payWith} available
                   </p>
                 </div>
+                {quote && (
+                  <div className="flex justify-between gap-3 text-xs text-neutral-500">
+                    <span>
+                      Fee <span className="font-mono">{(quote.feeBps / 100).toFixed(2)}%</span> · price impact{" "}
+                      <span className={`font-mono ${Math.abs(quote.priceImpactPct) > 1 ? "text-amber-600" : ""}`}>
+                        {quote.priceImpactPct > 0 ? "+" : ""}
+                        {quote.priceImpactPct.toFixed(2)}%
+                      </span>
+                    </span>
+                  </div>
+                )}
                 {exceeds && <p className="text-center text-xs text-rose-500">That&apos;s more than your {payWith} balance.</p>}
                 {error && (
                   <p role="alert" className="text-center text-xs text-rose-600">
