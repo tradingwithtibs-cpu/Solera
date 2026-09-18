@@ -44,4 +44,4 @@ Live prices come from Pyth (Hermes) when `PYTH_API_KEY` is set in `.env.local` â
 
 ## Hosting
 
-The existing `.vercel/project.json` links the Vercel project. The public app is https://stocklana.vercel.app. Local changes do not deploy automatically. Publish with the existing Vercel CLI workflow when the change is ready for release.
+The existing `.vercel/project.json` links the Vercel project. The public app is https://trysolera.vercel.app (the older https://stocklana.vercel.app still works). Local changes do not deploy automatically. Publish with the existing Vercel CLI workflow when the change is ready for release.

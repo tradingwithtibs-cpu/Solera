@@ -21,7 +21,7 @@ const figuresFont = IBM_Plex_Mono({
   weight: ["500", "600"],
 });
 
-const SITE_URL = "https://stocklana.vercel.app";
+const SITE_URL = "https://trysolera.vercel.app";
 const DESCRIPTION = "Follow real investors, see their real holdings, copy with one tap.";
 
 export const metadata: Metadata = {
