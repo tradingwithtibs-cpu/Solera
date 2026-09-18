@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { BottomNav } from "./BottomNav";
 import { Logo } from "./Logo";
-import { MY_PROFILE } from "@/lib/mock-data";
-import { Avatar } from "./Avatar";
+import { SidebarAccount } from "./SidebarAccount";
 import { DiscoveryRail } from "./DiscoveryRail";
 import { ModeStrip } from "./ModeStrip";
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -28,13 +27,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </p>
             <span className="text-gradient-solana mt-3 inline-block text-xs font-semibold">Built on Solana ↗</span>
           </div>
-          <Link href="/portfolio" className="mt-6 flex items-center gap-3">
-            <Avatar initials={MY_PROFILE.initials} colorClass={MY_PROFILE.avatarColor} size="sm" />
-            <div>
-              <p className="text-sm font-semibold">{MY_PROFILE.name}</p>
-              <p className="text-xs text-neutral-500">Solera account</p>
-            </div>
-          </Link>
+          <SidebarAccount />
         </div>
       </aside>
       <div className="content-column">

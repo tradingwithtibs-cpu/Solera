@@ -3,19 +3,19 @@ import { premiumPct } from "./pyth-feeds";
 import type { TickerSymbol } from "./types";
 
 /**
- * Real, live prices from Pyth, for every ticker — see app/api/live-prices
- * for the fetch and lib/pyth-feeds.ts for which feeds. Two layers:
+ * The client-side store for everything live — see app/api/live-prices and
+ * app/api/price-history for the fetches. Layers:
  *
- * - `prices`: the xStock token's own price (Crypto.AAPLX/USD etc.), 24/7.
- *   This is the tradeable price and what `getEffectivePrice` returns.
- * - `underlying`: the listed share's price (Equity.US.AAPL/USD etc.),
- *   regular session only. Never used as *the* price; it exists so the UI can
- *   show how far the token is trading from the real stock.
+ * - `prices`: what each xStock token trades at on Solana right now (Jupiter),
+ *   24/7. This is the tradeable price and what `getEffectivePrice` returns.
+ * - `underlying`: the listed share's price from Pyth, regular session only.
+ *   Never used as *the* price; it drives the premium/discount badge.
+ * - `solUsd`: for sizing SOL-paid trades and valuing SOL balances.
+ * - `history`: real 30-day closes per ticker for charts and trailing moves.
  *
- * Before the first successful fetch (or with no PYTH_API_KEY configured)
- * every ticker falls through to its simulated price in mock-data.ts, which
- * already promises "swapping in real data is meant to need no changes
- * anywhere else" — this module is that seam.
+ * Before the first successful fetch, every ticker falls through to the
+ * placeholder numbers in mock-data.ts, which exist only so the UI has a
+ * shape to render — this module is the seam where real data takes over.
  */
 export interface UnderlyingQuote {
   price: number;

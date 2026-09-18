@@ -1,6 +1,5 @@
 import { AssetModeSection } from "@/components/AssetModeSection";
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { TICKERS } from "@/lib/mock-data";
 import type { TickerSymbol } from "@/lib/types";
 import { TopBar } from "@/components/TopBar";
@@ -9,7 +8,6 @@ import { AssetPriceChart } from "@/components/AssetPriceChart";
 import { OwnedPumpingBadge } from "@/components/OwnedPumpingBadge";
 import { WatchlistStarButton } from "@/components/WatchlistStarButton";
 import { EffectivePriceDisplay } from "@/components/EffectivePriceDisplay";
-import { ChatIcon } from "@/components/icons";
 import { NewsList } from "@/components/NewsList";
 
 export default async function AssetDetailPage({ params }: { params: Promise<{ ticker: string }> }) {
@@ -35,13 +33,6 @@ export default async function AssetDetailPage({ params }: { params: Promise<{ ti
         </div>
         <EffectivePriceDisplay ticker={ticker.symbol} />
         <AssetPriceChart ticker={ticker.symbol} color={ticker.color} />
-        <Link
-          href={`/asset/${ticker.symbol}/chat`}
-          className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-3.5 py-1.5 text-xs font-semibold text-violet-600 active:bg-violet-100"
-        >
-          <ChatIcon className="h-3.5 w-3.5" />
-          {ticker.symbol} chat
-        </Link>
       </div>
 
       <AssetModeSection ticker={ticker.symbol} />

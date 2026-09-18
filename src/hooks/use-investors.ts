@@ -54,7 +54,10 @@ export function useInvestors(): { investors: Investor[]; isLoaded: boolean; sour
   if (snapshot && snapshot.length > 0) {
     return { investors: snapshot.map(walletToInvestor), isLoaded: true, source: "chain" };
   }
-  return { investors: INVESTORS.map((i) => ({ ...i, kind: "sample" as const })), isLoaded: failed || !!snapshot, source: "sample" };
+  // Still loading: show nothing rather than samples that would be replaced
+  // a second later. Samples only stand in if the source is actually down.
+  if (!failed && !snapshot) return { investors: [], isLoaded: false, source: "sample" };
+  return { investors: INVESTORS.map((i) => ({ ...i, kind: "sample" as const })), isLoaded: true, source: "sample" };
 }
 
 /** One investor by id (wallet address or sample id). */

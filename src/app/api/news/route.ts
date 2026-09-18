@@ -68,13 +68,19 @@ interface FinnhubArticle {
   summary?: string;
 }
 
+function stripSourceSuffix(headline: string, source: string): string {
+  const trimmed = headline.replace(/\s+-\s+[\w.-]+\.(com|net|org|co\.uk)$/i, "");
+  const bySource = new RegExp(`\\s+-\\s+${source.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i");
+  return trimmed.replace(bySource, "");
+}
+
 function fromFinnhub(articles: FinnhubArticle[]): NewsItem[] {
   return articles
     .filter((a) => a.headline && a.url && a.datetime)
     .map((a) => ({
       id: String(a.id),
-      // Finnhub often appends " - reuters.com"; the source is shown separately anyway.
-      headline: a.headline.replace(/\s+-\s+[\w.-]+\.(com|net|org|co\.uk)$/i, ""),
+      // Finnhub often appends " - reuters.com" or " - Reuters"; the source is shown separately anyway.
+      headline: stripSourceSuffix(a.headline, a.source),
       source: a.source,
       url: a.url,
       publishedAt: a.datetime * 1000,

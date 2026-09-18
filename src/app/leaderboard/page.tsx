@@ -10,7 +10,7 @@ import { SegmentedControl } from "@/components/SegmentedControl";
 export default function LeaderboardPage() {
   const [sortMode, setSortMode] = useState<"performance" | "score">("score");
   const [window, setWindow] = useState<"7d" | "30d">("7d");
-  const { investors: INVESTORS, source } = useInvestors();
+  const { investors: INVESTORS, source, isLoaded } = useInvestors();
   const ranked = INVESTORS.map((investor) => {
     // Sort by the raw score (unbounded, but monotonic with the normalized
     // one below, so ranking is identical either way) — display the
@@ -67,6 +67,8 @@ export default function LeaderboardPage() {
         </div>
       </div>
       <div className="flex-1 space-y-3 px-5 pb-7 sm:px-7">
+        {!isLoaded &&
+          [0, 1, 2, 3].map((i) => <div key={i} className="rank-card h-16 animate-pulse bg-neutral-50" aria-busy="true" />)}
         {ranked.map(({ investor, move, score }, index) => {
           const scoreLabel = describeSoleraScore(score);
           return (

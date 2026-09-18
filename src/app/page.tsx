@@ -1,18 +1,12 @@
-import { MY_PROFILE } from "@/lib/mock-data";
-import { FeedList } from "@/components/FeedList";
-import { WelcomeGuide } from "@/components/WelcomeGuide";
-import { NewsList } from "@/components/NewsList";
 import Link from "next/link";
+import { FeedList } from "@/components/FeedList";
+import { Hero } from "@/components/Hero";
+import { NewsList } from "@/components/NewsList";
+
 export default function FeedPage() {
   return (
     <div className="flex flex-1 flex-col">
-      <header className="page-heading">
-        <h1>
-          Solera<span className="text-violet-500">.</span>
-        </h1>
-        <p>Welcome, {MY_PROFILE.name.split(" ")[0]}.</p>
-      </header>
-      <WelcomeGuide />
+      <Hero />
       <section className="mx-5 mb-4 rounded-2xl border border-neutral-200 bg-white p-4 sm:mx-7">
         <div className="flex items-baseline justify-between">
           <h2 className="text-sm font-semibold text-neutral-900">Today in markets</h2>

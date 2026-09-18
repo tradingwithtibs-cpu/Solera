@@ -10,7 +10,7 @@ export function FeedList() {
   const [query, setQuery] = useState("");
   const [view, setView] = useState<"all" | "following">("all");
   const { isFollowing } = useFollowedInvestors();
-  const { investors: INVESTORS, source } = useInvestors();
+  const { investors: INVESTORS, source, isLoaded } = useInvestors();
   const q = query.trim().toLowerCase();
   const filtered = INVESTORS.filter(
     (i) =>
@@ -51,7 +51,18 @@ export function FeedList() {
         </div>
       </div>
       <section aria-label="Investor portfolios" className="flex-1 space-y-4 px-5 pb-7 sm:px-7">
-        {filtered.length ? (
+        {!isLoaded ? (
+          <div className="space-y-4" aria-busy="true">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="investor-card animate-pulse">
+                <div className="h-4 w-1/3 rounded bg-neutral-100" />
+                <div className="mt-3 h-3 w-2/3 rounded bg-neutral-100" />
+                <div className="mt-6 h-10 rounded-xl bg-neutral-100" />
+              </div>
+            ))}
+            <p className="text-center text-xs text-neutral-400">Reading the largest wallets on Solana…</p>
+          </div>
+        ) : filtered.length ? (
           filtered.map((investor) => <InvestorCard key={investor.id} investor={investor} />)
         ) : (
           <div className="empty-state">

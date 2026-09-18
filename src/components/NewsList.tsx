@@ -48,6 +48,10 @@ export function NewsList({
                 src={item.image}
                 alt=""
                 loading="lazy"
+                onError={(e) => {
+                  // Many publishers block hotlinking; drop the box rather than show a gray square.
+                  e.currentTarget.style.display = "none";
+                }}
                 className="h-12 w-16 shrink-0 rounded-lg bg-neutral-100 object-cover"
               />
             )}
