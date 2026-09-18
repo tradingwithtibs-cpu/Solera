@@ -8,6 +8,8 @@ import { useActivePortfolio } from "@/hooks/use-active-portfolio";
 import { computeHoldings } from "@/lib/portfolio";
 import { formatCurrency } from "@/lib/format";
 import { shortAddress } from "@/lib/investors";
+import { useProfile } from "@/hooks/use-profiles";
+import { ProfileButton } from "./ProfileButton";
 
 /**
  * The first thing a visitor sees. Two states:
@@ -21,6 +23,7 @@ export function Hero() {
   const { openConnect } = useConnectWallet();
   const { isLive } = useTradeMode();
   const { cashBalance, holdings, isLoaded } = useActivePortfolio();
+  const profile = useProfile(publicKey?.toBase58());
 
   if (connected && publicKey) {
     const total = computeHoldings(holdings).reduce((sum, h) => sum + h.value, cashBalance);
@@ -28,9 +31,10 @@ export function Hero() {
       <header className="page-heading">
         <p className="eyebrow">{isLive ? "Live on Solana mainnet" : "Practice mode"}</p>
         <h1>
-          Welcome back<span className="text-violet-500">.</span>
+          Welcome back{profile?.name ? `, ${profile.name.split(" ")[0]}` : ""}<span className="text-violet-500">.</span>
         </h1>
         <p>
+          {profile ? <span>@{profile.handle} · </span> : null}
           <span className="font-mono">{shortAddress(publicKey.toBase58())}</span>
           {isLoaded && (
             <>
@@ -39,6 +43,11 @@ export function Hero() {
             </>
           )}
         </p>
+        {profile === null && (
+          <div className="mt-3">
+            <ProfileButton className="rounded-full border border-violet-200 bg-violet-50 px-3.5 py-1.5 text-xs font-semibold text-violet-600" />
+          </div>
+        )}
       </header>
     );
   }

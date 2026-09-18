@@ -1,6 +1,7 @@
 import type { HoldingPosition, Investor, TickerSymbol } from "./types";
 import { getEffectivePrice, type HistoryWindow } from "./live-prices";
 import { trailingChangePct } from "./portfolio";
+import type { Profile } from "./profiles";
 
 /**
  * Real investors are real wallets. Nothing here is made up: a wallet's
@@ -55,16 +56,25 @@ export function weightedTrailingChangePct(holdings: HoldingPosition[], window: H
   return value > 0 ? weighted / value : 0;
 }
 
-export function walletToInvestor(wallet: WalletHoldings): Investor {
+export function walletToInvestor(wallet: WalletHoldings, profile?: Profile | null): Investor {
   const holdings = wallet.holdings.map((h) => ({ ticker: h.ticker, shares: h.shares }));
+  const initials = profile?.name
+    ? profile.name
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((w) => w[0]?.toUpperCase() ?? "")
+        .join("")
+    : wallet.address.slice(0, 2).toUpperCase();
   return {
     id: wallet.address,
     kind: "wallet",
-    name: shortAddress(wallet.address),
-    handle: "on-chain wallet",
-    initials: wallet.address.slice(0, 2).toUpperCase(),
+    name: profile?.name ?? shortAddress(wallet.address),
+    handle: profile ? `@${profile.handle}` : "on-chain wallet",
+    initials,
     avatarColor: avatarColorFor(wallet.address),
-    bio: `A real Solana wallet holding ${holdings.length} tokenized ${holdings.length === 1 ? "stock" : "stocks"}. Holdings are read live from the chain.`,
+    bio:
+      profile?.bio ||
+      `A real Solana wallet holding ${holdings.length} tokenized ${holdings.length === 1 ? "stock" : "stocks"}. Holdings are read live from the chain.`,
     performancePct: weightedTrailingChangePct(holdings),
     performance30dPct: weightedTrailingChangePct(holdings, "30d"),
     holdings,

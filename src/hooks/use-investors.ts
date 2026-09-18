@@ -4,6 +4,7 @@ import { useEffect, useSyncExternalStore } from "react";
 import { INVESTORS } from "@/lib/mock-data";
 import { walletToInvestor, type WalletHoldings } from "@/lib/investors";
 import { getLivePrices, subscribeLivePrices } from "@/lib/live-prices";
+import { useProfiles } from "./use-profiles";
 import type { Investor } from "@/lib/types";
 
 /**
@@ -51,8 +52,11 @@ export function useInvestors(): { investors: Investor[]; isLoaded: boolean; sour
     if (!wallets && !failed) load();
   }, []);
 
+  // Claimed names/handles for these wallets, if any. Batched into one request.
+  const { get: profileFor } = useProfiles(snapshot ? snapshot.map((w) => w.address) : []);
+
   if (snapshot && snapshot.length > 0) {
-    return { investors: snapshot.map(walletToInvestor), isLoaded: true, source: "chain" };
+    return { investors: snapshot.map((w) => walletToInvestor(w, profileFor(w.address))), isLoaded: true, source: "chain" };
   }
   // Still loading: show nothing rather than samples that would be replaced
   // a second later. Samples only stand in if the source is actually down.

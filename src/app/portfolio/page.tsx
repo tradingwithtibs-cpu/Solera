@@ -25,6 +25,7 @@ import { PerformanceBadge } from "@/components/PerformanceBadge";
 import { AllocationBar } from "@/components/AllocationBar";
 import { PriceChart } from "@/components/PriceChart";
 import { MyWalletBadge } from "@/components/MyWalletBadge";
+import { ProfileButton } from "@/components/ProfileButton";
 import { usePreIpo } from "@/hooks/use-pre-ipo";
 import { COMPANIES, PRE_IPO_MINTS } from "@/lib/pre-ipo";
 
@@ -105,6 +106,7 @@ export default function PortfolioPage() {
             <PerformanceBadge value={performancePct} />
             <span className="text-xs text-neutral-400">unrealized return</span>
             <MyWalletBadge />
+            {isLive && <ProfileButton className="rounded-full border border-violet-200 bg-white/70 px-2.5 py-1 text-xs font-semibold text-violet-600" />}
           </div>
 
           <div className="relative mt-3">
