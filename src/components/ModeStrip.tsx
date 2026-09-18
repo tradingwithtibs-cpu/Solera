@@ -1,6 +1,6 @@
 "use client";
 
-import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { useConnectWallet } from "./ConnectWalletProvider";
 import { useTradeMode } from "@/hooks/use-trade-mode";
 
 /**
@@ -12,7 +12,7 @@ import { useTradeMode } from "@/hooks/use-trade-mode";
  */
 export function ModeStrip() {
   const { isLive, connected, setMode } = useTradeMode();
-  const { setVisible } = useWalletModal();
+  const { openConnect } = useConnectWallet();
 
   if (isLive) {
     return (
@@ -34,7 +34,7 @@ export function ModeStrip() {
       </span>
       <button
         type="button"
-        onClick={() => (connected ? setMode("live") : setVisible(true))}
+        onClick={() => (connected ? setMode("live") : openConnect())}
         className="font-semibold text-violet-600"
       >
         {connected ? "Switch to live trading" : "Connect a wallet to trade for real"}

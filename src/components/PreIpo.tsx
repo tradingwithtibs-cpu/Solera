@@ -116,7 +116,8 @@ export function PreIpoRow({ token }: { token: PreIpoToken }) {
  * much.
  */
 export function CompanyComparisonCard({ comparison }: { comparison: CompanyComparison }) {
-  const { company, tokens, cheapest, spreadPct } = comparison;
+  const { company, tokens, cheapest, priciest, cheaperByPct, markDisagreementPct, bestDiscountToMark } = comparison;
+  const marksDisagree = markDisagreementPct >= 30;
   return (
     <section className="card-elevated rounded-3xl border border-neutral-100 p-5">
       <div className="flex items-center gap-3">
@@ -127,11 +128,42 @@ export function CompanyComparisonCard({ comparison }: { comparison: CompanyCompa
         </div>
       </div>
 
-      <p className="mt-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm leading-relaxed text-emerald-900">
-        <span className="font-semibold">{cheapest.issuer}</span> is the cheaper {company.name} exposure right now:
-        its price implies a <span className="font-mono font-semibold">{formatValuation(cheapest.impliedValuation)}</span>{" "}
-        valuation, <span className="font-mono font-semibold">{spreadPct.toFixed(1)}%</span> below the other issuer.
-      </p>
+      {/* Two honest answers to "which is cheaper?", labelled so they can't be confused. */}
+      <div className="mt-4 space-y-2">
+        <p className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm leading-relaxed text-emerald-900">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-emerald-700">By company valuation</span>
+          <br />
+          <span className="font-semibold">{cheapest.issuer}</span> values {company.name} at{" "}
+          <span className="font-mono font-semibold">{formatValuation(cheapest.impliedValuation)}</span>,{" "}
+          <span className="font-mono font-semibold">{cheaperByPct.toFixed(0)}%</span> lower than {priciest.issuer}&apos;s{" "}
+          <span className="font-mono">{formatValuation(priciest.impliedValuation)}</span>.
+        </p>
+        <p className="rounded-2xl bg-neutral-50 px-4 py-3 text-sm leading-relaxed text-neutral-700">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Against each issuer&apos;s own mark</span>
+          <br />
+          {tokens.map((t, i) => (
+            <span key={t.mint}>
+              {i > 0 && " · "}
+              {t.issuer} trades{" "}
+              <span className={`font-mono font-semibold ${t.premiumPct < 0 ? "text-emerald-700" : "text-amber-700"}`}>
+                {Math.abs(t.premiumPct).toFixed(0)}% {t.premiumPct < 0 ? "below" : "above"}
+              </span>{" "}
+              its mark
+            </span>
+          ))}
+          {bestDiscountToMark !== cheapest && (
+            <>
+              . So {bestDiscountToMark.issuer} is the bigger discount to its issuer, while {cheapest.issuer} is the lower
+              valuation.
+            </>
+          )}
+        </p>
+        {marksDisagree && (
+          <p className="rounded-2xl bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-900">
+            The two issuers disagree on what {company.name} is worth ({tokens.map((t) => `${t.issuer} ${formatValuation(t.markValuation)}`).join(" vs ")}), so at least one mark is stale. Implied valuation compares what you actually pay for the company; discount-to-mark only says how each token trades against its own issuer&apos;s number.
+          </p>
+        )}
+      </div>
 
       <div className="mt-4 grid grid-cols-2 gap-3">
         {tokens.map((t) => (
@@ -141,7 +173,7 @@ export function CompanyComparisonCard({ comparison }: { comparison: CompanyCompa
           >
             <div className="flex items-center justify-between">
               <IssuerPill issuer={t.issuer} />
-              {t === cheapest && <span className="text-[10px] font-semibold text-emerald-700">Cheapest</span>}
+              {t === cheapest && <span className="text-[10px] font-semibold text-emerald-700">Lowest valuation</span>}
             </div>
             <p className="mt-2 font-mono text-lg font-semibold tabular-nums">{formatCurrency(t.tokenPrice)}</p>
             <p className="text-[11px] text-neutral-500">{t.symbol} token price</p>
@@ -180,8 +212,8 @@ export function CompanyComparisonCard({ comparison }: { comparison: CompanyCompa
         ))}
       </div>
       <p className="mt-3 text-[11px] leading-relaxed text-neutral-400">
-        Implied valuation scales each issuer&apos;s own mark-to-valuation ratio by the live token price, so the two
-        tokens are compared on what they value the company at, not on their raw prices.
+        Token prices can&apos;t be compared directly — one token from each issuer represents a different slice of the
+        company. Implied valuation = live token price ÷ issuer mark × the valuation that mark stands for.
       </p>
       <details className="mt-3 rounded-2xl bg-neutral-50 px-4 py-2">
         <summary className="cursor-pointer text-xs font-semibold text-neutral-700">Latest on {company.name}</summary>

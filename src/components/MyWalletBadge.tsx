@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useId, useState } from "react";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
-import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { useConnectWallet } from "./ConnectWalletProvider";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { ChainIcon } from "./icons";
 import { useTradeMode } from "@/hooks/use-trade-mode";
@@ -12,21 +12,15 @@ function truncateAddress(address: string): string {
 }
 
 /**
- * The user's wallet: a real Solana
- * wallet connection and a real mainnet balance read (see SolanaProvider.tsx).
- * Deliberately separate from OnChainBadge, which shows *other* investors'
- * mock wallet addresses — there's no "connect" story for someone else's
- * wallet, so that one stays purely illustrative. This one is for the
- * signed-in user's own portfolio only, and connecting here never touches
- * the mock portfolio below it: holdings, prices, and trades stay simulated
- * either way, and the popover says so explicitly so a connected wallet is
- * never mistaken for "this is where your real money is."
+ * The user's own wallet: connect button, address and SOL balance, and the
+ * Live / Practice switch. Deliberately separate from OnChainBadge, which is
+ * for *other* investors' wallets.
  */
 export function MyWalletBadge() {
   const id = useId();
   const { connection } = useConnection();
   const { publicKey, connected, connecting, disconnect } = useWallet();
-  const { setVisible } = useWalletModal();
+  const { openConnect } = useConnectWallet();
   const [balance, setBalance] = useState<number | null>(null);
   const { chosen, setMode } = useTradeMode();
 
@@ -60,7 +54,7 @@ export function MyWalletBadge() {
     return (
       <button
         type="button"
-        onClick={() => setVisible(true)}
+        onClick={openConnect}
         disabled={connecting}
         className="bg-gradient-solana inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold text-white disabled:opacity-60"
       >

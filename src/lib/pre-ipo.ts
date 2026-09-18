@@ -137,8 +137,13 @@ export interface CompanyComparison {
   /** Cheapest implied valuation first. */
   tokens: PreIpoToken[];
   cheapest: PreIpoToken;
-  /** How much more the priciest issuer's implied valuation is than the cheapest, in percent. */
-  spreadPct: number;
+  priciest: PreIpoToken;
+  /** How much lower the cheapest token's implied valuation is than the priciest's, in percent (0–100). */
+  cheaperByPct: number;
+  /** How far apart the issuers' own mark valuations are, in percent of the higher one. */
+  markDisagreementPct: number;
+  /** Which token trades furthest below its own issuer's mark (the "discount to mark" view). */
+  bestDiscountToMark: PreIpoToken;
 }
 
 /**
@@ -158,14 +163,20 @@ export function compareAcrossIssuers(tokens: PreIpoToken[]): CompanyComparison[]
     const sorted = [...list].sort((a, b) => a.impliedValuation - b.impliedValuation);
     const cheapest = sorted[0];
     const priciest = sorted[sorted.length - 1];
+    const marks = list.map((t) => t.markValuation);
+    const hiMark = Math.max(...marks);
+    const loMark = Math.min(...marks);
     out.push({
       company: COMPANIES[id],
       tokens: sorted,
       cheapest,
-      spreadPct: (priciest.impliedValuation / cheapest.impliedValuation - 1) * 100,
+      priciest,
+      cheaperByPct: (1 - cheapest.impliedValuation / priciest.impliedValuation) * 100,
+      markDisagreementPct: hiMark > 0 ? (1 - loMark / hiMark) * 100 : 0,
+      bestDiscountToMark: [...list].sort((a, b) => a.premiumPct - b.premiumPct)[0],
     });
   }
-  return out.sort((a, b) => b.spreadPct - a.spreadPct);
+  return out.sort((a, b) => b.cheaperByPct - a.cheaperByPct);
 }
 
 /** "$1.30T", "$31.1B". */

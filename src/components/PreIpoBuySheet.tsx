@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { useConnectWallet } from "./ConnectWalletProvider";
 import { COMPANIES, formatValuation, jupiterSwapUrl, type PreIpoToken } from "@/lib/pre-ipo";
 import { formatCurrency } from "@/lib/format";
 import { solscanTxUrl } from "@/lib/jupiter";
@@ -28,7 +28,7 @@ export function PreIpoBuySheet({ token, onClose }: { token: PreIpoToken; onClose
   const [payWith, setPayWith] = useState<SettlementCurrency>("SOL");
   const { status, fill, error, run, isLive } = usePreIpoBuy();
   const { solBalance, usdcBalance, solUsd, isLoaded } = useActivePortfolio();
-  const { setVisible } = useWalletModal();
+  const { openConnect } = useConnectWallet();
 
   const dollars = Math.max(0, Number(amount) || 0);
   const estimate = token.tokenPrice > 0 ? dollars / token.tokenPrice : 0;
@@ -103,7 +103,7 @@ export function PreIpoBuySheet({ token, onClose }: { token: PreIpoToken; onClose
             {!isLive ? (
               <div className="mt-5 space-y-3 rounded-2xl bg-neutral-50 p-4 text-sm text-neutral-600">
                 <p>Pre-IPO tokens are bought for real, from your wallet. Connect one and switch to live trading.</p>
-                <button type="button" onClick={() => setVisible(true)} className="btn-primary w-full">
+                <button type="button" onClick={openConnect} className="btn-primary w-full">
                   Connect wallet
                 </button>
                 <a

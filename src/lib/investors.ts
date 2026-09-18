@@ -1,5 +1,5 @@
 import type { HoldingPosition, Investor, TickerSymbol } from "./types";
-import { getEffectivePrice } from "./live-prices";
+import { getEffectivePrice, type HistoryWindow } from "./live-prices";
 import { trailingChangePct } from "./portfolio";
 
 /**
@@ -44,13 +44,13 @@ export function shortAddress(address: string): string {
  * The honest replacement for a made-up "monthly return": it's how the
  * market moved what they hold, not what they earned since buying.
  */
-export function weightedTrailingChangePct(holdings: HoldingPosition[]): number {
+export function weightedTrailingChangePct(holdings: HoldingPosition[], window: HistoryWindow = "7d"): number {
   let value = 0;
   let weighted = 0;
   for (const h of holdings) {
     const v = h.shares * getEffectivePrice(h.ticker);
     value += v;
-    weighted += v * trailingChangePct(h.ticker);
+    weighted += v * trailingChangePct(h.ticker, window);
   }
   return value > 0 ? weighted / value : 0;
 }
@@ -66,6 +66,7 @@ export function walletToInvestor(wallet: WalletHoldings): Investor {
     avatarColor: avatarColorFor(wallet.address),
     bio: `A real Solana wallet holding ${holdings.length} tokenized ${holdings.length === 1 ? "stock" : "stocks"}. Holdings are read live from the chain.`,
     performancePct: weightedTrailingChangePct(holdings),
+    performance30dPct: weightedTrailingChangePct(holdings, "30d"),
     holdings,
     walletAddress: wallet.address,
   };

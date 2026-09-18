@@ -28,7 +28,7 @@ export interface LiveSnapshot {
   underlying: Partial<Record<TickerSymbol, UnderlyingQuote>>;
   /** SOL/USD — needed to size SOL-paid trades and value a wallet's SOL in dollars. */
   solUsd?: number;
-  /** Real trailing 7-day closes per ticker, oldest → newest (see app/api/price-history). */
+  /** Real trailing 30-day closes per ticker (~4/day), oldest → newest (see app/api/price-history). */
   history: Partial<Record<TickerSymbol, number[]>>;
 }
 
@@ -53,8 +53,13 @@ export function setHistory(ticker: TickerSymbol, closes: number[]) {
  * that (or if the history source is down). Same fallback contract as
  * `getEffectivePrice`.
  */
-export function getEffectiveHistory(ticker: TickerSymbol): number[] {
-  return snapshot.history[ticker] ?? TICKERS[ticker]?.history ?? [];
+export type HistoryWindow = "7d" | "30d";
+
+export function getEffectiveHistory(ticker: TickerSymbol, window: HistoryWindow = "7d"): number[] {
+  const real = snapshot.history[ticker];
+  if (!real) return TICKERS[ticker]?.history ?? [];
+  // The route returns 30 days at a steady cadence; the last ~quarter is 7 days.
+  return window === "30d" ? real : real.slice(-Math.max(2, Math.round(real.length * 7 / 30)));
 }
 
 /** Whether `ticker`'s chart is drawn from real market data. */

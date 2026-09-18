@@ -40,7 +40,11 @@ test("cross-issuer comparison orders cheapest implied valuation first and skips 
   assert.equal(out[0].company.id, "openai");
   assert.equal(out[0].cheapest.issuer, "Tessera");
   assert.equal(out[0].tokens[0].issuer, "Tessera");
-  assert.ok(out[0].spreadPct > 10 && out[0].spreadPct < 20, `spread ${out[0].spreadPct}`);
+  assert.equal(out[0].priciest.issuer, "PreStocks");
+  assert.ok(out[0].cheaperByPct > 10 && out[0].cheaperByPct < 20, `cheaperBy ${out[0].cheaperByPct}`);
+  // PreStocks trades 8.9% above its mark, Tessera 19.8% above: PreStocks is the better discount-to-mark.
+  assert.equal(out[0].bestDiscountToMark.issuer, "PreStocks");
+  assert.ok(out[0].markDisagreementPct > 20, `marks ${out[0].markDisagreementPct}`);
 });
 
 test("valuation formatting", () => {

@@ -11,11 +11,9 @@ import { formatCurrency, formatShares } from "@/lib/format";
 import { useExecuteTrade } from "@/hooks/use-execute-trade";
 import { useEffectivePrice } from "@/hooks/use-effective-price";
 import { useActivePortfolio } from "@/hooks/use-active-portfolio";
-import { useSwapQuote } from "@/hooks/use-swap-quote";
 import { solscanTxUrl } from "@/lib/jupiter";
 import { celebrateTrade } from "@/lib/celebrate";
-import { settlementBaseUnits } from "@/lib/trade";
-import { SETTLEMENT, SOL_FEE_RESERVE, XSTOCK_TOKENS, fromBaseUnits, toBaseUnits, type SettlementCurrency } from "@/lib/tokens";
+import { SOL_FEE_RESERVE, type SettlementCurrency } from "@/lib/tokens";
 import type { TickerSymbol, TradeSide } from "@/lib/types";
 import { TopBar } from "./TopBar";
 import { TickerBadge } from "./TickerBadge";
@@ -48,37 +46,6 @@ export function TradeScreen() {
   const { cashBalance, solBalance, usdcBalance, solUsd, holdings: rawHoldings, recordTrade, isLoaded } =
     useActivePortfolio();
 
-  const ownedPosition = computeHoldings(rawHoldings).find((h) => h.ticker === symbol);
-  const ownedShares = ownedPosition?.shares ?? 0;
-  const ownedValue = ownedPosition?.value ?? 0;
-
-  const numericAmount =
-    side === "sell" && sellFraction !== null ? ownedValue * sellFraction : Math.max(0, Number(amount) || 0);
-  const estimatedShares =
-    side === "sell" && sellFraction !== null
-      ? ownedShares * sellFraction
-      : livePrice > 0
-        ? numericAmount / livePrice
-        : 0;
-  // A real quote from Jupiter for the review screen — only requested once
-  // the user is actually reviewing a live order, so casually adjusting the
-  // amount on the input screen never calls out to Jupiter.
-  const token = XSTOCK_TOKENS[symbol];
-  const settle = SETTLEMENT[payWith];
-  const quoteParams =
-    isLive && reviewing && numericAmount > 0
-      ? {
-          inputMint: side === "buy" ? settle.mint : token.mint,
-          outputMint: side === "buy" ? token.mint : settle.mint,
-          amountBaseUnits:
-            side === "buy" ? settlementBaseUnits(numericAmount, payWith) : toBaseUnits(estimatedShares, token.decimals),
-        }
-      : null;
-  const { quote, isLoading: quoteLoading } = useSwapQuote(quoteParams);
-  // Prefer Jupiter's exact quoted output over the price-based estimate once one arrives.
-  const quotedShares = quote && side === "buy" ? fromBaseUnits(quote.outAmount, token.decimals) : undefined;
-  const quotedProceeds = quote && side === "sell" ? fromBaseUnits(quote.outAmount, settle.decimals) : undefined;
-
   if (!ticker) {
     return (
       <div className="flex flex-1 flex-col">
@@ -101,12 +68,24 @@ export function TradeScreen() {
     );
   }
 
+  const ownedPosition = computeHoldings(rawHoldings).find((h) => h.ticker === symbol);
+  const ownedShares = ownedPosition?.shares ?? 0;
+  const ownedValue = ownedPosition?.value ?? 0;
+
   const changeSide = (nextSide: TradeSide) => {
     setSide(nextSide);
     setSellFraction(null);
     setAmount(nextSide === "sell" || refInvestor ? "0" : "100");
   };
 
+  const numericAmount =
+    side === "sell" && sellFraction !== null ? ownedValue * sellFraction : Math.max(0, Number(amount) || 0);
+  const estimatedShares =
+    side === "sell" && sellFraction !== null
+      ? ownedShares * sellFraction
+      : livePrice > 0
+        ? numericAmount / livePrice
+        : 0;
   // What a buy can be capped at, in dollars: in live mode only the chosen
   // settlement currency counts (SOL keeps a small reserve for network fees);
   // in practice mode it's the practice cash balance.
@@ -264,17 +243,10 @@ export function TradeScreen() {
           </div>
           <p className="mt-6 font-mono text-4xl font-semibold">{formatCurrency(numericAmount)}</p>
           <p className="mt-2 text-sm text-neutral-500">
-            ≈ <span className="font-mono">{formatShares(quotedShares ?? estimatedShares)}</span> shares at{" "}
+            ≈ <span className="font-mono">{formatShares(estimatedShares)}</span> shares at{" "}
             <span className="font-mono">{formatCurrency(livePrice)}</span>
-            {isLivePrice && !isLive && <span className="text-emerald-600"> · live</span>}
-            {isLive && quotedShares !== undefined && <span className="text-emerald-600"> · Jupiter quote</span>}
-            {isLive && quoteLoading && <span className="text-neutral-400"> · getting live quote…</span>}
+            {isLivePrice && <span className="text-emerald-600"> · live</span>}
           </p>
-          {isLive && side === "sell" && quotedProceeds !== undefined && (
-            <p className="mt-1 text-sm text-neutral-500">
-              You&apos;ll receive ≈ <span className="font-mono">{quotedProceeds.toFixed(payWith === "SOL" ? 4 : 2)} {payWith}</span>
-            </p>
-          )}
           <dl className="mt-6 space-y-4 border-t border-neutral-100 pt-5 text-sm">
             {isLive && (
               <div className="flex justify-between gap-3">
@@ -297,27 +269,10 @@ export function TradeScreen() {
                 {(ownedPosition?.allocationPct ?? 0).toFixed(1)}% → {afterAllocation.toFixed(1)}%
               </dd>
             </div>
-            {isLive ? (
-              <>
-                <div className="flex justify-between gap-3">
-                  <dt>Jupiter fee</dt>
-                  <dd className="font-mono">{quote ? `${(quote.feeBps / 100).toFixed(2)}%` : "—"} + network</dd>
-                </div>
-                <div className="flex justify-between gap-3">
-                  <dt>Price impact</dt>
-                  <dd
-                    className={`font-mono ${quote && Math.abs(quote.priceImpactPct) > 1 ? "text-amber-600" : ""}`}
-                  >
-                    {quote ? `${quote.priceImpactPct > 0 ? "+" : ""}${quote.priceImpactPct.toFixed(2)}%` : "—"}
-                  </dd>
-                </div>
-              </>
-            ) : (
-              <div className="flex justify-between gap-3">
-                <dt>Practice fees</dt>
-                <dd className="font-mono">$0.00</dd>
-              </div>
-            )}
+            <div className="flex justify-between gap-3">
+              <dt>{isLive ? "Fees" : "Practice fees"}</dt>
+              <dd className="font-mono">{isLive ? "0.10% + network" : "$0.00"}</dd>
+            </div>
           </dl>
           <p className="mt-4 text-xs leading-relaxed text-neutral-500">
             Allocation is a share of invested holdings, excluding cash.

@@ -15,8 +15,12 @@ import type { TickerSymbol } from "@/lib/types";
  */
 const COINGECKO = "https://api.coingecko.com/api/v3/coins";
 const CACHE_TTL_MS = 15 * 60_000;
-/** Enough points for a smooth sparkline without shipping 168 hourly ticks per ticker. */
-const MAX_POINTS = 48;
+/**
+ * 30 days of hourly data, thinned to ~4 points a day. The last quarter of
+ * the series is the 7-day window every sparkline draws.
+ */
+const DAYS = 30;
+const MAX_POINTS = 120;
 
 /** CoinGecko coin ids for each xStock, looked up from /coins/list on 2026-09-17. */
 const COINGECKO_IDS: Record<TickerSymbol, string> = {
@@ -32,7 +36,7 @@ const COINGECKO_IDS: Record<TickerSymbol, string> = {
 
 export interface PriceHistoryResponse {
   source: "coingecko";
-  /** Closes, oldest → newest, in USD. */
+  /** Closes over the last 30 days, oldest → newest, in USD, ~4 per day. */
   history: Partial<Record<TickerSymbol, number[]>>;
   fetchedAt: number;
 }
@@ -104,7 +108,7 @@ async function backfill() {
 }
 
 async function fetchSeries(ticker: TickerSymbol): Promise<number[]> {
-  const res = await fetch(`${COINGECKO}/${COINGECKO_IDS[ticker]}/market_chart?vs_currency=usd&days=7`, {
+  const res = await fetch(`${COINGECKO}/${COINGECKO_IDS[ticker]}/market_chart?vs_currency=usd&days=${DAYS}`, {
     headers: { Accept: "application/json" },
     cache: "no-store",
     signal: AbortSignal.timeout(10_000),

@@ -53,6 +53,8 @@ export interface Investor {
   bio: string;
   /** For wallets: value-weighted 7-day price move of their holdings. For samples: a made-up monthly figure. */
   performancePct: number;
+  /** Wallets only: the same measure over 30 days. */
+  performance30dPct?: number;
   holdings: HoldingPosition[];
   socials?: InvestorSocials;
   /**

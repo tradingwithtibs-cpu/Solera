@@ -6,6 +6,7 @@ import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import { PhantomWalletAdapter, SolflareWalletAdapter } from "@solana/wallet-adapter-wallets";
 import type { WalletError } from "@solana/wallet-adapter-base";
 import { clusterApiUrl } from "@solana/web3.js";
+import { ConnectWalletProvider } from "./ConnectWalletProvider";
 
 // Default styles for the wallet selection modal — overridden in globals.css
 // to match the app's own palette rather than the library's default purple.
@@ -39,7 +40,9 @@ export function SolanaProvider({ children }: { children: React.ReactNode }) {
   return (
     <ConnectionProvider endpoint={endpoint}>
       <WalletProvider wallets={wallets} autoConnect onError={onError}>
-        <WalletModalProvider>{children}</WalletModalProvider>
+        <WalletModalProvider>
+          <ConnectWalletProvider>{children}</ConnectWalletProvider>
+        </WalletModalProvider>
       </WalletProvider>
     </ConnectionProvider>
   );

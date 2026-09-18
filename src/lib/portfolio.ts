@@ -1,4 +1,4 @@
-import { getEffectiveHistory, getEffectivePrice } from "./live-prices";
+import { getEffectiveHistory, getEffectivePrice, type HistoryWindow } from "./live-prices";
 import type { HoldingPosition, Investor, TickerSymbol } from "./types";
 
 export interface HoldingWithValue extends HoldingPosition {
@@ -168,15 +168,15 @@ export function describeSoleraScore(normalizedScore: number): string {
 /** A ticker is "pumping" once its trailing 7-day history is up at least this much. */
 const PUMPING_THRESHOLD_PCT = 15;
 
-/** Percent change across the ticker's trailing series (real 7-day closes when fetched). */
-export function trailingChangePct(ticker: TickerSymbol): number {
-  const history = getEffectiveHistory(ticker);
+/** Percent change across the ticker's trailing series (real closes when fetched), over 7 or 30 days. */
+export function trailingChangePct(ticker: TickerSymbol, window: HistoryWindow = "7d"): number {
+  const history = getEffectiveHistory(ticker, window);
   if (history.length < 2 || history[0] <= 0) return 0;
   return ((history[history.length - 1] - history[0]) / history[0]) * 100;
 }
 
-/** @deprecated alias kept for older call sites — same as `trailingChangePct`. */
-export const tickerChangePct = trailingChangePct;
+/** @deprecated alias kept for older call sites — same as `trailingChangePct` over 7 days. */
+export const tickerChangePct = (ticker: TickerSymbol) => trailingChangePct(ticker);
 
 /**
  * True whenever a ticker's own trailing price history — the same series
