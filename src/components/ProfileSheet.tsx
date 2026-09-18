@@ -86,7 +86,7 @@ export function ProfileSheet({ existing, onClose }: { existing: Profile | null; 
             <fieldset disabled={status !== "idle"} className="mt-4 space-y-3">
               <label className="block">
                 <span className="text-xs font-semibold text-neutral-600">Handle</span>
-                <div className="mt-1 flex items-center rounded-xl border border-neutral-200 px-3">
+                <div className="field mt-1 flex items-center px-3">
                   <span className="text-neutral-400">@</span>
                   <input
                     value={form.handle}
@@ -100,24 +100,28 @@ export function ProfileSheet({ existing, onClose }: { existing: Profile | null; 
               </label>
               <label className="block">
                 <span className="text-xs font-semibold text-neutral-600">Display name</span>
-                <input
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="How you'd like to appear"
-                  maxLength={NAME_MAX}
-                  className="mt-1 w-full rounded-xl border border-neutral-200 px-3 py-2 text-sm outline-none"
-                />
+                <div className="field mt-1">
+                  <input
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    placeholder="How you'd like to appear"
+                    maxLength={NAME_MAX}
+                    className="w-full bg-transparent px-3 py-2 text-sm outline-none"
+                  />
+                </div>
               </label>
               <label className="block">
                 <span className="text-xs font-semibold text-neutral-600">Bio</span>
-                <textarea
-                  value={form.bio}
-                  onChange={(e) => setForm({ ...form, bio: e.target.value })}
-                  placeholder="What you invest in, and why"
-                  maxLength={BIO_MAX}
-                  rows={2}
-                  className="mt-1 w-full resize-none rounded-xl border border-neutral-200 px-3 py-2 text-sm outline-none"
-                />
+                <div className="field mt-1">
+                  <textarea
+                    value={form.bio}
+                    onChange={(e) => setForm({ ...form, bio: e.target.value })}
+                    placeholder="What you invest in, and why"
+                    maxLength={BIO_MAX}
+                    rows={2}
+                    className="block w-full resize-none bg-transparent px-3 py-2 text-sm outline-none"
+                  />
+                </div>
                 <span className="text-[10px] text-neutral-400">{form.bio.length}/{BIO_MAX}</span>
               </label>
               <div className="flex items-center justify-between text-xs">

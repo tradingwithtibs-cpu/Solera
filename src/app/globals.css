@@ -204,6 +204,20 @@ select {
 input:focus-visible {
   outline-offset: 4px;
 }
+/* Form fields whose rounded wrapper carries the focus ring instead of the bare input. */
+.field {
+  border-radius: 0.75rem;
+  border: 1px solid #e5e7eb;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+.field:focus-within {
+  border-color: #6d5eea;
+  box-shadow: 0 0 0 3px rgba(109, 94, 234, 0.25);
+}
+.field input:focus-visible,
+.field textarea:focus-visible {
+  outline: none;
+}
 .text-neutral-400 {
   color: #756e93;
 }
