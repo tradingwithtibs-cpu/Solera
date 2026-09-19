@@ -2,10 +2,10 @@
 
 import { useCallback, useRef, useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { executeLiveSwap, settlementBaseUnits } from "@/lib/trade";
+import { executeLiveSwap, settlementBaseUnits, settlementDollars } from "@/lib/trade";
 import { SETTLEMENT, fromBaseUnits, type SettlementCurrency } from "@/lib/tokens";
-import { getSolPrice } from "@/lib/live-prices";
-import type { PreIpoToken } from "@/lib/pre-ipo";
+import { isDeferredSigner } from "@/lib/deferred-signing";
+import { COMPANIES, type PreIpoToken } from "@/lib/pre-ipo";
 import { useTradeMode } from "./use-trade-mode";
 
 export interface PreIpoFill {
@@ -27,7 +27,8 @@ export interface PreIpoFill {
  */
 export function usePreIpoBuy() {
   const { isLive } = useTradeMode();
-  const { publicKey, signTransaction } = useWallet();
+  const { publicKey, signTransaction, wallet: connectedWallet } = useWallet();
+  const deferred = isDeferredSigner(connectedWallet?.adapter);
   const [status, setStatus] = useState<"idle" | "pending" | "success" | "error">("idle");
   const [fill, setFill] = useState<PreIpoFill | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -47,16 +48,18 @@ export function usePreIpoBuy() {
       try {
         const settle = SETTLEMENT[payWith];
         const swap = await executeLiveSwap(
-          { inputMint: settle.mint, outputMint: token.mint, amountBaseUnits: settlementBaseUnits(dollars, payWith) },
-          { publicKey, signTransaction },
+          {
+            inputMint: settle.mint,
+            outputMint: token.mint,
+            amountBaseUnits: settlementBaseUnits(dollars, payWith),
+            inDecimals: settle.decimals,
+            outDecimals: token.decimals,
+          },
+          { publicKey, signTransaction, deferred },
+          { payWith, trade: { kind: "pre-ipo", symbol: token.symbol, name: COMPANIES[token.company].name } },
         );
         const settledAmount = fromBaseUnits(swap.inUnits, settle.decimals);
-        const spent =
-          swap.inUsd && swap.inUsd > 0
-            ? swap.inUsd
-            : payWith === "SOL"
-              ? settledAmount * (getSolPrice() ?? 0)
-              : settledAmount;
+        const spent = settlementDollars(swap.inUsd, settledAmount, payWith);
         const result: PreIpoFill = {
           token,
           amount: fromBaseUnits(swap.outUnits, token.decimals),
@@ -77,7 +80,7 @@ export function usePreIpoBuy() {
         inFlight.current = false;
       }
     },
-    [isLive, publicKey, signTransaction],
+    [isLive, publicKey, signTransaction, deferred],
   );
 
   const reset = useCallback(() => {

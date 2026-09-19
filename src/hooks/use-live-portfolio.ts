@@ -42,7 +42,8 @@ let ledger: Ledger = typeof window !== "undefined" ? readLedger() : {};
 const ledgerListeners = new Set<() => void>();
 const EMPTY: Transaction[] = [];
 
-function recordLiveTrade(wallet: string, txn: Transaction) {
+/** Appends a landed trade to a wallet's local ledger. Exported for trades that finish outside React (deeplink returns). */
+export function recordLiveTrade(wallet: string, txn: Transaction) {
   ledger = { ...ledger, [wallet]: [txn, ...(ledger[wallet] ?? [])] };
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(ledger));

@@ -3,6 +3,7 @@ import { getTokenForSymbol, isKnownTicker } from "./catalog";
 import { getEffectivePrice, getSolPrice } from "./live-prices";
 import { executeUltraOrder, getUltraOrder } from "./jupiter";
 import { SETTLEMENT, fromBaseUnits, toBaseUnits, type SettlementCurrency } from "./tokens";
+import { stageContinuation, type Continuation } from "./deferred-signing";
 import type { TickerSymbol, TradeSide } from "./types";
 
 export type TradeMode = "live" | "practice";
@@ -16,13 +17,24 @@ export interface TradeParams {
   totalValue: number;
   /** What a live trade is paid in (buy) or paid out in (sell). Defaults to SOL. */
   payWith?: SettlementCurrency;
+  /** Set when the order came from "Copy" on an investor's holding; recorded with the trade. */
+  copiedFromInvestorId?: string;
 }
 
 /** What a live trade needs from the connected wallet. Matches wallet-adapter's shape. */
 export interface TradeWallet {
   publicKey: { toBase58(): string };
   signTransaction: (tx: VersionedTransaction) => Promise<VersionedTransaction>;
+  /**
+   * True for a wallet that signs by leaving the page (Phantom deeplinks on
+   * iOS Safari). The swap then finishes on the return page load via
+   * `finishDeferredSwap`, so the trade context is staged before signing.
+   */
+  deferred?: boolean;
 }
+
+/** What a swap is for, so a deferred one can be finished and recorded later. */
+export type SwapContext = { payWith: SettlementCurrency; trade: Extract<Continuation, { kind: "swap" }>["trade"] };
 
 export interface TradeResult {
   success: true;
@@ -103,8 +115,9 @@ export interface SwapFill {
  * alike. Throws on any failure; a thrown error means nothing was spent.
  */
 export async function executeLiveSwap(
-  params: { inputMint: string; outputMint: string; amountBaseUnits: string },
+  params: { inputMint: string; outputMint: string; amountBaseUnits: string; inDecimals: number; outDecimals: number },
   wallet: TradeWallet,
+  context?: SwapContext,
 ): Promise<SwapFill> {
   if (params.amountBaseUnits === "0") throw new Error("That amount is too small to trade.");
 
@@ -119,10 +132,39 @@ export async function executeLiveSwap(
   }
 
   const tx = VersionedTransaction.deserialize(Buffer.from(order.transaction, "base64"));
+  if (wallet.deferred && context) {
+    stageContinuation({
+      kind: "swap",
+      requestId: order.requestId,
+      inputMint: params.inputMint,
+      outputMint: params.outputMint,
+      inDecimals: params.inDecimals,
+      outDecimals: params.outDecimals,
+      inAmount: order.inAmount,
+      outAmount: order.outAmount,
+      inUsd: order.inUsdValue,
+      outUsd: order.outUsdValue,
+      payWith: context.payWith,
+      wallet: wallet.publicKey.toBase58(),
+      trade: context.trade,
+    });
+  }
   const signed = await wallet.signTransaction(tx);
   const signedBase64 = Buffer.from(signed.serialize()).toString("base64");
+  return submitSigned(signedBase64, order.requestId, {
+    inAmount: order.inAmount,
+    outAmount: order.outAmount,
+    inUsd: order.inUsdValue,
+    outUsd: order.outUsdValue,
+  });
+}
 
-  const result = await executeUltraOrder(signedBase64, order.requestId);
+async function submitSigned(
+  signedBase64: string,
+  requestId: string,
+  order: { inAmount: string; outAmount: string; inUsd?: number; outUsd?: number },
+): Promise<SwapFill> {
+  const result = await executeUltraOrder(signedBase64, requestId);
   if (result.status !== "Success" || !result.signature) {
     throw new Error(result.error ? `Swap failed: ${result.error}` : "Swap failed. Nothing was spent.");
   }
@@ -130,8 +172,48 @@ export async function executeLiveSwap(
     signature: result.signature,
     inUnits: result.inputAmountResult ?? order.inAmount,
     outUnits: result.outputAmountResult ?? order.outAmount,
-    inUsd: order.inUsdValue,
-    outUsd: order.outUsdValue,
+    inUsd: order.inUsd,
+    outUsd: order.outUsd,
+  };
+}
+
+/**
+ * Second half of a swap whose signature came back through a deeplink:
+ * submit the signed bytes Phantom returned against the order that was
+ * staged before the hop. Same Jupiter call, same fill shape.
+ */
+export async function finishDeferredSwap(c: Extract<Continuation, { kind: "swap" }>, signedTx: Uint8Array): Promise<SwapFill> {
+  return submitSigned(Buffer.from(signedTx).toString("base64"), c.requestId, c);
+}
+
+/** Dollar value of the settlement leg: Jupiter's own USD figure when it gave one, else at the live SOL price. */
+export function settlementDollars(usd: number | undefined, settledAmount: number, payWith: SettlementCurrency): number {
+  if (typeof usd === "number" && usd > 0) return usd;
+  return payWith === "SOL" ? settledAmount * (getSolPrice() ?? 0) : settledAmount;
+}
+
+/** Turns a landed xStock swap into the TradeResult every screen understands. */
+export function fillToTradeResult(
+  fill: SwapFill,
+  info: { ticker: TickerSymbol; side: TradeSide; payWith: SettlementCurrency; tokenDecimals: number },
+): TradeResult {
+  const isBuy = info.side === "buy";
+  const settle = SETTLEMENT[info.payWith];
+  const shares = fromBaseUnits(isBuy ? fill.outUnits : fill.inUnits, info.tokenDecimals);
+  const settledAmount = fromBaseUnits(isBuy ? fill.inUnits : fill.outUnits, settle.decimals);
+  const dollars = settlementDollars(isBuy ? fill.inUsd : fill.outUsd, settledAmount, info.payWith);
+  return {
+    success: true,
+    mode: "live",
+    ticker: info.ticker,
+    side: info.side,
+    quantity: shares,
+    pricePerShare: shares > 0 ? dollars / shares : 0,
+    totalValue: dollars,
+    txId: fill.signature,
+    timestamp: Date.now(),
+    settledIn: info.payWith,
+    settledAmount,
   };
 }
 
@@ -144,7 +226,7 @@ export function settlementBaseUnits(dollars: number, payWith: SettlementCurrency
 }
 
 async function executeLiveTrade(
-  { ticker, side, quantity, totalValue, payWith = "SOL" }: TradeParams,
+  { ticker, side, quantity, totalValue, payWith = "SOL", copiedFromInvestorId }: TradeParams,
   wallet: TradeWallet,
 ): Promise<TradeResult> {
   const token = getTokenForSymbol(ticker);
@@ -157,34 +239,11 @@ async function executeLiveTrade(
       inputMint: isBuy ? settle.mint : token.mint,
       outputMint: isBuy ? token.mint : settle.mint,
       amountBaseUnits: isBuy ? settlementBaseUnits(totalValue, payWith) : toBaseUnits(quantity, token.decimals),
+      inDecimals: isBuy ? settle.decimals : token.decimals,
+      outDecimals: isBuy ? token.decimals : settle.decimals,
     },
     wallet,
+    { payWith, trade: { kind: "xstock", ticker, side, copiedFromInvestorId } },
   );
-
-  const shares = fromBaseUnits(isBuy ? fill.outUnits : fill.inUnits, token.decimals);
-  const settledAmount = fromBaseUnits(isBuy ? fill.inUnits : fill.outUnits, settle.decimals);
-  // Dollar value: Jupiter's own USD valuation of the leg when it gives one,
-  // otherwise the settlement amount at the live SOL price.
-  const jupiterUsd = isBuy ? fill.inUsd : fill.outUsd;
-  const solUsd = getSolPrice() ?? 0;
-  const dollars =
-    typeof jupiterUsd === "number" && jupiterUsd > 0
-      ? jupiterUsd
-      : payWith === "SOL"
-        ? settledAmount * solUsd
-        : settledAmount;
-
-  return {
-    success: true,
-    mode: "live",
-    ticker,
-    side,
-    quantity: shares,
-    pricePerShare: shares > 0 ? dollars / shares : 0,
-    totalValue: dollars,
-    txId: fill.signature,
-    timestamp: Date.now(),
-    settledIn: payWith,
-    settledAmount,
-  };
+  return fillToTradeResult(fill, { ticker, side, payWith, tokenDecimals: token.decimals });
 }

@@ -141,12 +141,12 @@ export interface OptionTransaction {
 }
 
 /** A message in a per-ticker demo chat room. Local-only — see use-chat.ts. */
+/** One post in a ticker's room. The author is a wallet; profiles (if claimed) supply the name. */
 export interface ChatMessage {
   id: string;
-  roomId: TickerSymbol;
-  authorName: string;
-  authorInitials: string;
-  authorColor: string;
+  room: string;
+  wallet: string;
   body: string;
-  timestamp: number;
+  /** Unix ms. */
+  createdAt: number;
 }

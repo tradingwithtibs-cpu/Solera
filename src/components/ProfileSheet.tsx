@@ -4,6 +4,19 @@ import { useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { BIO_MAX, NAME_MAX, buildProfileClaimMessage, validateProfileInput, type Profile, type ProfileInput } from "@/lib/profiles";
 import { setProfile } from "@/hooks/use-profiles";
+import { isDeferredSigner, stageContinuation } from "@/lib/deferred-signing";
+
+/** POSTs a signed claim; shared with the deeplink resumer, which has the signature but not this sheet. */
+export async function submitProfileClaim(wallet: string, profile: ProfileInput, issuedAt: number, signatureBase64: string): Promise<Profile> {
+  const res = await fetch("/api/profile", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ wallet, profile, issuedAt, signature: signatureBase64 }),
+  });
+  const data = (await res.json()) as { profile?: Profile; error?: string };
+  if (!res.ok || !data.profile) throw new Error(data.error ?? "Couldn't save your profile.");
+  return data.profile;
+}
 
 /**
  * Claim or edit the connected wallet's profile. Saving asks the wallet to
@@ -11,7 +24,7 @@ import { setProfile } from "@/hooks/use-profiles";
  * the server checks that signature before writing. No email, no password.
  */
 export function ProfileSheet({ existing, onClose }: { existing: Profile | null; onClose: () => void }) {
-  const { publicKey, signMessage } = useWallet();
+  const { publicKey, signMessage, wallet: connected } = useWallet();
   const [form, setForm] = useState<ProfileInput>({
     handle: existing?.handle ?? "",
     name: existing?.name ?? "",
@@ -38,16 +51,12 @@ export function ProfileSheet({ existing, onClose }: { existing: Profile | null; 
       const wallet = publicKey.toBase58();
       const issuedAt = Date.now();
       const message = buildProfileClaimMessage(wallet, form, issuedAt);
+      // On iOS Safari the signature comes back on a fresh page load; DeepLinkResumer finishes the save.
+      if (isDeferredSigner(connected?.adapter)) stageContinuation({ kind: "profile", wallet, profile: form, issuedAt });
       const sig = await signMessage(new TextEncoder().encode(message));
       setStatus("saving");
-      const res = await fetch("/api/profile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ wallet, profile: form, issuedAt, signature: Buffer.from(sig).toString("base64") }),
-      });
-      const data = (await res.json()) as { profile?: Profile; error?: string };
-      if (!res.ok || !data.profile) throw new Error(data.error ?? "Couldn't save your profile.");
-      setProfile(data.profile);
+      const saved = await submitProfileClaim(wallet, form, issuedAt, Buffer.from(sig).toString("base64"));
+      setProfile(saved);
       setStatus("done");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Something went wrong";

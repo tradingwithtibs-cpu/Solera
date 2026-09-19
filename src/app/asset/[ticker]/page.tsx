@@ -12,6 +12,7 @@ import { OwnedPumpingBadge } from "@/components/OwnedPumpingBadge";
 import { WatchlistStarButton } from "@/components/WatchlistStarButton";
 import { EffectivePriceDisplay } from "@/components/EffectivePriceDisplay";
 import { NewsList } from "@/components/NewsList";
+import { ChatRoomCard } from "@/components/ChatRoomCard";
 import { LoadingState } from "@/components/LoadingState";
 import { formatCompactUsd } from "@/lib/pre-ipo";
 
@@ -64,6 +65,8 @@ export default function AssetDetailPage() {
         )}
         <AssetPriceChart ticker={ticker.symbol} color={ticker.color} />
       </div>
+
+      <ChatRoomCard ticker={ticker.symbol} />
 
       <AssetModeSection ticker={ticker.symbol} />
 

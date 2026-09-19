@@ -7,6 +7,8 @@ import { PhantomWalletAdapter, SolflareWalletAdapter } from "@solana/wallet-adap
 import type { WalletError } from "@solana/wallet-adapter-base";
 import { clusterApiUrl } from "@solana/web3.js";
 import { ConnectWalletProvider } from "./ConnectWalletProvider";
+import { DeepLinkResumer } from "./DeepLinkResumer";
+import { PhantomDeepLinkWalletAdapter } from "@/lib/phantom-deeplink-adapter";
 
 // Default styles for the wallet selection modal — overridden in globals.css
 // to match the app's own palette rather than the library's default purple.
@@ -26,7 +28,12 @@ export function SolanaProvider({ children }: { children: React.ReactNode }) {
   // Explicit adapters for the two dominant wallets; most modern wallets also
   // auto-register via the Wallet Standard and show up without needing an
   // adapter listed here at all.
-  const wallets = useMemo(() => [new PhantomWalletAdapter(), new SolflareWalletAdapter()], []);
+  // Plus Phantom over deeplinks for iPhone Safari, where no wallet can
+  // inject itself: it reports Unsupported everywhere else.
+  const wallets = useMemo(() => {
+    const phantom = new PhantomWalletAdapter();
+    return [phantom, new SolflareWalletAdapter(), new PhantomDeepLinkWalletAdapter({ icon: phantom.icon })];
+  }, []);
 
   // Without this the adapter console.error()s every wallet error, and a user
   // simply closing the Phantom popup ("User rejected the request") surfaces
@@ -41,7 +48,10 @@ export function SolanaProvider({ children }: { children: React.ReactNode }) {
     <ConnectionProvider endpoint={endpoint}>
       <WalletProvider wallets={wallets} autoConnect onError={onError}>
         <WalletModalProvider>
-          <ConnectWalletProvider>{children}</ConnectWalletProvider>
+          <ConnectWalletProvider>
+            <DeepLinkResumer />
+            {children}
+          </ConnectWalletProvider>
         </WalletModalProvider>
       </WalletProvider>
     </ConnectionProvider>

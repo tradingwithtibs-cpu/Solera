@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { executeTrade, type TradeParams, type TradeResult } from "@/lib/trade";
+import { isDeferredSigner } from "@/lib/deferred-signing";
 import { useTradeMode } from "./use-trade-mode";
 
 export type TradeStatus = "idle" | "pending" | "success" | "error";
@@ -18,7 +19,8 @@ export function useExecuteTrade() {
   const [result, setResult] = useState<TradeResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { isLive } = useTradeMode();
-  const { publicKey, signTransaction } = useWallet();
+  const { publicKey, signTransaction, wallet: connectedWallet } = useWallet();
+  const deferred = isDeferredSigner(connectedWallet?.adapter);
 
   const inFlight = useRef(false);
   const run = useCallback(
@@ -29,7 +31,7 @@ export function useExecuteTrade() {
       setError(null);
       try {
         const wallet =
-          isLive && publicKey && signTransaction ? { publicKey, signTransaction } : undefined;
+          isLive && publicKey && signTransaction ? { publicKey, signTransaction, deferred } : undefined;
         if (isLive && !wallet) throw new Error("Connect a wallet that can sign transactions.");
         const res = await executeTrade(params, wallet);
         onFilled?.(res);
@@ -44,7 +46,7 @@ export function useExecuteTrade() {
         inFlight.current = false;
       }
     },
-    [isLive, publicKey, signTransaction],
+    [isLive, publicKey, signTransaction, deferred],
   );
 
   const reset = useCallback(() => {

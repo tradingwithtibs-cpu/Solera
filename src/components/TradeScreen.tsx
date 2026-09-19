@@ -123,7 +123,14 @@ export function TradeScreen() {
   const handleConfirm = async () => {
     if (!canSubmit || status === "pending") return;
     const tradeResult = await run(
-      { ticker: symbol, side, quantity: estimatedShares, totalValue: numericAmount, payWith },
+      {
+        ticker: symbol,
+        side,
+        quantity: estimatedShares,
+        totalValue: numericAmount,
+        payWith,
+        copiedFromInvestorId: side === "buy" ? refInvestor?.id : undefined,
+      },
       (fill) => {
         recordTrade({
           ticker: fill.ticker,

@@ -1,93 +1,94 @@
 "use client";
 
-import { useCallback, useEffect, useSyncExternalStore } from "react";
-import { seedMessagesForRoom } from "@/lib/mock-chat";
-import type { ChatMessage, TickerSymbol } from "@/lib/types";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { getSupabaseAnon } from "@/lib/supabase";
+import { mergeMessages, rowToMessage, type MessageRow } from "@/lib/chat";
+import { requestProfiles } from "./use-profiles";
+import type { ChatMessage } from "@/lib/types";
 
-const STORAGE_KEY = "stocklana:chat";
-
-type ChatStore = Partial<Record<TickerSymbol, ChatMessage[]>>;
-
-function readFromStorage(): ChatStore {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as ChatStore) : {};
-  } catch {
-    return {};
-  }
-}
-
-// Module-level store, same pattern as use-portfolio.ts / use-followed-investors.ts.
-// `null` means "not yet hydrated from localStorage" — distinct from a room
-// that's genuinely never had a message sent in it (which falls back to seed
-// data instead of appearing empty).
-let snapshot: ChatStore | null = typeof window !== "undefined" ? readFromStorage() : null;
-const listeners = new Set<() => void>();
-
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
-
-function getSnapshot() {
-  return snapshot;
-}
-
-function getServerSnapshot(): ChatStore | null {
-  return null;
-}
-
-function persist(next: ChatStore) {
-  snapshot = next;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-  } catch {
-    // Ignore write failures (private browsing, storage disabled, etc.)
-  }
-  listeners.forEach((listener) => listener());
-}
-
-interface Author {
-  name: string;
-  initials: string;
-  avatarColor: string;
-}
-
-function sendMessage(roomId: TickerSymbol, body: string, author: Author) {
-  const current = snapshot ?? {};
-  const existing = current[roomId] ?? seedMessagesForRoom(roomId);
-
-  const message: ChatMessage = {
-    id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-    roomId,
-    authorName: author.name,
-    authorInitials: author.initials,
-    authorColor: author.avatarColor,
-    body,
-    timestamp: Date.now(),
-  };
-
-  persist({ ...current, [roomId]: [...existing, message] });
-}
+const POLL_MS = 4_000;
 
 /**
- * Messages for one ticker's demo chat room. Entirely local/mocked — see
- * the architecture note in mock-chat.ts and the conversation that led here:
- * swapping this for a real real-time backend later only means rewriting
- * this file's internals (and adding real user identity), not the screens
- * that consume it.
+ * A ticker's room, live. Messages arrive two ways: a poll every few
+ * seconds (always), and a Supabase Realtime subscription when the
+ * deployment has one (instant). Both feed the same deduplicated list.
+ * Posting goes through /api/chat with the caller's session token.
  */
-export function useRoomMessages(roomId: TickerSymbol) {
-  const store = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  const messages = store ? (store[roomId] ?? seedMessagesForRoom(roomId)) : null;
+export function useRoomMessages(room: string | undefined) {
+  const [messages, setMessages] = useState<ChatMessage[] | null>(null);
+  const [configured, setConfigured] = useState<boolean | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  // Which room the latest effect is for, so a response from a room we've since left is dropped.
+  const roomRef = useRef(room);
 
-  const send = useCallback((body: string, author: Author) => sendMessage(roomId, body, author), [roomId]);
-
-  // One-time nudge past the `null` SSR placeholder to the real value
-  // already sitting in `snapshot` — see use-followed-investors.ts.
-  useEffect(() => {
-    listeners.forEach((listener) => listener());
+  const append = useCallback((incoming: ChatMessage[]) => {
+    if (incoming.length > 0) requestProfiles(incoming.map((m) => m.wallet));
+    setMessages((prev) => mergeMessages(prev ?? [], incoming));
   }, []);
 
-  return { messages, isLoaded: store !== null, sendMessage: send };
+  const load = useCallback(async () => {
+    if (!room) return;
+    try {
+      const res = await fetch(`/api/chat?room=${encodeURIComponent(room)}`, { cache: "no-store" });
+      const data = (await res.json()) as { messages?: ChatMessage[]; configured?: boolean; error?: string };
+      if (!res.ok) throw new Error(data.error ?? `Chat unavailable (${res.status})`);
+      if (roomRef.current !== room) return;
+      setConfigured(data.configured ?? false);
+      setError(null);
+      const list = data.messages ?? [];
+      requestProfiles(list.map((m) => m.wallet));
+      setMessages((prev) => mergeMessages(prev ?? [], list));
+    } catch (err) {
+      if (roomRef.current !== room) return;
+      setError(err instanceof Error ? err.message : "Chat unavailable");
+      setMessages((prev) => prev ?? []);
+    }
+  }, [room]);
+
+  useEffect(() => {
+    roomRef.current = room;
+    if (!room) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMessages(null);
+    // Fetch on mount, then poll while the tab is visible; setState only after the network round trip.
+    load();
+    const tick = () => {
+      if (document.visibilityState === "visible") load();
+    };
+    const interval = setInterval(tick, POLL_MS);
+    document.addEventListener("visibilitychange", tick);
+
+    // Realtime: instant delivery when the table is in the publication (see supabase/chat.sql).
+    const supabase = getSupabaseAnon();
+    const channel = supabase
+      ?.channel(`room:${room}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages", filter: `room=eq.${room}` }, (payload) => {
+        append([rowToMessage(payload.new as MessageRow)]);
+      })
+      .subscribe();
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", tick);
+      if (channel) supabase?.removeChannel(channel);
+    };
+  }, [room, load, append]);
+
+  const send = useCallback(
+    async (body: string, token: string) => {
+      if (!room) throw new Error("No room.");
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ room, body }),
+      });
+      const data = (await res.json()) as { message?: ChatMessage; error?: string };
+      if (!res.ok || !data.message) throw new Error(data.error ?? "Couldn't post that.");
+      append([data.message]);
+      return data.message;
+    },
+    [room, append],
+  );
+
+  return { messages, configured, error, send, refresh: load };
 }
