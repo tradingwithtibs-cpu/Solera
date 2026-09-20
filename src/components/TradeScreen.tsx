@@ -296,7 +296,7 @@ export function TradeScreen() {
         <div className="mt-auto p-5">
           <p className="mb-4 text-xs leading-relaxed text-neutral-500">
             {isLive
-              ? "This is a real swap through Jupiter on Solana mainnet. Your wallet will ask you to sign. The final amount can differ slightly from the estimate. Copying a holding does not guarantee a return."
+              ? `This is a real swap through Jupiter on Solana mainnet. Your wallet will ask you to sign. The final amount can differ slightly from the estimate. ${symbol} is issued by a third party, not by Solera; whether you may hold it depends on where you live, and xStocks are not offered to US persons. Copying a holding does not guarantee a return.`
               : "Simulated funds and prices. No real order is placed. Copying a holding does not guarantee a return."}
           </p>
           {error && (

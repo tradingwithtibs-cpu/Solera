@@ -185,8 +185,10 @@ export function PreIpoBuySheet({ token, onClose }: { token: PreIpoToken; onClose
                   </p>
                 )}
                 <p className="text-[11px] leading-relaxed text-neutral-400">
-                  Real swap on Solana mainnet through Jupiter. Your wallet will ask you to sign. {token.issuer} tokens are
-                  not shares; see the issuer&apos;s terms. Not financial advice.
+                  Real swap on Solana mainnet through Jupiter. Your wallet will ask you to sign. {token.issuer} tokens give
+                  price exposure to the company; they are not shares and carry no ownership, votes, or place on the share
+                  register. Issued by {token.issuer}, not Solera; availability depends on where you live. Not financial
+                  advice.
                 </p>
                 <button
                   type="button"
