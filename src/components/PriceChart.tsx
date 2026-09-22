@@ -24,10 +24,10 @@ export function PriceChart({ history, color }: { history: number[]; color: strin
   const fillPath = `${linePath} L${points[points.length - 1][0].toFixed(1)},${HEIGHT} L${points[0][0].toFixed(1)},${HEIGHT} Z`;
 
   const rising = history[history.length - 1] >= history[0];
-  const strokeColor = rising ? "#059669" : "#e11d48";
+  const strokeColor = "currentColor";
 
   return (
-    <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} className="w-full" preserveAspectRatio="none" aria-hidden="true">
+    <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} className={`w-full ${rising ? "up" : "down"}`} preserveAspectRatio="none" aria-hidden="true">
       <defs>
         <linearGradient id={`chart-fill-${gradientId}-${color}`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor={strokeColor} stopOpacity="0.16" />

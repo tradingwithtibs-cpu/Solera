@@ -32,11 +32,25 @@ export interface LiveSnapshot {
   history: Partial<Record<TickerSymbol, number[]>>;
   /** Jupiter's 24h price change per ticker, in percent. */
   change24h: Partial<Record<TickerSymbol, number>>;
+  /** Lazily fetched ranges beyond the 30-day series: 5-minute closes for 24h, daily closes for 180d. */
+  ranges: Partial<Record<TickerSymbol, Partial<Record<RangeKey, number[]>>>>;
   /** Unix ms of the last successful price fetch; drives the footer's "refreshed" time. */
   fetchedAt?: number;
 }
 
-let snapshot: LiveSnapshot = { prices: {}, underlying: {}, history: {}, change24h: {} };
+let snapshot: LiveSnapshot = { prices: {}, underlying: {}, history: {}, change24h: {}, ranges: {} };
+
+/** Ranges the price-history route serves on demand. */
+export type RangeKey = "24h" | "180d";
+
+export function setRangeHistory(ticker: TickerSymbol, range: RangeKey, closes: number[]) {
+  commit({ ...snapshot, ranges: { ...snapshot.ranges, [ticker]: { ...(snapshot.ranges[ticker] ?? {}), [range]: closes } } });
+}
+
+/** Whether a lazily fetched range is in the store. */
+export function hasRangeHistory(ticker: TickerSymbol, range: RangeKey): boolean {
+  return Array.isArray(snapshot.ranges[ticker]?.[range]);
+}
 
 export function setChange24h(ticker: TickerSymbol, pct: number) {
   commit({ ...snapshot, change24h: { ...snapshot.change24h, [ticker]: pct } });
@@ -70,17 +84,20 @@ export function setHistory(ticker: TickerSymbol, closes: number[]) {
  * that (or if the history source is down). Same fallback contract as
  * `getEffectivePrice`.
  */
-export type HistoryWindow = "7d" | "30d";
+export type HistoryWindow = "24h" | "7d" | "30d" | "180d";
 
 export function getEffectiveHistory(ticker: TickerSymbol, window: HistoryWindow = "7d"): number[] {
+  // 24h and 180d exist only when fetched: never a placeholder for those.
+  if (window === "24h" || window === "180d") return snapshot.ranges[ticker]?.[window] ?? [];
   const real = snapshot.history[ticker];
   if (!real) return getTickerInfo(ticker).history;
   // The route returns 30 days at a steady cadence; the last ~quarter is 7 days.
   return window === "30d" ? real : real.slice(-Math.max(2, Math.round(real.length * 7 / 30)));
 }
 
-/** Whether `ticker`'s chart is drawn from real market data. */
-export function isLiveHistory(ticker: TickerSymbol): boolean {
+/** Whether `ticker`'s chart for this window is drawn from real market data. */
+export function isLiveHistory(ticker: TickerSymbol, window: HistoryWindow = "7d"): boolean {
+  if (window === "24h" || window === "180d") return hasRangeHistory(ticker, window);
   return snapshot.history[ticker] !== undefined;
 }
 const listeners = new Set<() => void>();

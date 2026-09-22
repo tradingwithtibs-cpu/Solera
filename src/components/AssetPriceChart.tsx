@@ -1,39 +1,45 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
-import { getEffectiveHistory, getLivePrices, isLiveHistory, subscribeLivePrices } from "@/lib/live-prices";
+import { useState, useSyncExternalStore } from "react";
+import { getEffectiveHistory, getLivePrices, isLiveHistory, subscribeLivePrices, type HistoryWindow } from "@/lib/live-prices";
+import { useHistoryRange } from "@/hooks/use-history-range";
 import { trailingChangePct } from "@/lib/portfolio";
 import { PriceChart } from "./PriceChart";
 import { PerformanceBadge } from "./PerformanceBadge";
+import { RangeSwitch, rangeCaption } from "./ui/RangeSwitch";
 import type { TickerSymbol } from "@/lib/types";
 
 /**
- * The asset page's chart and trailing-change badge, as one client island:
- * both read the same real 7-day series (see app/api/price-history) so the
- * number under the price and the line beneath it can never disagree.
+ * The asset chart with its range switch and trailing-change badge, as one
+ * client island: the number and the line read the same real series (see
+ * app/api/price-history), so they can never disagree. 24H and 6M are
+ * fetched on first use; until then the chart says it is loading rather
+ * than drawing a placeholder.
  */
 export function AssetPriceChart({ ticker, color }: { ticker: TickerSymbol; color: string }) {
+  const [range, setRange] = useState<HistoryWindow>("7d");
   useSyncExternalStore(subscribeLivePrices, getLivePrices, getLivePrices);
-  const live = isLiveHistory(ticker);
-  const history = getEffectiveHistory(ticker);
-  if (history.length < 2) {
-    // Catalog tokens before their history arrives (or if the source is
-    // rate-limited): say so rather than draw a placeholder.
-    return (
-      <div className="mx-5 mt-3 rounded-3xl border border-dashed border-neutral-200 p-4 text-center text-xs text-neutral-400">
-        7-day chart loading…
-      </div>
-    );
-  }
+  useHistoryRange([ticker], range);
+  const live = isLiveHistory(ticker, range);
+  const history = getEffectiveHistory(ticker, range);
+  const change = history.length >= 2 ? ((history[history.length - 1] - history[0]) / history[0]) * 100 : trailingChangePct(ticker);
+
   return (
-    <>
-      <PerformanceBadge value={trailingChangePct(ticker)} />
-      <div className="mx-5 mt-3 rounded-3xl border border-neutral-100 p-4">
-        <PriceChart history={history} color={color} />
-        <p className="mt-2 text-center text-xs text-neutral-400">
-          {live ? "Last 7 days · Solana DEX price" : "Placeholder series · live chart loading"}
-        </p>
+    <div className="mx-5 mt-3">
+      <div className="flex items-center justify-between gap-3">
+        {history.length >= 2 ? <PerformanceBadge value={change} /> : <span />}
+        <RangeSwitch value={range} onChange={setRange} />
       </div>
-    </>
+      {history.length < 2 ? (
+        <div className="mt-3 rounded-[var(--radius-panel)] border border-dashed border-line-strong p-4 text-center text-xs text-muted" aria-busy="true">
+          {rangeCaption(range).split(" · ")[0]} chart loading…
+        </div>
+      ) : (
+        <div className="mt-3 rounded-[var(--radius-panel)] border border-line p-4">
+          <PriceChart history={history} color={color} />
+          <p className="mt-2 text-center text-xs text-muted">{live ? `${rangeCaption(range)} · Solana DEX price` : "Placeholder series · live chart loading"}</p>
+        </div>
+      )}
+    </div>
   );
 }

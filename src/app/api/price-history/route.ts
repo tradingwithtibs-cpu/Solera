@@ -37,10 +37,17 @@ const COINGECKO_IDS: Record<TickerSymbol, string> = {
 
 export interface PriceHistoryResponse {
   source: "coingecko";
-  /** Closes over the last 30 days, oldest → newest, in USD, ~4 per day. */
+  /** Which window the series cover. */
+  range?: Range;
+  /** Closes oldest → newest, in USD: ~4 per day for 30d, every 5 minutes for 24h, daily for 180d. */
   history: Partial<Record<TickerSymbol, number[]>>;
   fetchedAt: number;
 }
+
+type Range = "24h" | "30d" | "180d";
+const RANGE_DAYS: Record<Range, number> = { "24h": 1, "30d": 30, "180d": 180 };
+const RANGE_TTL_MS: Record<Range, number> = { "24h": 5 * 60_000, "30d": CACHE_TTL_MS, "180d": 6 * 60 * 60_000 };
+const RANGE_MAX_POINTS: Record<Range, number> = { "24h": 300, "30d": MAX_POINTS, "180d": 200 };
 
 const TICKERS = Object.keys(COINGECKO_IDS) as TickerSymbol[];
 let cached: { at: number; body: PriceHistoryResponse } | null = null;
@@ -49,19 +56,36 @@ let refreshing: Promise<PriceHistoryResponse | null> | null = null;
 
 const single = new Map<string, { at: number; series: number[] }>();
 
+async function coingeckoIdFor(ticker: string): Promise<string | null> {
+  const featured = COINGECKO_IDS[ticker as TickerSymbol];
+  if (featured) return featured;
+  const token = await findCatalogToken(ticker);
+  return token?.coingeckoId ?? null;
+}
+
 export async function GET(request: NextRequest) {
-  // One catalog ticker on demand (asset page), cached per ticker.
+  const rangeParam = request.nextUrl.searchParams.get("range");
+  const range: Range = rangeParam === "24h" || rangeParam === "180d" ? rangeParam : "30d";
   const one = request.nextUrl.searchParams.get("ticker");
-  if (one && !COINGECKO_IDS[one as TickerSymbol]) {
-    const hit = single.get(one);
-    if (hit && Date.now() - hit.at < CACHE_TTL_MS) return NextResponse.json({ source: "coingecko", history: { [one]: hit.series }, fetchedAt: hit.at });
-    const token = await findCatalogToken(one);
-    if (!token?.coingeckoId) return NextResponse.json({ error: "Unknown ticker" }, { status: 404 });
+
+  // One ticker on demand: every range for catalog tokens, the 24h/180d
+  // ranges for featured ones too (only the 30d sweep is fetched for all
+  // eight at boot). Cached per (ticker, range) so the boot burst stays small.
+  if (one && (range !== "30d" || !COINGECKO_IDS[one as TickerSymbol])) {
+    const key = `${one}:${range}`;
+    const hit = single.get(key);
+    if (hit && Date.now() - hit.at < RANGE_TTL_MS[range]) {
+      return NextResponse.json({ source: "coingecko", range, history: { [one]: hit.series }, fetchedAt: hit.at });
+    }
+    const id = await coingeckoIdFor(one);
+    if (!id) return NextResponse.json({ error: "Unknown ticker" }, { status: 404 });
     try {
-      const series = await fetchSeriesById(token.coingeckoId);
-      single.set(one, { at: Date.now(), series });
-      return NextResponse.json({ source: "coingecko", history: { [one]: series }, fetchedAt: Date.now() });
+      const series = await fetchSeriesById(id, range);
+      single.set(key, { at: Date.now(), series });
+      return NextResponse.json({ source: "coingecko", range, history: { [one]: series }, fetchedAt: Date.now() });
     } catch {
+      // A stale hit beats nothing.
+      if (hit) return NextResponse.json({ source: "coingecko", range, history: { [one]: hit.series }, fetchedAt: hit.at });
       return NextResponse.json({ error: "Price history unavailable" }, { status: 502 });
     }
   }
@@ -84,7 +108,7 @@ export async function GET(request: NextRequest) {
 }
 
 async function refresh(): Promise<PriceHistoryResponse | null> {
-  const body: PriceHistoryResponse = { source: "coingecko", history: {}, fetchedAt: Date.now() };
+  const body: PriceHistoryResponse = { source: "coingecko", range: "30d", history: {}, fetchedAt: Date.now() };
   const results = await Promise.allSettled(TICKERS.map((t) => fetchSeries(t)));
   results.forEach((r, i) => {
     if (r.status === "fulfilled" && r.value.length >= 2) body.history[TICKERS[i]] = r.value;
@@ -130,8 +154,9 @@ async function fetchSeries(ticker: TickerSymbol): Promise<number[]> {
   return fetchSeriesById(COINGECKO_IDS[ticker]);
 }
 
-async function fetchSeriesById(coingeckoId: string): Promise<number[]> {
-  const res = await fetch(`${COINGECKO}/${coingeckoId}/market_chart?vs_currency=usd&days=${DAYS}`, {
+async function fetchSeriesById(coingeckoId: string, range: Range = "30d"): Promise<number[]> {
+  const days = range === "30d" ? DAYS : RANGE_DAYS[range];
+  const res = await fetch(`${COINGECKO}/${coingeckoId}/market_chart?vs_currency=usd&days=${days}`, {
     headers: { Accept: "application/json" },
     cache: "no-store",
     signal: AbortSignal.timeout(10_000),
@@ -139,7 +164,7 @@ async function fetchSeriesById(coingeckoId: string): Promise<number[]> {
   if (!res.ok) throw new Error(`coingecko ${res.status}`);
   const data = (await res.json()) as { prices?: [number, number][] };
   const prices = (data.prices ?? []).map(([, price]) => price).filter((p) => Number.isFinite(p) && p > 0);
-  return downsample(prices, MAX_POINTS);
+  return downsample(prices, RANGE_MAX_POINTS[range]);
 }
 
 /** Keeps the first and last points exactly, evenly spaced picks in between. */
