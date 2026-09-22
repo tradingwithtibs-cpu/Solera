@@ -1,0 +1,116 @@
+/*
+ * Panel placement and breakpoints. Card chrome (colours, head, handles'
+ * look) lives in globals.css; this file only says where cards go.
+ */
+.panel-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-auto-rows: var(--grid-row, 24px);
+  gap: var(--grid-gap, 8px);
+  padding: 8px 16px 24px;
+  max-width: var(--grid-max);
+  width: 100%;
+  margin: 0 auto;
+  align-items: stretch;
+}
+.panel-grid > .panel {
+  grid-area: var(--row) / var(--col) / span var(--h) / span var(--w);
+  height: 100%;
+}
+.panel-grid[data-entered] > .panel {
+  animation: none;
+}
+.panel > .panel-body {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.panel.is-over-before[data-axis="y"]::before {
+  inset: -6px 0 auto 0;
+  width: auto;
+  height: 3px;
+}
+.panel.is-over-after[data-axis="y"]::after {
+  inset: auto 0 -6px 0;
+  width: auto;
+  height: 3px;
+}
+.panel-grid[data-dragging] {
+  cursor: grabbing;
+}
+.panel-ghost {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.92;
+  background: var(--ink-panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  outline: 1px solid var(--era-3);
+  box-shadow: var(--glow-action);
+  overflow: hidden;
+}
+.panel-ghost .panel-head {
+  border-bottom: 0;
+}
+.reset-layout {
+  color: var(--text-accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+@media (pointer: coarse) {
+  .panel-grip {
+    padding: 12px;
+    margin: -12px;
+  }
+  .panel-resize {
+    width: 28px;
+    height: 28px;
+    opacity: 0.5;
+  }
+}
+@media (max-width: 1100px) {
+  .panel-grid > .panel {
+    grid-area: auto;
+    grid-column: 1 / -1;
+    height: auto;
+  }
+}
+@media (max-width: 767px) {
+  .panel-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px 12px calc(var(--tabbar-h, 56px) + 28px);
+    max-width: none;
+  }
+  .panel-grid > .panel {
+    order: var(--phone-order, 0);
+    animation-duration: 0.6s;
+  }
+  .panel-grid > .panel[data-phone-hidden] {
+    display: none;
+  }
+  .panel[data-sized] > .panel-body {
+    overflow: visible;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .panel,
+  .panel-ghost {
+    animation: none;
+    transition: none;
+  }
+}
