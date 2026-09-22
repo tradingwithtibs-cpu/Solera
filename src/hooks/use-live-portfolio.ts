@@ -8,6 +8,7 @@ import { USDC } from "@/lib/tokens";
 import { symbolForMint } from "@/lib/catalog";
 import { PRE_IPO_MINTS } from "@/lib/pre-ipo";
 import { costBasisFromTrades } from "@/lib/live-ledger";
+import { getStoredSession } from "./use-session";
 import type { HoldingPosition, TickerSymbol, TradeSide, Transaction } from "@/lib/types";
 
 const POLL_INTERVAL_MS = 15_000;
@@ -51,6 +52,37 @@ export function recordLiveTrade(wallet: string, txn: Transaction) {
     // Ignore write failures.
   }
   ledgerListeners.forEach((l) => l());
+  void publishLiveFill(wallet, txn);
+}
+
+/** Puts a landed trade on the public tape when the wallet is signed in; the server verifies it on-chain. */
+async function publishLiveFill(wallet: string, txn: Transaction & { settledIn?: "SOL" | "USDC"; settledAmount?: number }) {
+  const session = getStoredSession();
+  if (!session || !txn.signature || (session.kind === "wallet" && session.wallet !== wallet)) return;
+  try {
+    await fetch("/api/fills", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.token}` },
+      body: JSON.stringify({
+        signature: txn.signature,
+        ticker: txn.ticker,
+        side: txn.side ?? "buy",
+        quantity: txn.quantity,
+        pricePerShare: txn.pricePerShare,
+        totalValue: txn.totalValue,
+        settledIn: txn.settledIn,
+        settledAmount: txn.settledAmount,
+        note: txn.note,
+        wrongIf: txn.wrongIf,
+        leg: txn.leg,
+        via: txn.via ?? "ticket",
+        planId: txn.planId,
+        copiedFrom: txn.copiedFromInvestorId,
+      }),
+    });
+  } catch {
+    // The local ledger is the source of truth for this wallet; the tape can catch up later.
+  }
 }
 
 // --- hook ---------------------------------------------------------------
@@ -137,6 +169,13 @@ export function useLivePortfolio() {
       totalValue: number;
       txId: string;
       copiedFromInvestorId?: string;
+      note?: string;
+      wrongIf?: string;
+      leg?: "gap" | "mark";
+      via?: "ticket" | "plan" | "agent" | "copy";
+      planId?: string;
+      settledIn?: "SOL" | "USDC";
+      settledAmount?: number;
     }) => {
       if (!address) return;
       recordLiveTrade(address, {
@@ -149,7 +188,13 @@ export function useLivePortfolio() {
         timestamp: Date.now(),
         copiedFromInvestorId: params.copiedFromInvestorId,
         signature: params.txId,
-      });
+        note: params.note,
+        wrongIf: params.wrongIf,
+        leg: params.leg,
+        via: params.via,
+        planId: params.planId,
+        ...(params.settledIn ? { settledIn: params.settledIn, settledAmount: params.settledAmount } : {}),
+      } as Transaction);
       refresh();
     },
     [address, refresh],

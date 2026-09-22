@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useSyncExternalStore } from "react";
-import { MY_CASH_BALANCE, MY_HOLDINGS } from "@/lib/mock-data";
+import { MY_CASH_BALANCE } from "@/lib/mock-data";
+import { useSession } from "./use-session";
+import type { PracticeRow } from "@/lib/fills";
 import { isKnownTicker } from "@/lib/catalog";
 import type {
   HoldingPosition,
@@ -31,7 +33,8 @@ interface PortfolioState {
 function defaultState(): PortfolioState {
   return {
     cashBalance: MY_CASH_BALANCE,
-    holdings: MY_HOLDINGS.map((h) => ({ ...h })),
+    // A new visitor starts with cash and no positions (decision: no pre-loaded holdings).
+    holdings: [],
     transactions: [],
     optionPositions: [],
     optionTransactions: [],
@@ -188,6 +191,11 @@ function recordTrade(params: {
   pricePerShare: number;
   totalValue: number;
   copiedFromInvestorId?: string;
+  note?: string;
+  wrongIf?: string;
+  leg?: "gap" | "mark";
+  via?: "ticket" | "plan" | "agent" | "copy";
+  planId?: string;
 }) {
   // By the time a trade can be confirmed the store has necessarily already
   // hydrated (the Buy/Sell screen needs real cash/holdings to render at
@@ -205,6 +213,11 @@ function recordTrade(params: {
     totalValue: params.totalValue,
     timestamp: Date.now(),
     copiedFromInvestorId: params.copiedFromInvestorId,
+    note: params.note,
+    wrongIf: params.wrongIf,
+    leg: params.leg,
+    via: params.via,
+    planId: params.planId,
   };
 
   persist({
@@ -212,6 +225,11 @@ function recordTrade(params: {
     ...next,
     transactions: [transaction, ...current.transactions],
   });
+}
+
+/** True when this browser has any practice history worth importing into an account. */
+function localHasHistory(state: PortfolioState | null): boolean {
+  return !!state && (state.holdings.length > 0 || state.transactions.length > 0 || Math.abs(state.cashBalance - MY_CASH_BALANCE) > 0.005);
 }
 
 /**
@@ -243,7 +261,7 @@ function recordOptionsTrade(params: { contract: OptionContract; contracts: numbe
   });
 }
 
-export function usePortfolio() {
+function useLocalPortfolio() {
   const state = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const recordTradeCb = useCallback((params: Parameters<typeof recordTrade>[0]) => recordTrade(params), []);
   const recordOptionsTradeCb = useCallback(
@@ -267,4 +285,122 @@ export function usePortfolio() {
     recordTrade: recordTradeCb,
     recordOptionsTrade: recordOptionsTradeCb,
   };
+}
+
+// --- the server-side practice ledger for signed-in owners ------------------------
+
+interface ServerState {
+  owner: string;
+  cashBalance: number;
+  holdings: HoldingPosition[];
+  transactions: Transaction[];
+  version: number;
+}
+
+let serverState: ServerState | null = null;
+let serverLoading: string | null = null;
+const serverListeners = new Set<() => void>();
+
+function serverNotify() {
+  serverListeners.forEach((l) => l());
+}
+
+/** Replaces the server snapshot from a /api/practice or /api/practice/fill reply. */
+export function applyServerPractice(owner: string, portfolio: PracticeRow, transactions?: Transaction[], prepend?: Transaction) {
+  const existing = serverState?.owner === owner ? serverState.transactions : [];
+  serverState = {
+    owner,
+    cashBalance: portfolio.cash,
+    holdings: portfolio.holdings,
+    transactions: transactions ?? (prepend ? [prepend, ...existing] : existing),
+    version: portfolio.version,
+  };
+  serverNotify();
+}
+
+export function getServerPracticeVersion(): number | undefined {
+  return serverState?.version;
+}
+
+async function loadServerPractice(owner: string, token: string) {
+  if (serverLoading === owner) return;
+  serverLoading = owner;
+  try {
+    const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
+    const res = await fetch("/api/practice", { headers });
+    if (!res.ok) return;
+    const data = (await res.json()) as { portfolio: PracticeRow | null; transactions: Transaction[] };
+    if (data.portfolio) {
+      applyServerPractice(owner, data.portfolio, data.transactions);
+      return;
+    }
+    // First sign-in on this account: bring this device's practice history along, or start fresh.
+    const local = snapshot;
+    const body = localHasHistory(local)
+      ? { cash: local!.cashBalance, holdings: local!.holdings, fills: local!.transactions }
+      : null;
+    const seeded = await fetch(body ? "/api/practice/import" : "/api/practice/reset", { method: "POST", headers, body: body ? JSON.stringify(body) : "{}" });
+    if (!seeded.ok) return;
+    const created = (await seeded.json()) as { portfolio: PracticeRow };
+    applyServerPractice(owner, created.portfolio, body ? local!.transactions : []);
+  } catch {
+    // Offline or not migrated yet: the local store keeps serving.
+  } finally {
+    serverLoading = null;
+  }
+}
+
+const SERVER_POLL_MS = 15_000;
+
+function useServerPortfolio(owner: string | null, token: string | null) {
+  const state = useSyncExternalStore(
+    (l) => {
+      serverListeners.add(l);
+      return () => serverListeners.delete(l);
+    },
+    () => serverState,
+    () => null,
+  );
+  useEffect(() => {
+    if (!owner || !token) return;
+    const load = () => loadServerPractice(owner, token);
+    load();
+    const interval = setInterval(load, SERVER_POLL_MS);
+    const onFocus = () => load();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [owner, token]);
+  return owner && state?.owner === owner ? state : null;
+}
+
+/**
+ * The practice portfolio every screen reads: the account's server ledger
+ * when signed in (fills priced and settled by the server), this browser's
+ * local ledger otherwise. Same shape either way.
+ */
+export function usePortfolio() {
+  const local = useLocalPortfolio();
+  const { owner, token, signedIn } = useSession();
+  const server = useServerPortfolio(signedIn ? owner : null, signedIn ? token : null);
+  const serverRecord = useCallback((params: Parameters<typeof recordTrade>[0]) => {
+    // Server fills are settled by /api/practice/fill; the reply already replaced the snapshot.
+    void params;
+  }, []);
+  if (signedIn) {
+    return {
+      cashBalance: server?.cashBalance ?? 0,
+      holdings: server?.holdings ?? [],
+      transactions: server?.transactions ?? [],
+      optionPositions: [] as OptionPosition[],
+      optionTransactions: [] as OptionTransaction[],
+      isLoaded: server !== null,
+      recordTrade: serverRecord,
+      recordOptionsTrade: local.recordOptionsTrade,
+      source: "server" as const,
+    };
+  }
+  return { ...local, source: "local" as const };
 }

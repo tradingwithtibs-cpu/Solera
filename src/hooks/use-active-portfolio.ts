@@ -29,6 +29,13 @@ export function useActivePortfolio() {
     totalValue: number;
     txId: string;
     copiedFromInvestorId?: string;
+    note?: string;
+    wrongIf?: string;
+    leg?: "gap" | "mark";
+    via?: "ticket" | "plan" | "agent" | "copy";
+    planId?: string;
+    settledIn?: "SOL" | "USDC";
+    settledAmount?: number;
   }) => (isLive ? live.recordTrade(params) : practice.recordTrade(params));
 
   return isLive

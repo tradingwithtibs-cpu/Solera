@@ -150,7 +150,7 @@ async function resolve(pending: PendingRequest, result: DeepLinkResult): Promise
     }
     const fill = await finishDeferredSwap(c, bytes);
     if (c.trade.kind === "xstock") {
-      const { ticker, side, copiedFromInvestorId } = c.trade;
+      const { ticker, side, copiedFromInvestorId, note, wrongIf, leg, via, planId } = c.trade;
       const r = fillToTradeResult(fill, { ticker, side, payWith: c.payWith, tokenDecimals: side === "buy" ? c.outDecimals : c.inDecimals });
       recordLiveTrade(c.wallet, {
         id: r.txId,
@@ -162,7 +162,13 @@ async function resolve(pending: PendingRequest, result: DeepLinkResult): Promise
         timestamp: r.timestamp,
         copiedFromInvestorId,
         signature: r.txId,
-      });
+        note,
+        wrongIf,
+        leg,
+        via,
+        planId,
+        ...(r.settledIn ? { settledIn: r.settledIn, settledAmount: r.settledAmount } : {}),
+      } as Parameters<typeof recordLiveTrade>[1]);
       celebrateTrade();
       const settled = r.settledAmount !== undefined ? `${r.settledAmount.toFixed(c.payWith === "SOL" ? 4 : 2)} ${c.payWith}` : "";
       return {

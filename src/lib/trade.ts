@@ -19,6 +19,12 @@ export interface TradeParams {
   payWith?: SettlementCurrency;
   /** Set when the order came from "Copy" on an investor's holding; recorded with the trade. */
   copiedFromInvestorId?: string;
+  /** The thesis, optional and encouraged; stored with the fill. */
+  note?: string;
+  wrongIf?: string;
+  leg?: "gap" | "mark";
+  via?: "ticket" | "plan" | "agent" | "copy";
+  planId?: string;
 }
 
 /** What a live trade needs from the connected wallet. Matches wallet-adapter's shape. */
@@ -226,7 +232,7 @@ export function settlementBaseUnits(dollars: number, payWith: SettlementCurrency
 }
 
 async function executeLiveTrade(
-  { ticker, side, quantity, totalValue, payWith = "SOL", copiedFromInvestorId }: TradeParams,
+  { ticker, side, quantity, totalValue, payWith = "SOL", copiedFromInvestorId, note, wrongIf, leg, via, planId }: TradeParams,
   wallet: TradeWallet,
 ): Promise<TradeResult> {
   const token = getTokenForSymbol(ticker);
@@ -243,7 +249,7 @@ async function executeLiveTrade(
       outDecimals: isBuy ? token.decimals : settle.decimals,
     },
     wallet,
-    { payWith, trade: { kind: "xstock", ticker, side, copiedFromInvestorId } },
+    { payWith, trade: { kind: "xstock", ticker, side, copiedFromInvestorId, note, wrongIf, leg, via, planId } },
   );
   return fillToTradeResult(fill, { ticker, side, payWith, tokenDecimals: token.decimals });
 }

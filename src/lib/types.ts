@@ -88,6 +88,13 @@ export interface Transaction {
   copiedFromInvestorId?: string;
   /** Solana transaction signature — present only for live (on-chain) trades. */
   signature?: string;
+  /** The thesis behind the fill, optional and encouraged. */
+  note?: string;
+  wrongIf?: string;
+  /** Pre-IPO buys: which leg the thesis rides on. */
+  leg?: "gap" | "mark";
+  via?: "ticket" | "plan" | "agent" | "copy";
+  planId?: string;
 }
 
 export type OptionSide = "call" | "put";

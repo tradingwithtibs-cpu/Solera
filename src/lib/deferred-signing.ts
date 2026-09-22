@@ -27,7 +27,17 @@ export type Continuation =
       payWith: SettlementCurrency;
       wallet: string;
       trade:
-        | { kind: "xstock"; ticker: TickerSymbol; side: TradeSide; copiedFromInvestorId?: string }
+        | {
+            kind: "xstock";
+            ticker: TickerSymbol;
+            side: TradeSide;
+            copiedFromInvestorId?: string;
+            note?: string;
+            wrongIf?: string;
+            leg?: "gap" | "mark";
+            via?: "ticket" | "plan" | "agent" | "copy";
+            planId?: string;
+          }
         | { kind: "pre-ipo"; symbol: string; name: string };
     }
   | { kind: "profile"; wallet: string; profile: ProfileInput; issuedAt: number }
