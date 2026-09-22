@@ -11,7 +11,7 @@ load.extensions[".ts"] = (module, filename) =>
     }).outputText,
     filename,
   );
-const { validateProfileInput, buildProfileClaimMessage, isClaimFresh, normalizeProfileInput } = load("../src/lib/profiles.ts");
+const { validateProfileInput, buildProfileClaimMessage, buildWalletLinkMessage, isClaimFresh, normalizeProfileInput } = load("../src/lib/profiles.ts");
 
 test("profile validation", () => {
   assert.equal(validateProfileInput({ handle: "tibet_1", name: "Tibet", bio: "", visibility: "public" }), null);
@@ -37,4 +37,11 @@ test("claims expire after five minutes and can't be far in the future", () => {
   assert.equal(isClaimFresh(now - 6 * 60_000, now), false);
   assert.equal(isClaimFresh(now + 5 * 60_000, now), false);
   assert.equal(isClaimFresh(NaN, now), false);
+});
+
+test("wallet link message binds the account, the wallet and the time; names reject markup", () => {
+  const m = buildWalletLinkMessage("3f2c9d1e-5b6a-4c7d-8e9f-0a1b2c3d4e5f", "S7vYFFWH6BjJyEsdrPQpqpYTqLTrPRK6KW3VwsJuRaS", Date.UTC(2026, 8, 22));
+  assert.equal(m.split("\n")[0], "Solera wallet link");
+  assert.ok(m.includes("Account: 3f2c9d1e-5b6a-4c7d-8e9f-0a1b2c3d4e5f") && m.includes("Issued: 2026-09-22T00:00:00.000Z"));
+  assert.match(validateProfileInput({ handle: "ok_handle", name: "<img onerror=1>", bio: "", visibility: "public" }), /angle brackets/);
 });

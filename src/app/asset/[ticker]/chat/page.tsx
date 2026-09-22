@@ -27,7 +27,7 @@ export default function AssetChatPage() {
   const { messages, configured, error, send } = useRoomMessages(known ? symbol : undefined);
   const { publicKey } = useWallet();
   const address = publicKey?.toBase58() ?? null;
-  const { token, signIn, status: sessionStatus, error: sessionError, canSign } = useSession();
+  const { token, owner, signIn, status: sessionStatus, error: sessionError, canSign } = useSession();
   const profile = useProfile(address);
   const { openConnect } = useConnectWallet();
   const [draft, setDraft] = useState("");
@@ -93,7 +93,7 @@ export default function AssetChatPage() {
         ) : messages.length === 0 ? (
           <p className="pt-10 text-center text-xs text-neutral-400">Nobody has posted in #{symbol} yet. Be the first.</p>
         ) : (
-          messages.map((m) => <ChatMessageRow key={m.id} message={m} mine={m.wallet === address} />)
+          messages.map((m) => <ChatMessageRow key={m.id} message={m} mine={m.author === owner} />)
         )}
         {error && messages && messages.length > 0 && <p className="text-center text-[11px] text-amber-600">{error}</p>}
         <div ref={bottomRef} />

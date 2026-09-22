@@ -11,7 +11,7 @@ import { ChatIcon } from "./icons";
 export function ChatRoomCard({ ticker }: { ticker: string }) {
   const { messages, configured } = useRoomMessages(ticker);
   const last = messages && messages.length > 0 ? messages[messages.length - 1] : null;
-  const lastProfile = useProfile(last?.wallet);
+  const lastProfile = useProfile(last?.author);
 
   return (
     <Link
@@ -32,7 +32,7 @@ export function ChatRoomCard({ ticker }: { ticker: string }) {
         ) : last ? (
           <p className="truncate text-xs text-neutral-500">
             <span className={`font-semibold text-neutral-700 ${lastProfile ? "" : "font-mono"}`}>
-              {lastProfile?.name ?? shortAddress(last.wallet)}
+              {lastProfile?.name ?? shortAddress(last.author)}
             </span>
             : {last.body} · {formatRelativeTime(last.createdAt)}
           </p>

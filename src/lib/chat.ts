@@ -33,13 +33,16 @@ export function validateMessageBody(body: string): string | null {
 export interface MessageRow {
   id: number | string;
   room: string;
-  wallet: string;
+  /** The owner string (wallet or auth user id); absent on rows written before the port. */
+  owner?: string | null;
+  wallet: string | null;
   body: string;
   created_at: string;
 }
 
 export function rowToMessage(r: MessageRow): ChatMessage {
-  return { id: String(r.id), room: r.room, wallet: r.wallet, body: r.body, createdAt: Date.parse(r.created_at) };
+  const author = r.owner ?? r.wallet ?? "";
+  return { id: String(r.id), room: r.room, author, wallet: r.wallet ?? null, body: r.body, createdAt: Date.parse(r.created_at) };
 }
 
 /** Merges new messages into a list, deduplicated by id and ordered oldest first. */

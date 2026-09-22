@@ -8,9 +8,10 @@ import { isDeferredSigner, stageContinuation } from "@/lib/deferred-signing";
 const KEY = "solera:session";
 
 /**
- * The wallet's sign-in for posting. One signature, stored locally for 30
- * days, sent as a bearer token to /api/chat. Kept per wallet so switching
- * wallets never posts as the previous one.
+ * The signed-in session for posting, voting, notes and plans. One token,
+ * stored locally for 30 days, sent as a bearer to the app's routes. A
+ * wallet session counts only while that wallet is the connected one; an
+ * email session counts on its own.
  */
 let session: StoredSession | null = typeof window !== "undefined" ? read() : null;
 const listeners = new Set<() => void>();
@@ -18,8 +19,12 @@ const listeners = new Set<() => void>();
 function read(): StoredSession | null {
   try {
     const raw = window.localStorage.getItem(KEY);
-    const s = raw ? (JSON.parse(raw) as StoredSession) : null;
-    return s && s.expiresAt > Date.now() ? s : null;
+    const s = raw ? (JSON.parse(raw) as Partial<StoredSession>) : null;
+    if (!s || typeof s.token !== "string" || typeof s.expiresAt !== "number" || s.expiresAt <= Date.now()) return null;
+    // Sessions saved before email accounts existed carried only `wallet`.
+    const owner = s.owner ?? s.wallet;
+    if (!owner) return null;
+    return { owner, kind: s.kind ?? "wallet", wallet: s.wallet, token: s.token, expiresAt: s.expiresAt };
   } catch {
     return null;
   }
@@ -36,18 +41,36 @@ export function saveSession(next: StoredSession | null) {
   listeners.forEach((l) => l());
 }
 
-/** Exchanges a signature over the sign-in message for a token; shared with the deeplink resumer. */
-export async function completeSignIn(wallet: string, issuedAt: number, signatureBase64: string): Promise<StoredSession> {
-  const res = await fetch("/api/session", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ wallet, issuedAt, signature: signatureBase64 }),
-  });
-  const data = (await res.json()) as { token?: string; expiresAt?: number; error?: string };
-  if (!res.ok || !data.token || !data.expiresAt) throw new Error(data.error ?? "Couldn't sign in.");
-  const stored = { wallet, token: data.token, expiresAt: data.expiresAt };
+export function getStoredSession(): StoredSession | null {
+  return session;
+}
+
+interface SessionResponse {
+  token?: string;
+  owner?: string;
+  kind?: "wallet" | "user";
+  wallet?: string | null;
+  expiresAt?: number;
+  error?: string;
+}
+
+async function exchange(body: object): Promise<StoredSession> {
+  const res = await fetch("/api/session", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const data = (await res.json()) as SessionResponse;
+  if (!res.ok || !data.token || !data.expiresAt || !data.owner) throw new Error(data.error ?? "Couldn't sign in.");
+  const stored: StoredSession = { owner: data.owner, kind: data.kind ?? "wallet", wallet: data.wallet ?? undefined, token: data.token, expiresAt: data.expiresAt };
   saveSession(stored);
   return stored;
+}
+
+/** Exchanges a wallet signature over the sign-in message for a token; shared with the deeplink resumer. */
+export async function completeSignIn(wallet: string, issuedAt: number, signatureBase64: string): Promise<StoredSession> {
+  return exchange({ wallet, issuedAt, signature: signatureBase64 });
+}
+
+/** Exchanges a Supabase Auth access token (email account) for a token. */
+export async function completeEmailSignIn(supabaseAccessToken: string): Promise<StoredSession> {
+  return exchange({ supabaseAccessToken });
 }
 
 export function useSession() {
@@ -64,12 +87,11 @@ export function useSession() {
   const [status, setStatus] = useState<"idle" | "signing">("idle");
   const [error, setError] = useState<string | null>(null);
 
-  // A token belongs to exactly one wallet; another wallet starts signed out.
-  // Expiry is enforced when the session is read from storage and by the server.
-  const token = current && address && current.wallet === address ? current.token : null;
+  // A wallet session belongs to exactly one wallet; an email session stands on its own.
+  const valid = !!current && (current.kind === "user" || (!!address && current.wallet === address));
+  const token = valid ? current!.token : null;
 
   useEffect(() => {
-    // One-time nudge past the SSR `null` snapshot to whatever is in storage.
     listeners.forEach((l) => l());
   }, []);
 
@@ -94,5 +116,17 @@ export function useSession() {
     }
   }, [address, signMessage, connected]);
 
-  return { token, signedIn: !!token, signIn, status, error, canSign: !!address && !!signMessage };
+  const signOut = useCallback(() => saveSession(null), []);
+
+  return {
+    token,
+    signedIn: !!token,
+    owner: valid ? current!.owner : null,
+    kind: valid ? current!.kind : null,
+    signIn,
+    signOut,
+    status,
+    error,
+    canSign: !!address && !!signMessage,
+  };
 }

@@ -22,7 +22,7 @@ export function useRoomMessages(room: string | undefined) {
   const roomRef = useRef(room);
 
   const append = useCallback((incoming: ChatMessage[]) => {
-    if (incoming.length > 0) requestProfiles(incoming.map((m) => m.wallet));
+    if (incoming.length > 0) requestProfiles(incoming.map((m) => m.author));
     setMessages((prev) => mergeMessages(prev ?? [], incoming));
   }, []);
 
@@ -36,7 +36,7 @@ export function useRoomMessages(room: string | undefined) {
       setConfigured(data.configured ?? false);
       setError(null);
       const list = data.messages ?? [];
-      requestProfiles(list.map((m) => m.wallet));
+      requestProfiles(list.map((m) => m.author));
       setMessages((prev) => mergeMessages(prev ?? [], list));
     } catch (err) {
       if (roomRef.current !== room) return;

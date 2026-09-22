@@ -18,18 +18,31 @@ const { validateMessageBody, normalizeMessageBody, isValidRoom, mergeMessages } 
 
 const W = "S7vYFFWH6BjJyEsdrPQpqpYTqLTrPRK6KW3VwsJuRaS";
 
-test("session tokens round-trip, expire, and can't be forged", () => {
+test("session tokens round-trip, expire, and can't be forged", async () => {
   const now = Date.UTC(2026, 8, 18);
-  const { token, expiresAt } = issueSessionToken(W, now);
+  const { token, expiresAt } = issueSessionToken({ wallet: W }, now);
   assert.equal(expiresAt, now + SESSION_TTL_MS);
-  assert.deepEqual(verifySessionToken(token, now + 1000), { wallet: W, expiresAt });
+  assert.deepEqual(verifySessionToken(token, now + 1000), { owner: W, kind: "wallet", wallet: W, expiresAt });
+  // email accounts: a user-id claim
+  const U = "3f2c9d1e-5b6a-4c7d-8e9f-0a1b2c3d4e5f";
+  const user = issueSessionToken({ userId: U }, now);
+  assert.deepEqual(verifySessionToken(user.token, now), { owner: U, kind: "user", userId: U, expiresAt: user.expiresAt });
+  // old tokens: { w, exp } still verify
+  const legacyPayload = Buffer.from(JSON.stringify({ w: W, exp: expiresAt })).toString("base64url");
+  assert.equal(verifySessionToken(`${legacyPayload}.${token.split(".")[1]}`, now)?.owner, W);
   assert.equal(verifySessionToken(token, expiresAt + 1), null);
   assert.equal(verifySessionToken(token.slice(0, -2) + "zz", now), null);
   // Same MAC, different wallet in the payload: rejected.
   const mac = token.split(".")[1];
   const forged = Buffer.from(JSON.stringify({ w: "attacker", exp: expiresAt })).toString("base64url") + "." + mac;
   assert.equal(verifySessionToken(forged, now), null);
-  assert.equal(sessionFromHeader(`Bearer ${token}`)?.wallet, W);
+  assert.equal(sessionFromHeader(`Bearer ${token}`)?.owner, W);
+  // a payload with both claims, or neither, is rejected even when correctly signed
+  const { createHmac } = await import("node:crypto");
+  const key = createHmac("sha256", "test-service-key").update("solera-session").digest("hex");
+  const both = Buffer.from(JSON.stringify({ w: W, u: U, exp: expiresAt })).toString("base64url");
+  const bothMac = createHmac("sha256", key).update(both).digest("base64url");
+  assert.equal(verifySessionToken(`${both}.${bothMac}`, now), null);
   assert.equal(sessionFromHeader("Basic abc"), null);
   assert.equal(sessionFromHeader(null), null);
 });
