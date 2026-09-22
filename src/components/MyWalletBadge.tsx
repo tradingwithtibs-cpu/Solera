@@ -52,12 +52,7 @@ export function MyWalletBadge() {
 
   if (!connected || !publicKey) {
     return (
-      <button
-        type="button"
-        onClick={openConnect}
-        disabled={connecting}
-        className="bg-gradient-solana inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold text-white disabled:opacity-60"
-      >
+      <button type="button" onClick={openConnect} disabled={connecting} className="btn-secondary btn-small">
         <ChainIcon className="h-3 w-3" />
         {connecting ? "Connecting…" : "Connect wallet"}
       </button>
@@ -68,35 +63,23 @@ export function MyWalletBadge() {
 
   return (
     <span className="inline-block">
-      <button
-        type="button"
-        popoverTarget={id}
-        className="bg-gradient-solana inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold text-white"
-      >
-        <ChainIcon className="h-3 w-3" />
-        <span className="font-mono">{truncateAddress(address)}</span>
-        {balance !== null && <span className="font-mono">· {balance.toFixed(4)} SOL</span>}
+      <button type="button" popoverTarget={id} className="wallet-pill" title={chosen === "live" ? "Live · Solana mainnet" : "Practice mode · wallet connected"}>
+        <i className={chosen === "live" ? "" : "practice"} aria-hidden="true" />
+        <span>{truncateAddress(address)}</span>
+        {balance !== null && <small>{balance.toFixed(3)} SOL</small>}
       </button>
       <div id={id} popover="auto" className="wallet-popover">
-        <p className="font-semibold">{chosen === "live" ? "Live trading" : "Practice mode"}</p>
+        <p className="eyebrow">{chosen === "live" ? "Live · Solana mainnet" : "Practice mode"}</p>
         <p className="mt-2 text-sm leading-relaxed text-neutral-600">
           {chosen === "live"
             ? "Trades are real swaps on Solana mainnet through Jupiter, paid in SOL or USDC from this wallet. Your portfolio shows what this wallet actually holds."
             : "Trades are simulated with practice funds. Nothing touches this wallet. Switch to live when you're ready to trade for real."}
         </p>
-        <div className="mt-3 flex rounded-full bg-neutral-100 p-1 text-xs font-semibold">
-          <button
-            type="button"
-            onClick={() => setMode("live")}
-            className={`flex-1 rounded-full py-1.5 ${chosen === "live" ? "bg-panel text-neutral-900 shadow-sm" : "text-neutral-500"}`}
-          >
+        <div className="mode mt-3 flex w-full" role="group" aria-label="Trading mode">
+          <button type="button" data-mode="live" aria-pressed={chosen === "live"} onClick={() => setMode("live")}>
             Live
           </button>
-          <button
-            type="button"
-            onClick={() => setMode("practice")}
-            className={`flex-1 rounded-full py-1.5 ${chosen === "practice" ? "bg-panel text-neutral-900 shadow-sm" : "text-neutral-500"}`}
-          >
+          <button type="button" data-mode="practice" aria-pressed={chosen === "practice"} onClick={() => setMode("practice")}>
             Practice
           </button>
         </div>

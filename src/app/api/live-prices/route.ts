@@ -41,6 +41,8 @@ export interface LivePricesResponse {
   underlying: Partial<Record<TickerSymbol, UnderlyingQuote>>;
   /** SOL/USD, for sizing SOL-paid trades and valuing SOL balances. */
   solUsd?: number;
+  /** Jupiter's 24h price change per xStock, in percent. */
+  change24h?: Partial<Record<TickerSymbol, number>>;
   fetchedAt: number;
 }
 
@@ -146,7 +148,7 @@ async function fetchFromHermes(): Promise<LivePricesResponse | null> {
 }
 
 interface JupiterPriceResponse {
-  [mint: string]: { usdPrice?: number } | undefined;
+  [mint: string]: { usdPrice?: number; priceChange24h?: number } | undefined;
 }
 
 /** Pyth PriceUpdateV2 accounts on mainnet for the equities, Jupiter for the xStock tokens. */
@@ -158,6 +160,7 @@ async function fetchOnChain(): Promise<LivePricesResponse | null> {
   if (jupiter.status === "fulfilled") {
     body.prices = jupiter.value.prices;
     body.solUsd = jupiter.value.solUsd;
+    body.change24h = jupiter.value.change24h;
   }
 
   return Object.keys(body.prices).length > 0 || Object.keys(body.underlying).length > 0 ? body : null;
@@ -187,7 +190,7 @@ async function readPythAccounts(): Promise<LivePricesResponse["underlying"]> {
   return underlying;
 }
 
-async function readJupiterPrices(): Promise<{ prices: LivePricesResponse["prices"]; solUsd?: number }> {
+async function readJupiterPrices(): Promise<{ prices: LivePricesResponse["prices"]; solUsd?: number; change24h: LivePricesResponse["change24h"] }> {
   const mints = [...TICKERS.map((t) => XSTOCK_TOKENS[t].mint), SOL.mint];
   const res = await fetch(`${JUPITER_PRICE_URL}?ids=${mints.join(",")}`, { cache: "no-store" });
   if (!res.ok) throw new Error(`Jupiter responded ${res.status}`);
@@ -195,10 +198,12 @@ async function readJupiterPrices(): Promise<{ prices: LivePricesResponse["prices
 
   const valid = (p: number | undefined): p is number => typeof p === "number" && Number.isFinite(p) && p > 0;
   const prices: LivePricesResponse["prices"] = {};
+  const change24h: NonNullable<LivePricesResponse["change24h"]> = {};
   for (const ticker of TICKERS) {
-    const price = data[XSTOCK_TOKENS[ticker].mint]?.usdPrice;
-    if (valid(price)) prices[ticker] = price;
+    const entry = data[XSTOCK_TOKENS[ticker].mint];
+    if (valid(entry?.usdPrice)) prices[ticker] = entry.usdPrice;
+    if (typeof entry?.priceChange24h === "number" && Number.isFinite(entry.priceChange24h)) change24h[ticker] = entry.priceChange24h;
   }
   const solUsd = data[SOL.mint]?.usdPrice;
-  return { prices, solUsd: valid(solUsd) ? solUsd : undefined };
+  return { prices, solUsd: valid(solUsd) ? solUsd : undefined, change24h };
 }

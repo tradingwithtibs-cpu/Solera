@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { setHistory, setLivePrice, setSolPrice, setUnderlyingQuote } from "@/lib/live-prices";
+import { setChange24h, setFetchedAt, setHistory, setLivePrice, setSolPrice, setUnderlyingQuote } from "@/lib/live-prices";
 import type { TickerSymbol } from "@/lib/types";
 
 /**
@@ -22,6 +22,8 @@ interface LivePricesPayload {
   prices?: Record<string, number>;
   underlying?: Record<string, { price: number; publishTime: number; stale: boolean }>;
   solUsd?: number;
+  change24h?: Record<string, number>;
+  fetchedAt?: number;
 }
 
 /**
@@ -49,6 +51,10 @@ export function LivePriceLoader() {
           if (Number.isFinite(quote?.price)) setUnderlyingQuote(ticker as TickerSymbol, quote);
         }
         if (typeof data.solUsd === "number" && Number.isFinite(data.solUsd)) setSolPrice(data.solUsd);
+        for (const [ticker, pct] of Object.entries(data.change24h ?? {})) {
+          if (Number.isFinite(pct)) setChange24h(ticker as TickerSymbol, pct);
+        }
+        setFetchedAt(typeof data.fetchedAt === "number" ? data.fetchedAt : Date.now());
       } catch {
         // Ignore — affected tickers just keep their simulated price.
       }

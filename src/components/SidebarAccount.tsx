@@ -18,7 +18,7 @@ export function SidebarAccount() {
   if (connected && publicKey) {
     const address = publicKey.toBase58();
     return (
-      <Link href="/portfolio" className="mt-6 flex items-center gap-3">
+      <Link href="/portfolio" className="mt-4 flex items-center gap-3 rounded-[var(--radius-control)] px-2 py-2 hover:bg-hover">
         <Avatar initials={profile?.name?.slice(0, 2).toUpperCase() ?? address.slice(0, 2).toUpperCase()} colorClass={avatarColorFor(address)} size="sm" />
         <div>
           <p className={`text-sm font-semibold ${profile ? "" : "font-mono"}`}>{profile?.name ?? shortAddress(address)}</p>
@@ -28,11 +28,11 @@ export function SidebarAccount() {
     );
   }
   return (
-    <button type="button" onClick={openConnect} className="mt-6 flex items-center gap-3 text-left">
+    <button type="button" onClick={openConnect} className="mt-4 flex w-full items-center gap-3 rounded-[var(--radius-control)] px-2 py-2 text-left hover:bg-hover">
       <Avatar initials="?" colorClass="bg-neutral-300" size="sm" />
       <div>
         <p className="text-sm font-semibold">Guest</p>
-        <p className="text-xs text-violet-600">Connect a wallet →</p>
+        <p className="text-xs text-accent-text">Connect a wallet →</p>
       </div>
     </button>
   );

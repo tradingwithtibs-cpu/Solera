@@ -30,9 +30,26 @@ export interface LiveSnapshot {
   solUsd?: number;
   /** Real trailing 30-day closes per ticker (~4/day), oldest → newest (see app/api/price-history). */
   history: Partial<Record<TickerSymbol, number[]>>;
+  /** Jupiter's 24h price change per ticker, in percent. */
+  change24h: Partial<Record<TickerSymbol, number>>;
+  /** Unix ms of the last successful price fetch; drives the footer's "refreshed" time. */
+  fetchedAt?: number;
 }
 
-let snapshot: LiveSnapshot = { prices: {}, underlying: {}, history: {} };
+let snapshot: LiveSnapshot = { prices: {}, underlying: {}, history: {}, change24h: {} };
+
+export function setChange24h(ticker: TickerSymbol, pct: number) {
+  commit({ ...snapshot, change24h: { ...snapshot.change24h, [ticker]: pct } });
+}
+
+/** Jupiter's 24h move for `ticker`, or undefined before the first fetch. */
+export function getChange24h(ticker: TickerSymbol): number | undefined {
+  return snapshot.change24h[ticker];
+}
+
+export function setFetchedAt(at: number) {
+  commit({ ...snapshot, fetchedAt: at });
+}
 
 export function setSolPrice(solUsd: number) {
   commit({ ...snapshot, solUsd });

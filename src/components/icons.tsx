@@ -228,3 +228,24 @@ export function DiscordIcon({ className }: IconProps) {
     </svg>
   );
 }
+
+export function AgentIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <rect x="4" y="8" width="16" height="11" rx="2.5" stroke="currentColor" strokeWidth={1.8} />
+      <path d="M12 8V4M9 4h6" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" />
+      <circle cx="9" cy="13.5" r="1.3" fill="currentColor" />
+      <circle cx="15" cy="13.5" r="1.3" fill="currentColor" />
+      <path d="M9.5 17h5" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function SearchGlyph({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <circle cx="11" cy="11" r="6.5" stroke="currentColor" strokeWidth={1.8} />
+      <path d="M16 16l4 4" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" />
+    </svg>
+  );
+}

@@ -1,40 +1,34 @@
-import Link from "next/link";
 import { BottomNav } from "./BottomNav";
-import { Logo } from "./Logo";
-import { SidebarAccount } from "./SidebarAccount";
-import { DiscoveryRail } from "./DiscoveryRail";
-import { ModeStrip } from "./ModeStrip";
+import { SideNav } from "./shell/SideNav";
+import { Tape } from "./shell/Tape";
+import { Masthead } from "./shell/Masthead";
+import { Strip } from "./shell/Strip";
+import { Foot } from "./shell/Foot";
+import { Palette } from "./shell/Palette";
+
+/**
+ * The frame every route renders in: sidenav on desktop, then the content
+ * column (tape, glass top bar, chip strip, the page, footer). Phones get the
+ * six-tab bar instead of the sidenav. The ⌘K palette mounts once here.
+ */
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="app-shell">
+    <div className="app">
       <a href="#main-content" className="skip-link">
         Skip to content
       </a>
-      <aside className="sidebar">
-        <Link href="/" className="sidebar-logo" aria-label="Solera home">
-          <Logo size={44} />
-        </Link>
-        <p className="eyebrow mt-3 mb-9">A little more perspective.</p>
-        <BottomNav desktop />
-        <div className="sidebar-bottom">
-          <div className="rounded-2xl border border-neutral-200 p-4">
-            <p className="text-sm font-semibold">Built for the long view.</p>
-            <p className="mt-2 text-xs leading-relaxed text-neutral-500">
-              People, portfolios, and the thinking behind them.
-            </p>
-            <span className="text-gradient-solana mt-3 inline-block text-xs font-semibold">Built on Solana ↗</span>
-          </div>
-          <SidebarAccount />
-        </div>
-      </aside>
-      <div className="content-column">
-        <ModeStrip />
+      <SideNav />
+      <div className="content">
+        <Tape />
+        <Masthead />
+        <Strip />
         <main id="main-content" tabIndex={-1}>
           {children}
         </main>
+        <Foot />
       </div>
-      <DiscoveryRail />
       <BottomNav />
+      <Palette />
     </div>
   );
 }
