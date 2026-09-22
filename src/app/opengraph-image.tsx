@@ -1,9 +1,14 @@
 import { ImageResponse } from "next/og";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-export default function OpengraphImage() {
+/** Share card: the mark on the dark tile, the name, and the one-line pitch. */
+export default async function OpengraphImage() {
+  const png = await readFile(path.join(process.cwd(), "public/brand/solera-mark.png"));
+  const mark = `data:image/png;base64,${png.toString("base64")}`;
   return new ImageResponse(
     (
       <div
@@ -11,42 +16,29 @@ export default function OpengraphImage() {
           width: "100%",
           height: "100%",
           display: "flex",
-          flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(135deg, #ede9fe, #ffffff 55%, #ccfbf1)",
+          gap: 56,
+          background: "#0b0d16",
           fontFamily: "sans-serif",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            width: 120,
-            height: 120,
-            borderRadius: 28,
-            alignItems: "center",
-            justifyContent: "center",
-            background: "linear-gradient(135deg, #7c3aed, #0d9488)",
-            marginBottom: 36,
-          }}
-        >
-          <span style={{ fontSize: 68, fontWeight: 700, color: "white" }}>S</span>
-        </div>
-        <div
-          style={{
-            display: "flex",
-            fontSize: 76,
-            fontWeight: 700,
-            letterSpacing: -2,
-            background: "linear-gradient(135deg, #7c3aed, #0d9488)",
-            backgroundClip: "text",
-            color: "transparent",
-          }}
-        >
-          Solera
-        </div>
-        <div style={{ display: "flex", marginTop: 18, fontSize: 32, color: "#525252" }}>
-          Follow real investors. Copy with one tap.
+        <img src={mark} width={300} height={300} alt="" style={{ borderRadius: 64 }} />
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <div style={{ display: "flex", fontSize: 92, fontWeight: 700, letterSpacing: -3, color: "#ffffff" }}>Solera</div>
+          <div style={{ display: "flex", marginTop: 8, fontSize: 34, color: "#b8b4cc", maxWidth: 620, lineHeight: 1.3 }}>
+            Stocks on Solana, with the people who hold them.
+          </div>
+          <div
+            style={{
+              display: "flex",
+              marginTop: 28,
+              height: 10,
+              width: 560,
+              borderRadius: 999,
+              background: "linear-gradient(100deg, #d139fc 0%, #482efa 22%, #0191fd 50%, #01eaf4 78%, #05fbcf 100%)",
+            }}
+          />
         </div>
       </div>
     ),

@@ -9,6 +9,14 @@
      full-page background. */
   --brand-from: #4c6fff;
   --brand-to: #9b5cf7;
+  /* The era gradient, sampled from the logo mark: magenta to indigo to blue to cyan to mint. */
+  --era-1: #d139fc;
+  --era-2: #482efa;
+  --era-3: #0191fd;
+  --era-4: #01eaf4;
+  --era-5: #05fbcf;
+  --era-tile: #000000;
+  --era-ink: #0b0d16;
   /* Solana's own brand gradient — used only where we're specifically naming
      Solana (on-chain badge, "built on Solana" mark), never as our own accent. */
   --solana-from: #9945ff;
@@ -29,6 +37,15 @@ body {
 }
 
 /* Brand gradient — used sparingly on primary CTAs and hero numbers, not everywhere. */
+.bg-gradient-era {
+  background-image: linear-gradient(100deg, var(--era-1) 0%, var(--era-2) 22%, var(--era-3) 50%, var(--era-4) 78%, var(--era-5) 100%);
+}
+.text-gradient-era {
+  background-image: linear-gradient(100deg, var(--era-1) 0%, var(--era-2) 22%, var(--era-3) 50%, var(--era-4) 78%, var(--era-5) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
 .bg-gradient-brand {
   background-image: linear-gradient(135deg, var(--brand-from), var(--brand-to));
 }

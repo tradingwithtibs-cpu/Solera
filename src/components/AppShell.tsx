@@ -11,11 +11,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         Skip to content
       </a>
       <aside className="sidebar">
-        <Link href="/" className="sidebar-logo">
-          <span className="brand-symbol" aria-hidden="true">
-            s
-          </span>
-          <Logo className="text-xl" />
+        <Link href="/" className="sidebar-logo" aria-label="Solera home">
+          <Logo size={44} />
         </Link>
         <p className="eyebrow mt-3 mb-9">A little more perspective.</p>
         <BottomNav desktop />
