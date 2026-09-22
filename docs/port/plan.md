@@ -10,6 +10,22 @@ npm run typecheck && npm run lint && npm test && npm run build
 
 Where the docs disagree, **this file wins**, then `backend.md` for anything server-side, `design-system.md` for tokens and class names, `layout-engine.md` for placement, `agent-ux.md` for the Agent surface, `pages.md` for per-route content, `platform-notes.md` for toolchain facts.
 
+
+## Status (updated Sept 22, 19:00 CDT)
+
+Done on branch `redesign`, gate green (49 tests):
+
+- **F1** dark theme, palette remap, ink-safe fills (`18f438b`).
+- **F3** shell: sidenav, tape, glass top bar, mode toggle, strip, ⌘K, six-tab bar; `usePreIpo` is one shared store; `/agent` placeholder route (`cc0a60d`).
+- **F2** layout engine: `src/lib/layout.ts`, `panel-registry.ts`, `PanelGrid`/`Panel`, drag + swap-on-drop + resize + keyboard, persistence; the Agent placeholder is the first grid page (`b933f46`).
+- **F4** chart ranges 24H/1W/1M/6M with `useHistoryRange` and `RangeSwitch` (`7fec3b3`).
+- **F5** identity: `supabase/port.sql` (the whole migration), owners, two-claim sessions, `/api/session` bodies A and B, `/api/profile` by owner + wallet link, owner-authored rooms, `use-auth-user`, `supabase-browser` (`289c3b6`).
+- **F6** practice ledger on the server (`/api/practice*`), fills with a thesis through trades and both ledgers, `/api/fills` (on-chain verified) and `/api/tape`, position notes (`/api/notes`, `use-notes`); `usePortfolio()` is a façade over the local and server ledgers (`6f09a64`).
+
+Deviations from §4 the page tasks must know: `TopBar.tsx` keeps its name (it is the static back bar); the new top bar is `src/components/shell/Masthead.tsx`. `SegmentedControl.tsx` still exists (restyled via `.segmented-control`) and may be used or replaced per page. `BigChart` is owned by R2 (`src/components/ui/BigChart.tsx`); R1's hero uses `PriceChart` until then. `RoomPanel` (the room body as a component) is owned by R6 at `src/components/rooms/RoomPanel.tsx`; R2's room card imports it, and until R6 lands R2 may render `ChatRoomCard`. The `usePortfolio()` façade exposes `source: "local" | "server"`. Practice orders for signed-in users go through `/api/practice/fill` automatically inside `useExecuteTrade`.
+
+Not done: R1–R6, A1–A5, S1–S3, M1, P1–P3.
+
 ## 0. Rulings on the review issues
 
 Every blocker and major in `review-issues.md` is settled here. Implementers apply these over the docs' text.
