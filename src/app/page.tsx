@@ -7,7 +7,7 @@ export default function FeedPage() {
   return (
     <div className="flex flex-1 flex-col">
       <Hero />
-      <section className="mx-5 mb-4 rounded-2xl border border-neutral-200 bg-white p-4 sm:mx-7">
+      <section className="mx-5 mb-4 rounded-2xl border border-neutral-200 bg-panel p-4 sm:mx-7">
         <div className="flex items-baseline justify-between">
           <h2 className="text-sm font-semibold text-neutral-900">Today in markets</h2>
           <Link href="/news" className="text-xs font-semibold text-violet-600">

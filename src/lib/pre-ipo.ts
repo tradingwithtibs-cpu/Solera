@@ -39,14 +39,14 @@ export interface Company {
 }
 
 export const COMPANIES: Record<CompanyId, Company> = {
-  openai: { id: "openai", name: "OpenAI", short: "OAI", color: "bg-neutral-900", sector: "Artificial intelligence" },
-  anthropic: { id: "anthropic", name: "Anthropic", short: "ANT", color: "bg-orange-500", sector: "Artificial intelligence" },
-  spacex: { id: "spacex", name: "SpaceX", short: "SPX", color: "bg-slate-600", sector: "Aerospace" },
-  kalshi: { id: "kalshi", name: "Kalshi", short: "KAL", color: "bg-emerald-600", sector: "Prediction markets" },
-  anduril: { id: "anduril", name: "Anduril", short: "AND", color: "bg-zinc-700", sector: "Defense" },
-  neuralink: { id: "neuralink", name: "Neuralink", short: "NRL", color: "bg-violet-600", sector: "Neurotech" },
-  polymarket: { id: "polymarket", name: "Polymarket", short: "POLY", color: "bg-blue-600", sector: "Prediction markets" },
-  figureai: { id: "figureai", name: "Figure AI", short: "FIG", color: "bg-cyan-600", sector: "Robotics" },
+  openai: { id: "openai", name: "OpenAI", short: "OAI", color: "var(--color-tk-8)", sector: "Artificial intelligence" },
+  anthropic: { id: "anthropic", name: "Anthropic", short: "ANT", color: "var(--color-tk-7)", sector: "Artificial intelligence" },
+  spacex: { id: "spacex", name: "SpaceX", short: "SPX", color: "var(--color-tk-8)", sector: "Aerospace" },
+  kalshi: { id: "kalshi", name: "Kalshi", short: "KAL", color: "var(--color-tk-4)", sector: "Prediction markets" },
+  anduril: { id: "anduril", name: "Anduril", short: "AND", color: "var(--color-tk-8)", sector: "Defense" },
+  neuralink: { id: "neuralink", name: "Neuralink", short: "NRL", color: "var(--color-tk-5)", sector: "Neurotech" },
+  polymarket: { id: "polymarket", name: "Polymarket", short: "POLY", color: "var(--color-tk-2)", sector: "Prediction markets" },
+  figureai: { id: "figureai", name: "Figure AI", short: "FIG", color: "var(--color-tk-3)", sector: "Robotics" },
 };
 
 /** Issuer symbol → company. Anything not listed here is ignored by the route. */

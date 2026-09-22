@@ -106,7 +106,7 @@ export default function PortfolioPage() {
             <PerformanceBadge value={performancePct} />
             <span className="text-xs text-neutral-400">unrealized return</span>
             <MyWalletBadge />
-            {isLive && <ProfileButton className="rounded-full border border-violet-200 bg-white/70 px-2.5 py-1 text-xs font-semibold text-violet-600" />}
+            {isLive && <ProfileButton className="rounded-full border border-violet-200 glass px-2.5 py-1 text-xs font-semibold text-violet-600" />}
           </div>
 
           <div className="relative mt-3">
@@ -118,7 +118,7 @@ export default function PortfolioPage() {
             </p>
           </div>
 
-          <div className="mt-2 flex items-center justify-between rounded-2xl bg-white/70 px-4 py-3">
+          <div className="mt-2 flex items-center justify-between rounded-2xl glass px-4 py-3">
             <span className="text-sm text-neutral-500">{isLive ? "SOL + USDC to invest" : "Cash available"}</span>
             <span className="font-mono text-sm font-semibold tabular-nums text-neutral-900">
               {formatCurrency(cashBalance)}
@@ -127,7 +127,7 @@ export default function PortfolioPage() {
         </div>
       </div>
 
-      <section className="mx-5 mt-5 rounded-2xl border border-neutral-200 bg-white p-5">
+      <section className="mx-5 mt-5 rounded-2xl border border-neutral-200 bg-panel p-5">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold">Portfolio perspective</h2>
           {holdings.length > 0 && (

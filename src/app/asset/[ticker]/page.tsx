@@ -70,7 +70,7 @@ export default function AssetDetailPage() {
 
       <AssetModeSection ticker={ticker.symbol} />
 
-      <section className="mx-5 mb-6 mt-2 rounded-2xl border border-neutral-200 bg-white p-4">
+      <section className="mx-5 mb-6 mt-2 rounded-2xl border border-neutral-200 bg-panel p-4">
         <h2 className="text-sm font-semibold text-neutral-900">{ticker.name} news</h2>
         <p className="mb-1 text-xs text-neutral-400">Last 7 days, about the listed company behind {ticker.symbol}.</p>
         <NewsList scope={{ kind: "ticker", ticker: ticker.symbol }} limit={5} />

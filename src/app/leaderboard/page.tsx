@@ -50,7 +50,7 @@ export default function LeaderboardPage() {
                   key={w}
                   type="button"
                   onClick={() => setWindow(w)}
-                  className={`rounded-full px-3 py-1 ${window === w ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500"}`}
+                  className={`rounded-full px-3 py-1 ${window === w ? "bg-panel text-neutral-900 shadow-sm" : "text-neutral-500"}`}
                 >
                   {w === "7d" ? "7 days" : "30 days"}
                 </button>

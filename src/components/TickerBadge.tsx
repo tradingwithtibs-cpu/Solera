@@ -1,4 +1,5 @@
 import type { TickerInfo } from "@/lib/types";
+import { fillFor } from "@/lib/palette";
 
 const SIZES = {
   sm: "h-9 w-9 text-[11px]",
@@ -9,9 +10,10 @@ const SIZES = {
 export function TickerBadge({ ticker, size = "sm" }: { ticker: TickerInfo; size?: keyof typeof SIZES }) {
   return (
     <span
-      className={`flex shrink-0 items-center justify-center rounded-full font-bold text-white ${SIZES[size]} ${ticker.color}`}
+      className={`flex shrink-0 items-center justify-center rounded-full border border-line-strong font-mono font-semibold text-white ${SIZES[size]}`}
+      style={{ background: fillFor(ticker.color, ticker.symbol) }}
     >
-      {ticker.symbol.replace("x", "")}
+      {ticker.symbol.replace(/x$/, "")}
     </span>
   );
 }

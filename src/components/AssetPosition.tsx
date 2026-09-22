@@ -8,7 +8,7 @@ export function AssetPosition({ ticker }: { ticker: TickerSymbol }) {
   const { holdings, isLoaded } = useActivePortfolio();
   const owned = computeHoldings(holdings).find((h) => h.ticker === ticker);
   return (
-    <div className="mx-5 my-4 rounded-2xl border border-neutral-200 bg-white p-5">
+    <div className="mx-5 my-4 rounded-2xl border border-neutral-200 bg-panel p-5">
       {isLoaded && owned && (
         <div className="mb-4 flex flex-wrap justify-between gap-2 text-sm">
           <span>

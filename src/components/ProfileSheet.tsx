@@ -66,12 +66,12 @@ export function ProfileSheet({ existing, onClose }: { existing: Profile | null; 
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-neutral-900/40 p-3 sm:items-center" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end justify-center scrim p-3 sm:items-center" onClick={onClose}>
       <div
         role="dialog"
         aria-modal="true"
         aria-label="Your profile"
-        className="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl"
+        className="w-full max-w-md rounded-3xl bg-panel p-6 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         {status === "done" ? (
@@ -141,7 +141,7 @@ export function ProfileSheet({ existing, onClose }: { existing: Profile | null; 
                       key={v}
                       type="button"
                       onClick={() => setForm({ ...form, visibility: v })}
-                      className={`rounded-full px-3 py-1 capitalize ${form.visibility === v ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500"}`}
+                      className={`rounded-full px-3 py-1 capitalize ${form.visibility === v ? "bg-panel text-neutral-900 shadow-sm" : "text-neutral-500"}`}
                     >
                       {v}
                     </button>

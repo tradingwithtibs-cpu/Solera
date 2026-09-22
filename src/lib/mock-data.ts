@@ -17,56 +17,56 @@ export const TICKERS: Record<string, TickerInfo> = {
     symbol: "TSLAx",
     name: "Tesla",
     price: 248.42,
-    color: "bg-violet-500",
+    color: "var(--color-tk-1)",
     history: [210, 215, 208, 220, 225, 218, 230, 235, 228, 240, 245, 238, 250, 242, 248, 255, 247, 252, 245, 248.42],
   },
   AAPLx: {
     symbol: "AAPLx",
     name: "Apple",
     price: 231.18,
-    color: "bg-sky-500",
+    color: "var(--color-tk-2)",
     history: [215, 217, 214, 218, 220, 219, 222, 224, 221, 225, 227, 223, 226, 229, 228, 230, 227, 229, 232, 231.18],
   },
   SPYx: {
     symbol: "SPYx",
     name: "S&P 500",
     price: 572.35,
-    color: "bg-emerald-500",
+    color: "var(--color-tk-4)",
     history: [540, 542, 545, 543, 548, 551, 549, 554, 557, 555, 560, 563, 561, 566, 569, 567, 571, 568, 573, 572.35],
   },
   NVDAx: {
     symbol: "NVDAx",
     name: "Nvidia",
     price: 178.32,
-    color: "bg-amber-500",
+    color: "var(--color-tk-7)",
     history: [145, 150, 148, 155, 160, 157, 163, 168, 165, 170, 172, 169, 174, 171, 176, 180, 177, 181, 179, 178.32],
   },
   AMZNx: {
     symbol: "AMZNx",
     name: "Amazon",
     price: 224.87,
-    color: "bg-orange-500",
+    color: "var(--color-tk-7)",
     history: [205, 207, 204, 209, 211, 208, 213, 215, 212, 217, 219, 216, 220, 218, 221, 223, 220, 222, 226, 224.87],
   },
   GOOGLx: {
     symbol: "GOOGLx",
     name: "Alphabet",
     price: 196.44,
-    color: "bg-indigo-500",
+    color: "var(--color-tk-1)",
     history: [175, 177, 174, 179, 181, 178, 183, 185, 182, 187, 189, 186, 190, 188, 191, 193, 190, 192, 195, 196.44],
   },
   METAx: {
     symbol: "METAx",
     name: "Meta",
     price: 615.2,
-    color: "bg-blue-600",
+    color: "var(--color-tk-2)",
     history: [560, 565, 558, 570, 575, 568, 580, 585, 578, 590, 595, 588, 600, 595, 602, 608, 600, 605, 610, 615.2],
   },
   COINx: {
     symbol: "COINx",
     name: "Coinbase",
     price: 287.65,
-    color: "bg-cyan-500",
+    color: "var(--color-tk-3)",
     history: [240, 245, 238, 250, 255, 248, 258, 263, 256, 265, 268, 262, 270, 266, 272, 278, 270, 275, 280, 287.65],
   },
 };
@@ -79,7 +79,7 @@ export const INVESTORS: Investor[] = [
     name: "Maya Chen",
     handle: "@mayabuilds",
     initials: "MC",
-    avatarColor: "bg-violet-500",
+    avatarColor: "var(--color-tk-1)",
     bio: "Product designer by day. Long TSLAx since the split.",
     performancePct: 18.4,
     holdings: [
@@ -96,7 +96,7 @@ export const INVESTORS: Investor[] = [
     name: "Jordan Blake",
     handle: "@jblake",
     initials: "JB",
-    avatarColor: "bg-sky-500",
+    avatarColor: "var(--color-tk-2)",
     bio: "Steady and boring on purpose. Mostly index exposure.",
     performancePct: 6.2,
     holdings: [
@@ -113,7 +113,7 @@ export const INVESTORS: Investor[] = [
     name: "Priya Patel",
     handle: "@priyainvests",
     initials: "PP",
-    avatarColor: "bg-rose-500",
+    avatarColor: "var(--color-tk-6)",
     bio: "Ex-hardware engineer. High conviction in Apple.",
     performancePct: 24.7,
     holdings: [
@@ -130,7 +130,7 @@ export const INVESTORS: Investor[] = [
     name: "Sam Osei",
     handle: "@samosei",
     initials: "SO",
-    avatarColor: "bg-amber-500",
+    avatarColor: "var(--color-tk-7)",
     bio: "Rebalances monthly. Rough quarter, staying the course.",
     performancePct: -3.1,
     holdings: [
@@ -147,7 +147,7 @@ export const INVESTORS: Investor[] = [
     name: "Elena Volkov",
     handle: "@elenav",
     initials: "EV",
-    avatarColor: "bg-neutral-800",
+    avatarColor: "var(--color-tk-8)",
     bio: "Concentrated bets. Not for the faint of heart.",
     performancePct: 41.2,
     holdings: [
@@ -164,7 +164,7 @@ export const INVESTORS: Investor[] = [
 export const MY_PROFILE = {
   name: "Tibet",
   initials: "T",
-  avatarColor: "bg-indigo-500",
+  avatarColor: "var(--color-tk-1)",
   walletAddress: "2bWmK7xPqTr4NcYz9LsHo1FeVa6UdGj3ZnE8pCtRySq5",
 };
 

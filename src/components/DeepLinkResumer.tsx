@@ -81,7 +81,7 @@ export function DeepLinkResumer() {
   if (busy) {
     return (
       <div className="fixed inset-x-0 bottom-0 z-50 flex justify-center p-3">
-        <div role="status" aria-live="polite" className="w-full max-w-md rounded-3xl bg-white p-5 text-center shadow-xl ring-1 ring-neutral-200">
+        <div role="status" aria-live="polite" className="w-full max-w-md rounded-3xl bg-panel p-5 text-center shadow-xl ring-1 ring-neutral-200">
           <p className="text-sm font-semibold text-neutral-900">{busy}</p>
           <p className="mt-1 text-xs text-neutral-500">Hang on a moment.</p>
         </div>
@@ -91,12 +91,12 @@ export function DeepLinkResumer() {
   if (!outcome) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-neutral-900/40 p-3 sm:items-center" onClick={() => setOutcome(null)}>
+    <div className="fixed inset-0 z-50 flex items-end justify-center scrim p-3 sm:items-center" onClick={() => setOutcome(null)}>
       <div
         role="dialog"
         aria-modal="true"
         aria-label={outcome.title}
-        className="w-full max-w-md rounded-3xl bg-white p-6 text-center shadow-xl"
+        className="w-full max-w-md rounded-3xl bg-panel p-6 text-center shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         {outcome.tone === "success" && <CheckCircleIcon className="mx-auto h-12 w-12 text-emerald-500" />}

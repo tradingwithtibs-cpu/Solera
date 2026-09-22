@@ -76,7 +76,7 @@ export default function MarketsPage() {
             aria-label="Sort markets"
             value={sort}
             onChange={(e) => setSort(e.target.value)}
-            className="rounded-lg border border-neutral-200 bg-white px-2 py-2 text-xs"
+            className="rounded-lg border border-neutral-200 bg-panel px-2 py-2 text-xs"
           >
             <option value="community">Community holdings</option>
             <option value="change">Price change</option>

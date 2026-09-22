@@ -68,8 +68,8 @@ export function isFeatured(symbol: string): boolean {
 }
 
 const COLORS = [
-  "bg-violet-500", "bg-sky-500", "bg-rose-500", "bg-amber-500", "bg-emerald-500",
-  "bg-indigo-500", "bg-cyan-600", "bg-fuchsia-500", "bg-orange-500", "bg-teal-500", "bg-blue-600", "bg-lime-600",
+  "var(--color-tk-1)", "var(--color-tk-2)", "var(--color-tk-3)", "var(--color-tk-4)",
+  "var(--color-tk-5)", "var(--color-tk-6)", "var(--color-tk-7)", "var(--color-tk-8)",
 ];
 
 function colorFor(symbol: string): string {
@@ -89,7 +89,7 @@ export function getTickerInfo(symbol: TickerSymbol): TickerInfo {
   if (featured) return featured;
   const c = bySymbol.get(symbol);
   if (c) return { symbol, name: c.name, price: c.usdPrice ?? 0, color: colorFor(symbol), history: [], mint: c.mint };
-  return { symbol, name: symbol, price: 0, color: "bg-neutral-400", history: [] };
+  return { symbol, name: symbol, price: 0, color: "var(--color-tk-8)", history: [] };
 }
 
 /** Loose on purpose: a stored practice holding must survive a reload even before the catalog arrives. */

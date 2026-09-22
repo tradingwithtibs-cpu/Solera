@@ -15,6 +15,6 @@ export function celebrateTrade() {
     spread: 75,
     startVelocity: 45,
     origin: { y: 0.6 },
-    colors: ["#4c6fff", "#9b5cf7", "#f59e0b"],
+    colors: ["#482efa", "#0191fd", "#05fbcf", "#d139fc"],
   });
 }

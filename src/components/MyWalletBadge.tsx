@@ -88,14 +88,14 @@ export function MyWalletBadge() {
           <button
             type="button"
             onClick={() => setMode("live")}
-            className={`flex-1 rounded-full py-1.5 ${chosen === "live" ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500"}`}
+            className={`flex-1 rounded-full py-1.5 ${chosen === "live" ? "bg-panel text-neutral-900 shadow-sm" : "text-neutral-500"}`}
           >
             Live
           </button>
           <button
             type="button"
             onClick={() => setMode("practice")}
-            className={`flex-1 rounded-full py-1.5 ${chosen === "practice" ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500"}`}
+            className={`flex-1 rounded-full py-1.5 ${chosen === "practice" ? "bg-panel text-neutral-900 shadow-sm" : "text-neutral-500"}`}
           >
             Practice
           </button>

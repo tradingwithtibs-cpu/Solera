@@ -53,7 +53,7 @@ export function Hero() {
   }
 
   return (
-    <section className="relative mx-5 mt-5 mb-4 overflow-hidden rounded-3xl border border-neutral-200 bg-white p-6 sm:mx-7 sm:p-8">
+    <section className="relative mx-5 mt-5 mb-4 overflow-hidden rounded-3xl border border-neutral-200 bg-panel p-6 sm:mx-7 sm:p-8">
       <div
         aria-hidden
         className="bg-gradient-brand pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full opacity-[0.14] blur-3xl"

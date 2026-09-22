@@ -26,7 +26,7 @@ test("a wallet becomes an investor with a stable identity and no invented facts"
   assert.equal(inv.walletAddress, ADDR);
   assert.equal(inv.holdings.length, 2);
   assert.equal(avatarColorFor(ADDR), avatarColorFor(ADDR));
-  assert.match(avatarColorFor(ADDR), /^bg-/);
+  assert.match(avatarColorFor(ADDR), /^var\(--color-tk-/);
 });
 
 test("performance is the value-weighted trailing move of what's held", () => {

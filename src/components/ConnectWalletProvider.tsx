@@ -55,14 +55,14 @@ export function ConnectWalletProvider({ children }: { children: React.ReactNode 
       {children}
       {showMobilePrompt && (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-neutral-900/40 p-3 sm:items-center"
+          className="fixed inset-0 z-50 flex items-end justify-center scrim p-3 sm:items-center"
           onClick={() => setShowMobilePrompt(false)}
         >
           <div
             role="dialog"
             aria-modal="true"
             aria-label="Connect your wallet"
-            className="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl"
+            className="w-full max-w-md rounded-3xl bg-panel p-6 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-lg font-semibold text-neutral-900">Connect your wallet</h2>

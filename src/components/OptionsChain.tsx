@@ -42,7 +42,7 @@ export function OptionsChain({ ticker }: { ticker: TickerSymbol }) {
             </h3>
             <span className="font-mono text-xs text-neutral-400">{daysToExpiration(expiration)}d</span>
           </div>
-          <div className="divide-y divide-neutral-100 rounded-2xl border border-neutral-200 bg-white">
+          <div className="divide-y divide-neutral-100 rounded-2xl border border-neutral-200 bg-panel">
             {contracts
               .sort((a, b) => a.strike - b.strike)
               .map((contract) => (

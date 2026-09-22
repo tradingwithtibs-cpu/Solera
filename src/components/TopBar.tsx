@@ -16,7 +16,7 @@ export function TopBar({
   const Title = heading ? "h1" : "p";
 
   return (
-    <div className="sticky top-0 z-10 flex items-center gap-3 bg-white/90 px-4 py-3.5 backdrop-blur">
+    <div className="sticky top-0 z-10 flex items-center gap-3 glass px-4 py-3.5 backdrop-blur">
       <button
         type="button"
         onClick={() => {

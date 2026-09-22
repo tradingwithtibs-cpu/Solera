@@ -17,16 +17,14 @@ export interface WalletHoldings {
 }
 
 const AVATAR_COLORS = [
-  "bg-violet-500",
-  "bg-sky-500",
-  "bg-rose-500",
-  "bg-amber-500",
-  "bg-emerald-500",
-  "bg-indigo-500",
-  "bg-cyan-600",
-  "bg-fuchsia-500",
-  "bg-orange-500",
-  "bg-teal-500",
+  "var(--color-tk-1)",
+  "var(--color-tk-2)",
+  "var(--color-tk-3)",
+  "var(--color-tk-4)",
+  "var(--color-tk-5)",
+  "var(--color-tk-6)",
+  "var(--color-tk-7)",
+  "var(--color-tk-8)",
 ];
 
 /** Stable per-address color, so a wallet looks the same everywhere and across reloads. */

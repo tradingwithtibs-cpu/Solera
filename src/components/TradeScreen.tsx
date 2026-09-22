@@ -234,7 +234,7 @@ export function TradeScreen() {
           <h1>Review your {side}.</h1>
           <p>{isLive ? "Check how this order fits your portfolio." : "Check how this practice order fits your portfolio."}</p>
         </div>
-        <div className="mx-5 rounded-3xl border border-neutral-200 bg-white p-6">
+        <div className="mx-5 rounded-3xl border border-neutral-200 bg-panel p-6">
           <div className="flex items-center gap-3">
             <TickerBadge ticker={ticker} />
             <div>
@@ -369,7 +369,7 @@ export function TradeScreen() {
                   key={currency}
                   type="button"
                   onClick={() => setPayWith(currency)}
-                  className={`rounded-full px-3 py-1 ${payWith === currency ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500"}`}
+                  className={`rounded-full px-3 py-1 ${payWith === currency ? "bg-panel text-neutral-900 shadow-sm" : "text-neutral-500"}`}
                 >
                   {currency}
                 </button>

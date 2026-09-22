@@ -125,7 +125,7 @@ export function OptionsTradeScreen() {
           <h1>Review your option.</h1>
           <p>Check this simulated order before confirming.</p>
         </div>
-        <div className="mx-5 rounded-3xl border border-neutral-200 bg-white p-6">
+        <div className="mx-5 rounded-3xl border border-neutral-200 bg-panel p-6">
           <div className="flex items-center gap-3">
             <TickerBadge ticker={ticker} />
             <div>

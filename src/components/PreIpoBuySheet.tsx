@@ -50,12 +50,12 @@ export function PreIpoBuySheet({ token, onClose }: { token: PreIpoToken; onClose
   const quotedAmount = quote ? fromBaseUnits(quote.outAmount, token.decimals) : undefined;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-neutral-900/40 p-3 sm:items-center" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end justify-center scrim p-3 sm:items-center" onClick={onClose}>
       <div
         role="dialog"
         aria-modal="true"
         aria-label={`Buy ${token.symbol}`}
-        className="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl"
+        className="w-full max-w-md rounded-3xl bg-panel p-6 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         {status === "success" && fill ? (
@@ -125,7 +125,7 @@ export function PreIpoBuySheet({ token, onClose }: { token: PreIpoToken; onClose
                         key={c}
                         type="button"
                         onClick={() => setPayWith(c)}
-                        className={`rounded-full px-3 py-1 ${payWith === c ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500"}`}
+                        className={`rounded-full px-3 py-1 ${payWith === c ? "bg-panel text-neutral-900 shadow-sm" : "text-neutral-500"}`}
                       >
                         {c}
                       </button>
