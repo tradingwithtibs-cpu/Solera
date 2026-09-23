@@ -1,5 +1,6 @@
 import type { Plan, PlanCondition, PlanMode } from "./plans";
 import type { PendingDraft } from "./agent/types";
+import type { LivePreview } from "./plans-server";
 
 /**
  * Browser-side calls to the plans routes (docs/port/backend.md §6.3, §8.5,
@@ -62,8 +63,20 @@ export const plansClient = {
   list: (token: string) => call<{ plans: Plan[] }>("/api/plans", { headers: headers(token, false) }).then((r) => r.plans),
   get: (token: string, id: string) => call<{ plan: Plan }>(`/api/plans/${encodeURIComponent(id)}`, { headers: headers(token, false) }).then((r) => r.plan),
   /** A proposed plan; arm it next. `source` is "agent" when the sentence came through the Agent tab. */
-  create: (token: string, input: { text: string; condition: PlanCondition; mode: PlanMode; source?: "ui" | "agent" }) =>
+  create: (token: string, input: { text: string; condition: PlanCondition; mode: PlanMode; source?: "ui" | "agent"; execution?: "notify" }) =>
     call<{ plan: Plan }>("/api/plans", { method: "POST", headers: headers(token), body: JSON.stringify(input) }).then((r) => r.plan),
+  /** The same POST, keeping the live preview: the Jupiter order to sign (with its summary and disclosures) or the notify reason. */
+  createWithPreview: (token: string, input: { text: string; condition: PlanCondition; mode: PlanMode; source?: "ui" | "agent"; execution?: "notify" }) =>
+    call<{ plan: Plan; live: LivePreview | null }>("/api/plans", { method: "POST", headers: headers(token), body: JSON.stringify(input) }),
+  /** Arms a Jupiter Trigger plan once the deposit landed; the server verifies the signature and answers 409 while the RPC can't see it yet. */
+  armTrigger: (token: string, id: string, trigger: { orderId: string; depositSignature: string; expiresAt?: number; depositConfirmed?: boolean }) =>
+    call<{ plan: Plan }>(`/api/plans/${encodeURIComponent(id)}`, { method: "PATCH", headers: headers(token), body: JSON.stringify({ status: "armed", trigger }) }).then((r) => r.plan),
+  /** Cancels a Trigger plan after the withdrawal was signed and confirmed. */
+  cancelTrigger: (token: string, id: string, withdrawSignature: string) =>
+    call<{ plan: Plan }>(`/api/plans/${encodeURIComponent(id)}`, { method: "PATCH", headers: headers(token), body: JSON.stringify({ status: "cancelled", trigger: { withdrawSignature } }) }).then((r) => r.plan),
+  /** Mirrors Jupiter's order state onto the row (browser sync, backend §9.7). */
+  syncTrigger: (token: string, id: string, triggerState: string, filled?: { price: number; shares: number; at: number }) =>
+    call<{ plan: Plan }>(`/api/plans/${encodeURIComponent(id)}`, { method: "PATCH", headers: headers(token), body: JSON.stringify({ triggerState, ...(filled ? { filled } : {}) }) }).then((r) => r.plan),
   arm: (token: string, id: string, trigger?: { orderId: string; depositSignature: string }) =>
     call<{ plan: Plan }>(`/api/plans/${encodeURIComponent(id)}`, { method: "PATCH", headers: headers(token), body: JSON.stringify({ status: "armed", ...(trigger ? { trigger } : {}) }) }).then((r) => r.plan),
   cancel: (token: string, id: string) =>
