@@ -34,7 +34,9 @@ Deviations recorded by the page tasks: `src/hooks/use-visit.ts` is R1's (SincePa
 
 - **S1** feed backend: `src/lib/feed.ts` (hot = score / (ageHours + 2)^1.4 ranked in code over the newest 400 rows, fill titles, cursors, target parsing), `src/lib/feed-server.ts` (posts minted on first vote or comment from the server's news cache via `findCachedNews` or from a fill row — clients never send titles or urls), routes `GET /api/feed`, `POST /api/feed/posts`, `POST /api/feed/vote`, `GET|POST /api/feed/comments` (280 chars, 3 s cooldown), `tests/feed.test.mjs`. Targets: `{ postId } | { newsId } | { fillId, fillMode }`.
 
-Not done: A2, A4 (fleet `wf_8ae4565a-f83` running), S2 feed UI (VoteColumn, StorySheet comments, use-feed), A5, M1, P1–P3, LinkWalletSheet.
+- **A5 (pure half)** Jupiter Trigger: `src/lib/jupiter-trigger-map.ts` (`toTriggerOrder` per §9.2 — single/otoco buys, single sells, fraction sells from the live balance, the $10 minimum and one-exit shapes → notify with a reason, expiry = min(armUntil, 30 d), slippage 50–1000 bps default 200, the summary and disclosure sentences) and `src/lib/jupiter-trigger.ts` (keyless lite-api client with an in-memory per-wallet JWT, challenge text exposed before signing, 401 retry, vault register with the 409 path, craft/create/history/cancel/confirm/extend; cancel and extend paths unverified live). `tests/trigger-map.test.mjs`, `tests/jupiter-trigger.test.mjs`. Not built yet: `ArmPlanSheet` / `CancelPlanSheet` (agent-ux §3.1, §3.4), the `/api/plans` live preview (§9.3), the PATCH deposit verification (§9.4 step 6), the browser sync of `triggerState` (§9.7), and the two iOS continuations (§9.4).
+
+Not done: A2, A4 (fleet `wf_8ae4565a-f83` running), S2 feed UI (fleet `wf_c489c171-0c6` running), A5 UI half, M1, P1–P3, LinkWalletSheet.
 
 ## 0. Rulings on the review issues
 
