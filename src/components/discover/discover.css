@@ -844,3 +844,73 @@
     padding: 10px;
   }
 }
+
+/* ---- the Discover head: five tabs that never spill past the card ---- */
+.feed-card > .panel-head {
+  flex-wrap: wrap;
+  height: auto;
+  min-height: var(--head-h);
+  row-gap: 6px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+.feed-card > .panel-head > .panel-tools {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.feed-tools .seg {
+  max-width: 100%;
+}
+.feed-tools .seg > button {
+  padding-left: 9px;
+  padding-right: 9px;
+}
+/* Narrow card: the tabs drop under the title and fill the row. */
+@container (max-width: 720px) {
+  .feed-card > .panel-head > .panel-tools {
+    flex: 1 0 100%;
+    justify-content: flex-start;
+  }
+  .feed-tools {
+    flex: 1 1 auto;
+  }
+  .feed-tools .seg {
+    display: flex;
+    width: 100%;
+  }
+  .feed-tools .seg > button {
+    flex: 1 1 0;
+    text-align: center;
+  }
+}
+
+/* ---- room posts inside a feed list (Following, Holdings) ---- */
+.post.msg-post {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+.msg-post .post-meta a.post-tag {
+  text-decoration: none;
+}
+.msg-body {
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--ink-inset);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-0);
+  overflow-wrap: anywhere;
+}
+.msg-body.mine {
+  border-color: var(--line-strong);
+  background: var(--ink-selected);
+}
+
+/* ---- the Everyone lobby lives inside the Discover body ---- */
+.lobby {
+  padding: 12px;
+}
+.lobby .room-list {
+  max-height: min(60vh, 520px);
+}

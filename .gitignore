@@ -42,3 +42,6 @@ next-env.d.ts
 
 # Workflow fleet worktrees (harness-managed)
 .claude/worktrees/
+
+# share zips built by git archive
+solera-redesign-*.zip

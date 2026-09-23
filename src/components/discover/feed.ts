@@ -1,6 +1,6 @@
 import type { PublicFill, Leg } from "@/lib/fills";
 import type { FeedNews } from "@/hooks/use-news";
-import type { Transaction } from "@/lib/types";
+import type { ChatMessage, Transaction } from "@/lib/types";
 import { PRE_IPO_MINTS } from "@/lib/pre-ipo";
 import { ownerKind } from "@/lib/owner";
 import { shortAddress } from "@/lib/investors";
@@ -38,17 +38,53 @@ export interface FeedFill {
   local: boolean;
 }
 
-export type FeedItem = FeedFill | FeedNews;
+/** A room post shown in a feed list (Holdings: rooms of what you hold; Following: posts by people you follow). */
+export interface FeedMessage {
+  kind: "message";
+  id: string;
+  at: number;
+  message: ChatMessage;
+}
 
-export type FeedTab = "news" | "hot" | "all" | "following" | "mine";
+export type FeedItem = FeedFill | FeedNews | FeedMessage;
+/** What the story sheet can open: a headline or a fill. Messages have no thread of their own. */
+export type FeedStory = FeedFill | FeedNews;
+
+/**
+ * The five tabs: the last day of headlines newest first; the trending
+ * headlines; everyone's lobby; the people you follow (their trades and
+ * their posts); and what you hold (its news and its rooms).
+ */
+export type FeedTab = "news" | "hot" | "all" | "following" | "holdings";
 
 export const FEED_TABS: { key: FeedTab; label: string }[] = [
   { key: "news", label: "News" },
   { key: "hot", label: "Hot" },
   { key: "all", label: "Everyone" },
   { key: "following", label: "Following" },
-  { key: "mine", label: "Mine" },
+  { key: "holdings", label: "Holdings" },
 ];
+
+/** The News tab's window. */
+export const NEWS_WINDOW_MS = 24 * 3_600_000;
+
+export function fromMessage(m: ChatMessage): FeedMessage {
+  return { kind: "message", id: `msg:${m.id}`, at: m.createdAt, message: m };
+}
+
+/** Headlines and fills only, newest first, within `windowMs` of `now` (no window: everything). */
+export function withinWindow<T extends { at: number }>(items: T[], now: number, windowMs: number | null): T[] {
+  return windowMs === null ? items : items.filter((i) => now - i.at <= windowMs);
+}
+
+/**
+ * Hot ties (no votes yet, which is most of launch day) fall to what the
+ * story is about: a headline fetched for a ticker people hold or trade
+ * outranks a market-wide one, then the newer wins.
+ */
+export function relevance(item: FeedNews): number {
+  return item.tickers.length;
+}
 
 export function fromPublicFill(f: PublicFill, mine: boolean): FeedFill {
   return {

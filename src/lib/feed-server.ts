@@ -1,5 +1,6 @@
 import { createHash } from "crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { isOwner } from "./owner";
 import { HttpError } from "./http-error";
 import { POST_COOLDOWN_MS } from "./chat";
 import { findCachedNews } from "./news-server";
@@ -41,8 +42,15 @@ async function profilesFor(s: SupabaseClient, owners: string[]): Promise<Map<str
   const out = new Map<string, { handle: string | null; name: string | null }>();
   const unique = [...new Set(owners.filter(Boolean))];
   if (unique.length === 0) return out;
-  const { data } = await s.from("profiles").select("owner, handle, name").in("owner", unique);
-  for (const r of (data ?? []) as Array<{ owner: string; handle: string | null; name: string | null }>) out.set(r.owner, { handle: r.handle, name: r.name });
+  // A linked profile's owner is the user id while its posts may carry the wallet, so match on either.
+  const safe = unique.filter(isOwner);
+  if (safe.length === 0) return out;
+  const list = `(${safe.join(",")})`;
+  const { data } = await s.from("profiles").select("owner, wallet, handle, name").or(`owner.in.${list},wallet.in.${list}`);
+  for (const r of (data ?? []) as Array<{ owner: string; wallet: string | null; handle: string | null; name: string | null }>) {
+    out.set(r.owner, { handle: r.handle, name: r.name });
+    if (r.wallet) out.set(r.wallet, { handle: r.handle, name: r.name });
+  }
   return out;
 }
 

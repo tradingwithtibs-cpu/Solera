@@ -53,8 +53,11 @@ export async function GET(request: NextRequest) {
   const owners = [...new Set(raw.split(",").map((w) => w.trim()).filter(isOwner))].slice(0, 100);
   if (owners.length === 0) return NextResponse.json({ profiles: {}, configured: true });
 
+  // A linked profile's owner is the user id, so a wallet-only lookup must match on wallet too.
+  // Owners are validated above (base58 or uuid), so they are safe inside the filter string.
+  const list = `(${owners.join(",")})`;
+  const primary = await supabase.from("profiles").select(COLUMNS).or(`owner.in.${list},wallet.in.${list}`);
   // Before port.sql runs there is no owner column; fall back to wallets so profiles keep working.
-  const primary = await supabase.from("profiles").select(COLUMNS).in("owner", owners);
   let data = primary.data as Row[] | null;
   let error = primary.error;
   if (error && /owner/.test(error.message)) {

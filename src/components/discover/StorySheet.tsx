@@ -16,7 +16,7 @@ import { openAuthSheet } from "@/components/auth/auth-sheet-store";
 import { VoteColumn } from "./VoteColumn";
 import { CommentList } from "./CommentList";
 import { agentQuestion, scopeHref, scopeSymbol } from "./NewsRow";
-import { actorName, fillSymbol, legLabel, type FeedFill, type FeedItem } from "./feed";
+import { actorName, fillSymbol, legLabel, type FeedFill, type FeedStory } from "./feed";
 import { COMMENTS_LOCKED, LOCAL_FILL_COMMENTS_LOCKED, feedTargetOf } from "./feed-posts";
 
 /**
@@ -26,7 +26,7 @@ import { COMMENTS_LOCKED, LOCAL_FILL_COMMENTS_LOCKED, feedTargetOf } from "./fee
  * the story was fetched for at their live price. Beneath, the real thread
  * from the posts store and a composer that opens with sign-in.
  */
-export function StorySheet({ item, profile, onClose }: { item: FeedItem; profile?: Profile | null; onClose: () => void }) {
+export function StorySheet({ item, profile, onClose }: { item: FeedStory; profile?: Profile | null; onClose: () => void }) {
   const closeRef = useRef<HTMLButtonElement>(null);
   const feed = useFeed();
   const post = feed.postFor(item);
@@ -75,7 +75,7 @@ export function StorySheet({ item, profile, onClose }: { item: FeedItem; profile
  * reason; signed in it posts and shows the route's reason when it refuses
  * (the 3-second cooldown says "Slow down a little.").
  */
-function Composer({ item, locked, signedIn, onPost }: { item: FeedItem; locked: boolean; signedIn: boolean; onPost: (text: string) => Promise<unknown> }) {
+function Composer({ item, locked, signedIn, onPost }: { item: FeedStory; locked: boolean; signedIn: boolean; onPost: (text: string) => Promise<unknown> }) {
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);

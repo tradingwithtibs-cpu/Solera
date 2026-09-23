@@ -7,11 +7,26 @@ import type { ChatMessage } from "./types";
  */
 export const MESSAGE_MAX = 280;
 export const ROOM_PATTERN = /^[A-Z0-9.]{1,12}x$/;
+/** The one room that is not a ticker: everyone's lobby, the Everyone tab on Discover (supabase/lobby.sql lets the table accept it). */
+export const LOBBY_ROOM = "everyone";
 /** Minimum gap between two posts from one wallet. */
 export const POST_COOLDOWN_MS = 3_000;
+/** Rooms a multi-room read may name at once. */
+export const MAX_ROOMS_PER_QUERY = 12;
 
 export function isValidRoom(room: string): boolean {
-  return ROOM_PATTERN.test(room);
+  return room === LOBBY_ROOM || ROOM_PATTERN.test(room);
+}
+
+/** "#TSLAx" for a ticker room, "Everyone" for the lobby. */
+export function roomLabel(room: string): string {
+  return room === LOBBY_ROOM ? "Everyone" : `#${room}`;
+}
+
+/** Parses a comma-separated room list, dropping anything that is not a room, capped. */
+export function parseRooms(raw: string | null): string[] {
+  if (!raw) return [];
+  return [...new Set(raw.split(",").map((r) => r.trim()).filter(isValidRoom))].slice(0, MAX_ROOMS_PER_QUERY);
 }
 
 // Control characters other than tab/newline (which collapse to spaces below).

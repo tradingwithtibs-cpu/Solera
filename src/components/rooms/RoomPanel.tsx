@@ -45,8 +45,10 @@ export function RoomCard({ ticker, id = "room" }: { ticker: string; id?: string 
  * wallet. A claimed profile puts a name on it. The caller owns the
  * `useRoomMessages` subscription so the card head can show the count.
  */
-export function RoomPanel({ ticker, room }: { ticker: string; room: RoomState }) {
+export function RoomPanel({ ticker, room, label: labelProp }: { ticker: string; room: RoomState; label?: string }) {
   const { messages, configured, error, send } = room;
+  // "#TSLAx" for a ticker room; the lobby passes its own name.
+  const label = labelProp ?? `#${ticker}`;
   const { publicKey } = useWallet();
   const address = publicKey?.toBase58() ?? null;
   const { token, owner, kind, signIn, status: sessionStatus, error: sessionError, canSign } = useSession();
@@ -88,7 +90,7 @@ export function RoomPanel({ ticker, room }: { ticker: string; room: RoomState })
 
   return (
     <div className="room">
-      <ul ref={listRef} className="room-list" aria-label={`Posts in the ${ticker} room`}>
+      <ul ref={listRef} className="room-list" aria-label={`Posts in ${label}`}>
         {messages === null ? (
           <li className="room-note" aria-busy="true">
             Opening the room…
@@ -96,7 +98,7 @@ export function RoomPanel({ ticker, room }: { ticker: string; room: RoomState })
         ) : configured === false ? (
           <li className="room-note">Rooms aren&apos;t switched on for this deployment yet.</li>
         ) : messages.length === 0 ? (
-          <li className="room-note">Nobody has posted in #{ticker} yet. Be the first.</li>
+          <li className="room-note">Nobody has posted in {label} yet. Be the first.</li>
         ) : (
           messages.map((m) => <ChatMessageRow key={m.id} message={m} mine={!!owner && m.author === owner} />)
         )}
@@ -131,8 +133,8 @@ export function RoomPanel({ ticker, room }: { ticker: string; room: RoomState })
                   type="text"
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
-                  placeholder={`Say something in ${ticker}…`}
-                  aria-label={`Message the ${ticker} room`}
+                  placeholder={`Say something in ${label}…`}
+                  aria-label={`Message ${label}`}
                   maxLength={MESSAGE_MAX}
                   disabled={sending}
                 />

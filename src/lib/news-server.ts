@@ -14,6 +14,8 @@ const FINNHUB = "https://finnhub.io/api/v1";
 const GOOGLE_NEWS = "https://news.google.com/rss/search";
 const CACHE_TTL_MS = 10 * 60_000;
 const LIMIT = 12;
+/** The market-wide stream is the News tab's backbone: keep a full day of it, not a dozen items. */
+const GENERAL_LIMIT = 60;
 
 export const TICKER_QUERY = /^[A-Z0-9.]{1,12}x$/;
 
@@ -122,7 +124,7 @@ async function tickerNews(ticker: TickerSymbol): Promise<NewsResponse> {
 
 async function generalNews(): Promise<NewsResponse> {
   const articles = await finnhub(`/news?category=general`);
-  if (articles) return { items: dedupeNews(fromFinnhub(articles), LIMIT), source: "finnhub", fetchedAt: Date.now() };
+  if (articles) return { items: dedupeNews(fromFinnhub(articles), GENERAL_LIMIT), source: "finnhub", fetchedAt: Date.now() };
   return googleNews("stock market when:2d");
 }
 

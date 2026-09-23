@@ -6,6 +6,12 @@
       "runtimeExecutable": "/bin/sh",
       "runtimeArgs": ["-c", "export PATH=/Users/tibet/.local/node/bin:$PATH; exec npx next dev -p 3000 --webpack"],
       "port": 3000
+    },
+    {
+      "name": "stocklana-prod",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": ["-c", "export PATH=/Users/tibet/.local/node/bin:$PATH; exec npx next start -p 3001"],
+      "port": 3001
     }
   ]
 }

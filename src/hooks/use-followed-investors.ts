@@ -76,5 +76,5 @@ export function useFollowedInvestors() {
     listeners.forEach((listener) => listener());
   }, []);
 
-  return { isFollowing, toggle: toggleFollow };
+  return { isFollowing, toggle: toggleFollow, followed };
 }

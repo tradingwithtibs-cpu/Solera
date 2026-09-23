@@ -1,26 +1,39 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseAnon, getSupabaseService } from "@/lib/supabase";
 import { sessionFromHeader } from "@/lib/session-server";
-import { POST_COOLDOWN_MS, isValidRoom, normalizeMessageBody, rowToMessage, validateMessageBody, type MessageRow } from "@/lib/chat";
+import { POST_COOLDOWN_MS, isValidRoom, normalizeMessageBody, parseRooms, rowToMessage, validateMessageBody, type MessageRow } from "@/lib/chat";
+import { isOwner } from "@/lib/owner";
 
 const PAGE = 100;
 
-/** GET /api/chat?room=AAPLx → the room's latest messages, oldest first. */
+const MAX_AUTHORS = 20;
+
+/**
+ * GET /api/chat?room=AAPLx            → the room's latest messages, oldest first.
+ * GET /api/chat?rooms=AAPLx,TSLAx     → the latest across several rooms (the Holdings tab).
+ * GET /api/chat?authors=a,b           → the latest by these owners or wallets, any room (the Following tab).
+ */
 export async function GET(request: NextRequest) {
-  const room = request.nextUrl.searchParams.get("room") ?? "";
-  if (!isValidRoom(room)) return NextResponse.json({ error: "Unknown room." }, { status: 400 });
+  const params = request.nextUrl.searchParams;
+  const room = params.get("room") ?? "";
+  const rooms = params.get("rooms") !== null ? parseRooms(params.get("rooms")) : null;
+  const authors = params.get("authors") !== null ? [...new Set((params.get("authors") ?? "").split(",").map((a) => a.trim()).filter(isOwner))].slice(0, MAX_AUTHORS) : null;
+  if (rooms === null && authors === null && !isValidRoom(room)) return NextResponse.json({ error: "Unknown room." }, { status: 400 });
+  if ((rooms && rooms.length === 0) || (authors && authors.length === 0)) return NextResponse.json({ messages: [], configured: true });
   const supabase = getSupabaseAnon();
   if (!supabase) return NextResponse.json({ messages: [], configured: false });
 
-  const primary = await supabase
-    .from("messages")
-    .select("id, room, owner, wallet, body, created_at")
-    .eq("room", room)
-    .order("created_at", { ascending: false })
-    .limit(PAGE);
+  let query = supabase.from("messages").select("id, room, owner, wallet, body, created_at");
+  if (rooms) query = query.in("room", rooms);
+  else if (authors) {
+    // Owners are validated (base58 or uuid), so they are safe inside the filter string.
+    const list = `(${authors.join(",")})`;
+    query = query.or(`owner.in.${list},wallet.in.${list}`);
+  } else query = query.eq("room", room);
+  const primary = await query.order("created_at", { ascending: false }).limit(PAGE);
   let data = primary.data as MessageRow[] | null;
   let error = primary.error;
-  if (error && /owner/.test(error.message)) {
+  if (error && /owner/.test(error.message) && !rooms && !authors) {
     // port.sql not run yet: rows are wallet-authored only.
     const legacy = await supabase.from("messages").select("id, room, wallet, body, created_at").eq("room", room).order("created_at", { ascending: false }).limit(PAGE);
     data = legacy.data as MessageRow[] | null;

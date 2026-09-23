@@ -33,6 +33,8 @@ export function postKeyOf(post: Pick<FeedPost, "kind" | "ref" | "url">): string 
 /** What a row votes or comments on. A fill from this browser's ledger has no server row, so nothing to name. */
 export function feedTargetOf(item: FeedItem): FeedTarget {
   if (item.kind === "news") return { key: newsKey(item.item.url), target: { newsId: item.item.id }, local: false };
+  // A room post is not a post in the votes sense: nothing to vote on, nothing to thread.
+  if (item.kind === "message") return { key: `message:${item.message.id}`, target: null, local: true };
   if (item.local) return { key: `local:${item.fillId}`, target: null, local: true };
   return { key: fillKey(item.fillId), target: { fillId: item.fillId, fillMode: item.mode }, local: false };
 }
@@ -49,10 +51,10 @@ export function commentLabel(count: number): string {
  * ties by recency. Age is the item's own time (published, or filled), so a
  * stale headline that just collected a vote does not outrank fresh news.
  */
-export function hotMerge<T extends FeedItem>(items: T[], scoreOf: (item: T) => number, now: number): T[] {
-  const eligible = items.filter((i) => i.kind === "news" || !!i.note);
-  const ranked = eligible.map((item) => ({ item, hot: hotScore(scoreOf(item), item.at, now) }));
-  ranked.sort((a, b) => b.hot - a.hot || b.item.at - a.item.at);
+export function hotMerge<T extends FeedItem>(items: T[], scoreOf: (item: T) => number, now: number, tieBreak: (item: T) => number = () => 0): T[] {
+  const eligible = items.filter((i) => i.kind === "news" || (i.kind === "fill" && !!i.note));
+  const ranked = eligible.map((item) => ({ item, hot: hotScore(scoreOf(item), item.at, now), tie: tieBreak(item) }));
+  ranked.sort((a, b) => b.hot - a.hot || b.tie - a.tie || b.item.at - a.item.at);
   return ranked.map((r) => r.item);
 }
 
