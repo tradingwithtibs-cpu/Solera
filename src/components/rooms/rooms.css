@@ -1,0 +1,72 @@
+/*
+ * The room body (RoomPanel) and the static room route. Inside a sized
+ * card the list is the scroller and the composer stays at the foot; on
+ * phones and on auto-height cards the list caps itself instead.
+ */
+.panel-body:has(> .panel-inner > .room) {
+  display: flex;
+  flex-direction: column;
+}
+.panel-inner:has(> .room) {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.room {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: 12px;
+}
+.room-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  overscroll-behavior: contain;
+}
+.panel:not([data-sized]) .room-list {
+  max-height: min(60vh, 520px);
+}
+@media (max-width: 767px) {
+  .room-list {
+    max-height: min(60vh, 520px);
+  }
+}
+.room-msg {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+.room-note {
+  padding: 24px 12px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.room-form {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+.room-page {
+  width: 100%;
+  max-width: var(--grid-max);
+  margin: 0 auto;
+  padding: 8px 16px 24px;
+}
+@media (max-width: 767px) {
+  .room-page {
+    padding: 10px 12px calc(var(--tabbar-h, 56px) + 28px);
+  }
+}

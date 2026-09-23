@@ -8,6 +8,7 @@ import type { WalletError } from "@solana/wallet-adapter-base";
 import { clusterApiUrl } from "@solana/web3.js";
 import { ConnectWalletProvider } from "./ConnectWalletProvider";
 import { DeepLinkResumer } from "./DeepLinkResumer";
+import { AuthSheetHost } from "./auth/AuthSheetHost";
 import { PhantomDeepLinkWalletAdapter } from "@/lib/phantom-deeplink-adapter";
 
 // Default styles for the wallet selection modal — overridden in globals.css
@@ -50,6 +51,7 @@ export function SolanaProvider({ children }: { children: React.ReactNode }) {
         <WalletModalProvider>
           <ConnectWalletProvider>
             <DeepLinkResumer />
+            <AuthSheetHost />
             {children}
           </ConnectWalletProvider>
         </WalletModalProvider>

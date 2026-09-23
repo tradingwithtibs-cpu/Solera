@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { BIO_MAX, NAME_MAX, buildProfileClaimMessage, validateProfileInput, type Profile, type ProfileInput } from "@/lib/profiles";
 import { setProfile } from "@/hooks/use-profiles";
 import { isDeferredSigner, stageContinuation } from "@/lib/deferred-signing";
+import { Sheet, SheetHead } from "./auth/Sheet";
+import { CheckCircleIcon } from "./icons";
 
 /** POSTs a signed claim; shared with the deeplink resumer, which has the signature but not this sheet. */
 export async function submitProfileClaim(wallet: string, profile: ProfileInput, issuedAt: number, signatureBase64: string): Promise<Profile> {
@@ -24,6 +26,7 @@ export async function submitProfileClaim(wallet: string, profile: ProfileInput, 
  * the server checks that signature before writing. No email, no password.
  */
 export function ProfileSheet({ existing, onClose }: { existing: Profile | null; onClose: () => void }) {
+  const id = useId();
   const { publicKey, signMessage, wallet: connected } = useWallet();
   const [form, setForm] = useState<ProfileInput>({
     handle: existing?.handle ?? "",
@@ -65,104 +68,101 @@ export function ProfileSheet({ existing, onClose }: { existing: Profile | null; 
     }
   }
 
+  const pending = status === "signing" || status === "saving";
+
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center scrim p-3 sm:items-center" onClick={onClose}>
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Your profile"
-        className="w-full max-w-md rounded-3xl bg-panel p-6 shadow-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {status === "done" ? (
-          <div className="text-center">
-            <h2 className="text-lg font-semibold text-neutral-900">Profile saved</h2>
-            <p className="mt-2 text-sm text-neutral-600">
-              You&apos;re <span className="font-semibold">@{form.handle.trim().toLowerCase()}</span> on Solera. Your name now
-              shows wherever this wallet appears.
-            </p>
-            <button type="button" onClick={onClose} className="btn-primary mt-4 w-full">
-              Done
-            </button>
-          </div>
-        ) : (
-          <>
-            <h2 className="text-lg font-semibold text-neutral-900">{existing ? "Edit your profile" : "Claim your profile"}</h2>
-            <p className="mt-1 text-xs leading-relaxed text-neutral-500">
-              Identity on Solera is your wallet. Saving asks it to sign a short message, which proves the wallet is yours.
-              No email, no password, nothing to leak.
-            </p>
-            <fieldset disabled={status !== "idle"} className="mt-4 space-y-3">
-              <label className="block">
-                <span className="text-xs font-semibold text-neutral-600">Handle</span>
-                <div className="field mt-1 flex items-center px-3">
-                  <span className="text-neutral-400">@</span>
-                  <input
-                    value={form.handle}
-                    onChange={(e) => setForm({ ...form, handle: e.target.value.toLowerCase() })}
-                    placeholder="yourname"
-                    maxLength={20}
-                    autoCapitalize="none"
-                    className="w-full bg-transparent py-2 text-sm outline-none"
-                  />
-                </div>
-              </label>
-              <label className="block">
-                <span className="text-xs font-semibold text-neutral-600">Display name</span>
-                <div className="field mt-1">
-                  <input
-                    value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    placeholder="How you'd like to appear"
-                    maxLength={NAME_MAX}
-                    className="w-full bg-transparent px-3 py-2 text-sm outline-none"
-                  />
-                </div>
-              </label>
-              <label className="block">
-                <span className="text-xs font-semibold text-neutral-600">Bio</span>
-                <div className="field mt-1">
-                  <textarea
-                    value={form.bio}
-                    onChange={(e) => setForm({ ...form, bio: e.target.value })}
-                    placeholder="What you invest in, and why"
-                    maxLength={BIO_MAX}
-                    rows={2}
-                    className="block w-full resize-none bg-transparent px-3 py-2 text-sm outline-none"
-                  />
-                </div>
-                <span className="text-[10px] text-neutral-400">{form.bio.length}/{BIO_MAX}</span>
-              </label>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-neutral-500">Who can see it</span>
-                <div className="flex rounded-full bg-neutral-100 p-0.5 font-semibold">
-                  {(["public", "private"] as const).map((v) => (
-                    <button
-                      key={v}
-                      type="button"
-                      onClick={() => setForm({ ...form, visibility: v })}
-                      className={`rounded-full px-3 py-1 capitalize ${form.visibility === v ? "bg-panel text-neutral-900 shadow-sm" : "text-neutral-500"}`}
-                    >
-                      {v}
-                    </button>
-                  ))}
-                </div>
+    <Sheet labelledBy={id} onClose={onClose} locked={pending} narrow>
+      {status === "done" ? (
+        <div className="text-center">
+          <CheckCircleIcon className="mx-auto h-10 w-10 text-gain" />
+          <h3 id={id}>Profile saved</h3>
+          <p className="sheet-text">
+            You&apos;re <b>@{form.handle.trim().toLowerCase()}</b> on Solera. Your name now shows wherever this wallet appears.
+          </p>
+          <button type="button" onClick={onClose} className="btn-primary w-full">
+            Done
+          </button>
+        </div>
+      ) : (
+        <>
+          <SheetHead eyebrow="Wallet" title={existing ? "Edit your profile" : "Claim your profile"} id={id} onClose={pending ? undefined : onClose} />
+          <p className="sheet-text">
+            Identity on Solera is your wallet. Saving asks it to sign a short message, which proves the wallet is yours. No email, no
+            password, nothing to leak.
+          </p>
+          <fieldset disabled={pending} className="m-0 min-w-0 space-y-3 border-0 p-0">
+            <label className="field-label">
+              <span>Handle</span>
+              <div className="field">
+                <span className="pl-3 text-muted">@</span>
+                <input
+                  value={form.handle}
+                  onChange={(e) => setForm({ ...form, handle: e.target.value.toLowerCase() })}
+                  placeholder="yourname"
+                  maxLength={20}
+                  autoCapitalize="none"
+                  autoComplete="username"
+                  className="!pl-1"
+                />
               </div>
-            </fieldset>
-            {error && (
-              <p role="alert" className="mt-3 text-xs text-rose-600">
-                {error}
-              </p>
-            )}
-            <button type="button" onClick={save} disabled={status !== "idle"} className="btn-primary mt-4 w-full disabled:opacity-50">
+            </label>
+            <label className="field-label">
+              <span>Display name</span>
+              <div className="field">
+                <input
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  placeholder="How you'd like to appear"
+                  maxLength={NAME_MAX}
+                  autoComplete="nickname"
+                />
+              </div>
+            </label>
+            <label className="field-label">
+              <span>
+                Bio{" "}
+                <em className="font-sans text-[11px] font-medium normal-case tracking-normal not-italic">
+                  {form.bio.length}/{BIO_MAX}
+                </em>
+              </span>
+              <div className="field">
+                <textarea
+                  value={form.bio}
+                  onChange={(e) => setForm({ ...form, bio: e.target.value })}
+                  placeholder="What you invest in, and why"
+                  maxLength={BIO_MAX}
+                  rows={2}
+                  className="block resize-none"
+                />
+              </div>
+            </label>
+            <div className="flex items-center justify-between gap-3">
+              <span className="eyebrow">Who can see it</span>
+              <div className="seg" role="group" aria-label="Who can see your profile">
+                {(["public", "private"] as const).map((v) => (
+                  <button key={v} type="button" aria-pressed={form.visibility === v} onClick={() => setForm({ ...form, visibility: v })}>
+                    {v}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </fieldset>
+          {error && (
+            <p role="alert" className="field-error">
+              {error}
+            </p>
+          )}
+          <div className="sheet-actions mt-4">
+            <button type="button" onClick={save} disabled={pending} aria-busy={pending} className="btn-primary flex-1">
               {status === "signing" ? "Waiting for your wallet…" : status === "saving" ? "Saving…" : "Sign & save"}
             </button>
-            <button type="button" onClick={onClose} className="mt-2 w-full rounded-full py-2 text-sm font-semibold text-neutral-500">
+            <button type="button" onClick={onClose} disabled={pending} className="btn-ghost">
               Not now
             </button>
-          </>
-        )}
-      </div>
-    </div>
+          </div>
+          <p className="sheet-foot">The signature proves the wallet is yours. No transaction, no fee.</p>
+        </>
+      )}
+    </Sheet>
   );
 }

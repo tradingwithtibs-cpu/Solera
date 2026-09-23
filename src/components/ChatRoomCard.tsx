@@ -7,42 +7,43 @@ import { shortAddress } from "@/lib/investors";
 import { formatRelativeTime } from "@/lib/format";
 import { ChatIcon } from "./icons";
 
-/** The way into a ticker's room from its asset page: who spoke last, and how many posts there are. */
-export function ChatRoomCard({ ticker }: { ticker: string }) {
+/**
+ * The phone's way into a ticker's room from under the asset card: who
+ * spoke last, and how many posts there are. On desktop the room is a
+ * grid card (RoomCard) and this link is not shown.
+ */
+export function ChatRoomCard({ ticker, className = "" }: { ticker: string; className?: string }) {
   const { messages, configured } = useRoomMessages(ticker);
   const last = messages && messages.length > 0 ? messages[messages.length - 1] : null;
   const lastProfile = useProfile(last?.author);
+  const count = messages?.length ?? 0;
 
   return (
     <Link
       href={`/asset/${ticker}/chat`}
-      className="mx-5 mt-2 flex items-center gap-3 rounded-2xl border border-neutral-200 bg-panel p-4 active:bg-neutral-50"
+      className={`flex min-h-11 items-center gap-3 rounded-[var(--radius-panel)] border border-line bg-panel px-3 py-2.5 transition-colors hover:bg-hover active:bg-hover ${className}`.trim()}
     >
-      <span className="bg-gradient-brand flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white">
-        <ChatIcon className="h-5 w-5" />
+      <span className="avatar sm border-transparent text-white" style={{ background: "var(--grad-action)" }} aria-hidden="true">
+        <ChatIcon className="h-3.5 w-3.5" />
       </span>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-neutral-900">#{ticker} room</p>
+      <span className="min-w-0 flex-1">
+        <span className="eyebrow block text-fg">{ticker} room</span>
         {messages === null ? (
-          <p className="text-xs text-neutral-400" aria-busy="true">
+          <span className="block truncate text-xs text-muted" aria-busy="true">
             Opening the room…
-          </p>
+          </span>
         ) : configured === false ? (
-          <p className="text-xs text-neutral-400">Opens once rooms are switched on for this deployment.</p>
+          <span className="block truncate text-xs text-muted">Opens once rooms are switched on for this deployment.</span>
         ) : last ? (
-          <p className="truncate text-xs text-neutral-500">
-            <span className={`font-semibold text-neutral-700 ${lastProfile ? "" : "font-mono"}`}>
-              {lastProfile?.name ?? shortAddress(last.author)}
-            </span>
-            : {last.body} · {formatRelativeTime(last.createdAt)}
-          </p>
+          <span className="block truncate text-xs text-muted">
+            <span className={`font-semibold text-fg ${lastProfile ? "" : "font-mono"}`}>{lastProfile?.name ?? shortAddress(last.author)}</span>: {last.body} ·{" "}
+            {formatRelativeTime(last.createdAt)}
+          </span>
         ) : (
-          <p className="text-xs text-neutral-500">Quiet so far. Say what you think of {ticker}.</p>
+          <span className="block truncate text-xs text-muted">Quiet so far. Say what you think of {ticker}.</span>
         )}
-      </div>
-      <span className="shrink-0 text-xs font-semibold text-indigo-600">
-        {messages && messages.length > 0 ? `${messages.length} →` : "Join →"}
       </span>
+      <span className="chip shrink-0">{count > 0 ? `${count} →` : "Join →"}</span>
     </Link>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   PENDING_KEY,
@@ -22,6 +22,7 @@ import { solscanTxUrl } from "@/lib/jupiter";
 import { fromBaseUnits } from "@/lib/tokens";
 import { formatCurrency, formatShares } from "@/lib/format";
 import { celebrateTrade } from "@/lib/celebrate";
+import { Sheet } from "./auth/Sheet";
 import { CheckCircleIcon } from "./icons";
 
 interface Outcome {
@@ -39,6 +40,7 @@ interface Outcome {
  * Mounted once, app-wide, so it works on whichever page Phantom returns to.
  */
 export function DeepLinkResumer() {
+  const id = useId();
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [outcome, setOutcome] = useState<Outcome | null>(null);
@@ -80,38 +82,37 @@ export function DeepLinkResumer() {
 
   if (busy) {
     return (
-      <div className="fixed inset-x-0 bottom-0 z-50 flex justify-center p-3">
-        <div role="status" aria-live="polite" className="w-full max-w-md rounded-3xl bg-panel p-5 text-center shadow-xl ring-1 ring-neutral-200">
-          <p className="text-sm font-semibold text-neutral-900">{busy}</p>
-          <p className="mt-1 text-xs text-neutral-500">Hang on a moment.</p>
+      <div className="toasts" role="status" aria-live="polite">
+        <div className="toast in glass glass-era">
+          <p className="eyebrow">Phantom</p>
+          <p className="mt-1 font-semibold text-fg">{busy}</p>
+          <p className="text-xs text-muted">Hang on a moment.</p>
         </div>
       </div>
     );
   }
   if (!outcome) return null;
 
+  const close = () => setOutcome(null);
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center scrim p-3 sm:items-center" onClick={() => setOutcome(null)}>
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={outcome.title}
-        className="w-full max-w-md rounded-3xl bg-panel p-6 text-center shadow-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {outcome.tone === "success" && <CheckCircleIcon className="mx-auto h-12 w-12 text-emerald-500" />}
-        <h2 className="mt-2 text-lg font-semibold text-neutral-900">{outcome.title}</h2>
-        <p className="mt-2 text-sm leading-relaxed text-neutral-600">{outcome.body}</p>
+    <Sheet labelledBy={id} onClose={close}>
+      <div className="text-center">
+        {outcome.tone === "success" && <CheckCircleIcon className="mx-auto h-10 w-10 text-gain" />}
+        <p className="eyebrow mt-2">Phantom</p>
+        <h3 id={id}>{outcome.title}</h3>
+        <p className="sheet-text">{outcome.body}</p>
         {outcome.link && (
-          <a href={outcome.link.href} target="_blank" rel="noreferrer" className="mt-3 inline-block text-sm font-semibold text-indigo-600">
-            {outcome.link.label} ↗
-          </a>
+          <p className="mb-3">
+            <a href={outcome.link.href} target="_blank" rel="noreferrer" className="btn-secondary btn-small">
+              {outcome.link.label} ↗
+            </a>
+          </p>
         )}
-        <button type="button" onClick={() => setOutcome(null)} className="btn-primary mt-4 w-full">
+        <button type="button" onClick={close} className="btn-primary w-full">
           Done
         </button>
       </div>
-    </div>
+    </Sheet>
   );
 }
 

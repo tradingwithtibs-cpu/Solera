@@ -1,10 +1,11 @@
 "use client";
 
-import { createContext, useCallback, useContext, useState } from "react";
+import { createContext, useCallback, useContext, useId, useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { hasInjectedWallet, isAndroid, isMobileBrowser, phantomBrowseUrl, solflareBrowseUrl } from "@/lib/mobile-wallet";
 import { PhantomDeepLinkWalletName } from "@/lib/phantom-deeplink-adapter";
+import { Sheet, SheetHead } from "./auth/Sheet";
 
 const ConnectWalletContext = createContext<{ openConnect: () => void }>({ openConnect: () => {} });
 
@@ -26,6 +27,7 @@ export function useConnectWallet() {
  *   (it's the only route for Solflare).
  */
 export function ConnectWalletProvider({ children }: { children: React.ReactNode }) {
+  const id = useId();
   const { setVisible } = useWalletModal();
   const { select, connect, wallet } = useWallet();
   const [showMobilePrompt, setShowMobilePrompt] = useState(false);
@@ -49,51 +51,34 @@ export function ConnectWalletProvider({ children }: { children: React.ReactNode 
   }, [select, connect, wallet]);
 
   const pageUrl = typeof window !== "undefined" ? window.location.href : "";
+  const close = () => setShowMobilePrompt(false);
 
   return (
     <ConnectWalletContext.Provider value={{ openConnect }}>
       {children}
       {showMobilePrompt && (
-        <div
-          className="fixed inset-0 z-50 flex items-end justify-center scrim p-3 sm:items-center"
-          onClick={() => setShowMobilePrompt(false)}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label="Connect your wallet"
-            className="w-full max-w-md rounded-3xl bg-panel p-6 shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 className="text-lg font-semibold text-neutral-900">Connect your wallet</h2>
-            <p className="mt-2 text-sm leading-relaxed text-neutral-600">
-              Phantom opens to approve, then brings you right back here. You stay in Safari.
-            </p>
-            <div className="mt-4 space-y-2">
-              <button type="button" onClick={connectPhantom} className="btn-primary block w-full text-center">
-                Connect Phantom
-              </button>
-              <a href={solflareBrowseUrl(pageUrl)} className="btn-secondary block w-full text-center">
-                Open in Solflare
-              </a>
-            </div>
-            <p className="mt-3 text-[11px] leading-relaxed text-neutral-400">
-              Prefer Phantom&apos;s built-in browser?{" "}
-              <a href={phantomBrowseUrl(pageUrl)} className="font-semibold text-violet-600">
-                Open Solera there
-              </a>
-              . No wallet yet? Install Phantom or Solflare from the App Store; you can keep exploring in practice mode
-              meanwhile.
-            </p>
-            <button
-              type="button"
-              onClick={() => setShowMobilePrompt(false)}
-              className="mt-3 w-full rounded-full py-2 text-sm font-semibold text-neutral-500"
-            >
-              Not now
+        <Sheet labelledBy={id} onClose={close}>
+          <SheetHead eyebrow="Wallet" title="Connect your wallet" id={id} onClose={close} />
+          <p className="sheet-text">Phantom opens to approve, then brings you right back here. You stay in Safari.</p>
+          <div className="sheet-actions">
+            <button type="button" onClick={connectPhantom} className="btn-primary flex-1">
+              Connect Phantom
             </button>
+            <a href={solflareBrowseUrl(pageUrl)} className="btn-secondary flex-1">
+              Open in Solflare
+            </a>
           </div>
-        </div>
+          <p className="sheet-foot leading-relaxed">
+            Prefer Phantom&apos;s built-in browser?{" "}
+            <a href={phantomBrowseUrl(pageUrl)} className="font-semibold text-accent-text underline underline-offset-2">
+              Open Solera there
+            </a>
+            . No wallet yet? Install Phantom or Solflare from the App Store; you can keep exploring in practice mode meanwhile.
+          </p>
+          <button type="button" onClick={close} className="btn-ghost mt-3 w-full">
+            Not now
+          </button>
+        </Sheet>
       )}
     </ConnectWalletContext.Provider>
   );
