@@ -1,0 +1,581 @@
+/*
+ * The Agent card (docs/port/agent-ux.md §1): the thread, the partner's
+ * prompt box (.plan-form, terminal.css:478) and example chips (.lens-chip),
+ * the Lens answer bubble (terminal.css:407) and the cards under it. Layout
+ * only, on the classes globals.css already defines (.panel*, .chip,
+ * .btn-*, .field, .eyebrow, .sheet*, .toast*). Tokens only, no hex.
+ * Imported by AgentPanel.tsx.
+ */
+
+/* ---------- the card body: list scrolls, composer stays at the foot ---------- */
+.panel-body:has(> .panel-inner > .agent) {
+  display: flex;
+  flex-direction: column;
+}
+.panel-inner:has(> .agent) {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.agent {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  gap: 10px;
+}
+.agent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  overscroll-behavior: contain;
+  padding: 2px 2px 4px 0;
+}
+.panel:not([data-sized]) .agent-list {
+  max-height: min(60vh, 520px);
+}
+@media (max-width: 1100px) {
+  .agent-list {
+    max-height: min(60vh, 520px);
+  }
+}
+.agent-empty {
+  margin: 0;
+  padding: 6px 2px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-2);
+}
+.agent-foot {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 500;
+}
+
+/* ---------- turns ---------- */
+.agent-turn {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.agent-turn.user {
+  align-items: flex-end;
+}
+.agent-bubble {
+  max-width: 100%;
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.agent-bubble.user {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius-control);
+  background: var(--ink-raised);
+  font-family: var(--font-mono);
+  color: var(--text-1);
+}
+.agent-bubble.assistant {
+  padding: 10px 14px;
+  border-left: 2px solid var(--era-3);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--era-2) 7%, transparent), transparent);
+  font-family: var(--font-sans);
+  font-weight: 500;
+  color: var(--text-1);
+  animation: rise 0.5s var(--ease);
+}
+.agent-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+}
+.agent-draft {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--text-3);
+  overflow-wrap: anywhere;
+}
+.agent-thinking {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.25em;
+  color: var(--text-2);
+}
+.agent-error {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  font-size: 12px;
+  color: var(--loss);
+}
+.agent-spin {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 auto;
+  border: 2px solid var(--line-strong);
+  border-top-color: var(--live);
+  border-radius: 50%;
+  animation: agentSpin 0.8s linear infinite;
+}
+@keyframes agentSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- the prompt box (partner .plan-form) ---------- */
+.plan-form {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: start;
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--ink-inset);
+  padding: 6px 6px 6px 12px;
+  transition:
+    border-color var(--t) var(--ease-soft),
+    box-shadow var(--t) var(--ease-soft);
+}
+.plan-form:focus-within {
+  border-color: var(--live);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--live) 13%, transparent);
+}
+.plan-form .lens-prompt {
+  padding: 8px 0;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 700;
+  color: var(--era-3);
+}
+.plan-form textarea {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-height: 96px;
+  padding: 8px 0;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  resize: none;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--text-1);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.plan-form textarea::placeholder {
+  color: var(--text-2);
+}
+.plan-form textarea:disabled {
+  opacity: 0.6;
+}
+.plan-form .btn-live {
+  align-self: end;
+  min-height: 36px;
+  padding: 0 16px;
+}
+@media (max-width: 767px) {
+  .plan-form .btn-live {
+    min-height: 40px;
+  }
+}
+
+/* ---------- starters (partner .lens-chip) ---------- */
+.lens-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+.lens-chip {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--era-2) 7%, transparent), transparent);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  text-align: left;
+  color: var(--text-2);
+  overflow-wrap: anywhere;
+  transition:
+    transform var(--t) var(--ease),
+    border-color var(--t) var(--ease-soft),
+    color var(--t) var(--ease-soft),
+    box-shadow var(--t) var(--ease-soft);
+}
+.lens-chip:hover:not(:disabled) {
+  border-color: var(--era-3);
+  color: var(--text-1);
+  transform: translateY(-1px);
+  box-shadow: var(--glow-action-soft);
+}
+.lens-chip:disabled {
+  opacity: 0.5;
+}
+
+/* ---------- cards ---------- */
+.agent-card {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--ink-inset);
+  overflow: hidden;
+}
+.agent-card-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--line-soft);
+  background: var(--ink-head);
+}
+.agent-card-head h3 {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-1);
+}
+.agent-card-head h3::before {
+  content: "// ";
+  color: var(--text-accent);
+}
+.agent-card-chips {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+.agent-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px 12px;
+}
+.agent-summary {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-1);
+  overflow-wrap: anywhere;
+}
+.agent-line {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-2);
+  overflow-wrap: anywhere;
+}
+.agent-line b {
+  color: var(--text-1);
+  font-weight: 600;
+}
+.agent-rows {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 5px 14px;
+  margin: 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--line-soft);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.5;
+}
+.agent-rows dt {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  padding-top: 1px;
+}
+.agent-rows dd {
+  margin: 0;
+  min-width: 0;
+  color: var(--text-1);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.agent-what {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--text-2);
+}
+.agent-note-toggle {
+  align-self: flex-start;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--text-accent);
+}
+.agent-note-toggle:hover {
+  text-decoration: underline;
+}
+.agent-note-fields {
+  display: grid;
+  gap: 8px;
+}
+.agent-note-fields .field textarea,
+.agent-note-fields .field input {
+  font-size: 12px;
+  padding: 8px 10px;
+}
+.agent-note-fields .field-label em,
+.agent-editor .field-label em {
+  font-style: normal;
+  text-transform: none;
+  letter-spacing: 0;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 11px;
+}
+.agent-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-top: 2px;
+}
+.agent-stub {
+  margin: 0;
+  padding: 4px 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+@container (max-width: 420px) {
+  .agent-rows {
+    grid-template-columns: 1fr;
+    gap: 2px 0;
+  }
+  .agent-rows dd {
+    margin-bottom: 4px;
+  }
+}
+
+/* news */
+.agent-news {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.agent-news li {
+  padding: 7px 0;
+  border-bottom: 1px dashed var(--line-soft);
+}
+.agent-news li:last-child {
+  border-bottom: 0;
+}
+.agent-news a {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--text-1);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.agent-news a:hover {
+  color: var(--text-accent);
+  text-decoration: underline;
+}
+.agent-news small {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-2);
+}
+
+/* prices */
+.agent-prices {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.agent-prices a {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--line-soft);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-1);
+  text-decoration: none;
+  font-variant-numeric: tabular-nums;
+}
+.agent-prices li:last-child a {
+  border-bottom: 0;
+}
+.agent-prices a:hover {
+  color: var(--text-accent);
+}
+
+/* the plans list card */
+.agent-plans {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.agent-plan-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 10px;
+  align-items: start;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--line-soft);
+}
+.agent-plan-row:last-child {
+  border-bottom: 0;
+}
+.agent-plan-row .agent-line {
+  color: var(--text-1);
+}
+.agent-plan-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.agent-confirm {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-2);
+}
+.chip.st-armed {
+  color: var(--live);
+  border-color: color-mix(in srgb, var(--live) 33%, transparent);
+  background: color-mix(in srgb, var(--live) 10%, transparent);
+  animation: pulseDot 2.4s ease-in-out infinite;
+}
+.chip.st-holding {
+  color: var(--gain);
+  background: var(--gain-tint);
+  border-color: transparent;
+}
+.chip.st-ready {
+  color: var(--warn);
+  background: var(--warn-tint);
+  border-color: var(--warn);
+  animation: pulseDot 2.4s ease-in-out infinite;
+}
+.chip.st-done {
+  color: var(--text-accent);
+}
+.chip.st-failed {
+  color: var(--loss);
+  background: var(--loss-tint);
+  border-color: transparent;
+}
+@keyframes pulseDot {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* explain */
+.agent-pre {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--text-1);
+}
+
+/* ---------- the minimal plan editor on the sheet frame ---------- */
+.agent-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.agent-editor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+.agent-editor .field input {
+  font-family: var(--font-mono);
+}
+.agent-editor .seg {
+  display: flex;
+}
+.agent-editor .seg > button {
+  flex: 1 1 0;
+  padding-left: 6px;
+  padding-right: 6px;
+  white-space: nowrap;
+}
+.agent-preview {
+  margin: 0;
+  min-height: 16px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-2);
+  overflow-wrap: anywhere;
+}
+.agent-preview .ok {
+  color: var(--gain);
+}
+.agent-preview .no {
+  color: var(--warn);
+}
+
+/* ---------- toasts: the frame is in globals.css (.toasts, .toast) ---------- */
+.toast.agent-toast {
+  border-width: 1px;
+  border-style: solid;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agent-spin,
+  .chip.st-armed,
+  .chip.st-ready,
+  .agent-bubble.assistant {
+    animation: none;
+  }
+}
