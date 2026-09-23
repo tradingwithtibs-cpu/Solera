@@ -55,7 +55,7 @@ function amount(n: number, unit: string): string {
  * the deposit — with every step's error inline. On iOS each prompt leaves
  * the page and the resumer reopens this sheet with the token it earned.
  */
-export function ArmPlanSheet({ plan, planId, loadError, sessionToken, resume, onClose }: { plan: Plan | null; planId: string; loadError: string | null; sessionToken: string; resume?: { jwt?: string }; onClose: () => void }) {
+export function ArmPlanSheet({ plan, loadError, sessionToken, resume, onClose }: { plan: Plan | null; loadError: string | null; sessionToken: string; resume?: { jwt?: string }; onClose: () => void }) {
   const id = useId();
   const { publicKey, signMessage, signTransaction, wallet } = useWallet();
   const address = publicKey?.toBase58() ?? null;

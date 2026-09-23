@@ -42,6 +42,6 @@ export function TriggerSheets() {
   if (!kind || !planId) return null;
   if (!token) return null;
   const close = () => closeTriggerSheet();
-  if (kind === "arm") return <ArmPlanSheet plan={plan} planId={planId} loadError={error} sessionToken={token} resume={resume} onClose={close} />;
+  if (kind === "arm") return <ArmPlanSheet plan={plan} loadError={error} sessionToken={token} resume={resume} onClose={close} />;
   return <CancelPlanSheet plan={plan} loadError={error} sessionToken={token} resume={resume} onClose={close} />;
 }
