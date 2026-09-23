@@ -30,7 +30,9 @@ Deviations from §4 the page tasks must know: `TopBar.tsx` keeps its name (it is
 
 Deviations recorded by the page tasks: `src/hooks/use-visit.ts` is R1's (SincePanel), not R3's; `/pre-ipo` renders its own pre-IPO list (`PreIpoRow`) rather than the shared markets component; the portfolio Buy link goes to `/asset/[ticker]` and Sell to `/buy/[ticker]?side=sell`; `use-plan-prefill.ts` in `src/components/markets/` is a no-op until A2 reads `GET /api/plans/:id`; pre-IPO iPhone continuations do not yet carry the thesis (`deferred-signing.ts`, R4 request); `use-history-range` has no failed marker, so a range whose upstream answers 502 keeps saying "loading…" (F4 request).
 
-Not done: A2, A4, A5, S1–S3, M1, P1–P3.
+- **S3** email + password on Supabase Auth: `src/components/auth/EmailForm.tsx` (sign up with the display name in user metadata, log in, "Email me a reset link", the new-password form after a recovery link via `useRecoveryPending`), pure wording/checks in `src/lib/auth-copy.ts` (`tests/auth.test.mjs`). Both paths trade the Supabase token for Solera's session (`completeEmailSignIn`). The user still has to switch the Email provider on in the Supabase dashboard (confirmation off; add the site URL to the redirect list for reset links). Not done: `LinkWalletSheet` (an email account signs the wallet-link message) — the account sheet's "Link a wallet" connects only.
+
+Not done: A2, A4 (fleet `wf_8ae4565a-f83` running), A5, S1–S2, M1, P1–P3, LinkWalletSheet.
 
 ## 0. Rulings on the review issues
 

@@ -2,7 +2,7 @@
 
 import { useId, useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { useAuthUser } from "@/hooks/use-auth-user";
+import { useAuthUser, useRecoveryPending } from "@/hooks/use-auth-user";
 import { useProfile } from "@/hooks/use-profiles";
 import { useSession } from "@/hooks/use-session";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
@@ -10,18 +10,18 @@ import { avatarColorFor, shortAddress } from "@/lib/investors";
 import { fillFor } from "@/lib/palette";
 import { formatCurrency } from "@/lib/format";
 import { MY_CASH_BALANCE } from "@/lib/mock-data";
-import { NAME_MAX } from "@/lib/profiles";
 import { useConnectWallet } from "../ConnectWalletProvider";
 import { ProfileButton } from "../ProfileButton";
 import { ChainIcon } from "../icons";
 import { Sheet, SheetHead } from "./Sheet";
+import { EmailForm, NewPasswordForm } from "./EmailForm";
 import { setAuthSheetMode, type AuthSheetMode } from "./auth-sheet-store";
 
 /**
  * Log in / Sign up, and the account sheet once someone is in. The wallet is
  * the trading identity: "Continue with wallet" runs the existing connect
- * flow and then offers the profile claim. The email form is drawn but
- * disabled until task S3 wires Supabase Auth behind it.
+ * flow and then offers the profile claim. The email form runs on Supabase
+ * Auth and trades its token for Solera's own 30-day session.
  */
 export function AuthSheet({ mode, onClose }: { mode: AuthSheetMode; onClose: () => void }) {
   const id = useId();
@@ -34,6 +34,7 @@ export function AuthSheet({ mode, onClose }: { mode: AuthSheetMode; onClose: () 
   const session = useSession();
   const [walletFlow, setWalletFlow] = useState(false);
   const [busy, setBusy] = useState(false);
+  const recovering = useRecoveryPending();
 
   const walletName = wallet?.adapter.name ?? "a wallet";
   const metaName = typeof authUser?.user_metadata?.display_name === "string" ? (authUser.user_metadata.display_name as string) : undefined;
@@ -129,6 +130,7 @@ export function AuthSheet({ mode, onClose }: { mode: AuthSheetMode; onClose: () 
             <span className="chip live">Signed in · 30 days</span>
           </p>
         )}
+        {authUser && recovering && <NewPasswordForm />}
         <div className="sheet-actions">
           <ProfileButton className="btn-secondary" />
           {!address && (
@@ -174,40 +176,7 @@ export function AuthSheet({ mode, onClose }: { mode: AuthSheetMode; onClose: () 
           ? `A name people see on the tape, and a way back in. Practice cash to start (${formatCurrency(MY_CASH_BALANCE)}); nothing here moves real money until you link a wallet.`
           : "Use the email you signed up with, or your wallet."}
       </p>
-      <form onSubmit={(e) => e.preventDefault()} aria-describedby={`${id}-soon`}>
-        <fieldset disabled className="m-0 min-w-0 space-y-2.5 border-0 p-0 [&_input]:opacity-60">
-          {tab === "signup" && (
-            <label className="field-label">
-              <span>Display name</span>
-              <div className="field">
-                <input type="text" placeholder="How you'd like to appear" autoComplete="nickname" maxLength={NAME_MAX} />
-              </div>
-            </label>
-          )}
-          <label className="field-label">
-            <span>Email</span>
-            <div className="field">
-              <input type="email" placeholder="you@example.com" autoComplete="email" />
-            </div>
-          </label>
-          <label className="field-label">
-            <span>Password</span>
-            <div className="field">
-              <input
-                type="password"
-                placeholder={tab === "signup" ? "At least 8 characters" : "Your password"}
-                autoComplete={tab === "signup" ? "new-password" : "current-password"}
-              />
-            </div>
-          </label>
-          <button type="submit" className="btn-primary w-full">
-            {tab === "signup" ? "Create account" : "Log in"}
-          </button>
-        </fieldset>
-        <p id={`${id}-soon`} className="mt-2 text-[11px] leading-relaxed text-muted">
-          Email sign-up arrives Wednesday. Until then, continue with your wallet.
-        </p>
-      </form>
+      <EmailForm tab={tab} onSignedIn={() => setAuthSheetMode("account")} />
       <div className="my-3 flex items-center gap-2.5 font-mono text-[10px] uppercase tracking-[0.1em] text-muted" aria-hidden="true">
         <span className="h-px flex-1 bg-line" />
         or

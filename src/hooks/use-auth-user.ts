@@ -9,6 +9,7 @@ import { getSupabaseBrowser } from "@/lib/supabase-browser";
  * the first check completes; null when signed out.
  */
 let user: User | null | undefined = undefined;
+let recovering = false;
 let started = false;
 const listeners = new Set<() => void>();
 
@@ -29,8 +30,10 @@ function start() {
     user = data.session?.user ?? null;
     notify();
   });
-  supabase.auth.onAuthStateChange((_event, session) => {
+  supabase.auth.onAuthStateChange((event, session) => {
     user = session?.user ?? null;
+    if (event === "PASSWORD_RECOVERY") recovering = true;
+    if (event === "SIGNED_OUT") recovering = false;
     notify();
   });
 }
@@ -50,4 +53,18 @@ export function useAuthUser(): User | null | undefined {
 
 export function getAuthUser(): User | null | undefined {
   return user;
+}
+
+/** True after a password-reset link signed the person in and until they set a new password. */
+export function useRecoveryPending(): boolean {
+  const snapshot = useSyncExternalStore(subscribe, () => recovering, () => false);
+  useEffect(() => {
+    start();
+  }, []);
+  return snapshot;
+}
+
+export function clearRecoveryPending() {
+  recovering = false;
+  notify();
 }
