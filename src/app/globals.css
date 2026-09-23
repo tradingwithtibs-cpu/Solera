@@ -1623,7 +1623,7 @@ code,
 }
 .masthead small {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 10px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text-2);
@@ -1743,7 +1743,7 @@ code,
 .side-tag {
   margin: 6px 0 20px;
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 10px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--text-2);
@@ -2185,7 +2185,7 @@ code,
     padding: 8px 2px 6px;
     border-radius: var(--radius-control);
     font-family: var(--font-mono);
-    font-size: 9px;
+    font-size: 10px;
     font-weight: 600;
     letter-spacing: 0.06em;
     text-transform: uppercase;

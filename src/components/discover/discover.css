@@ -130,7 +130,7 @@
   border-radius: var(--radius-control);
   font-family: var(--font-mono);
   font-style: normal;
-  font-size: 8px;
+  font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -216,7 +216,7 @@
   border: 1px solid var(--line);
   border-radius: var(--radius-control);
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -315,7 +315,7 @@
   margin-left: 2px;
   vertical-align: 1px;
   padding: 1px 5px;
-  font-size: 9px;
+  font-size: 10px;
   text-decoration: none;
 }
 .post blockquote,
