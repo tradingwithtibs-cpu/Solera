@@ -25,6 +25,12 @@ const {
   modeNotice,
   readyToastText,
   triggerStateLabel,
+  triggerAction,
+  jupiterLine,
+  jupiterHoldingLine,
+  walletNotice,
+  shortWallet,
+  shortId,
   FOOT_PRACTICE,
   FOOT_LIVE,
 } = load("../src/components/plans/plan-format.ts");
@@ -153,4 +159,43 @@ test("toasts, feet, health and the mode notice", () => {
   assert.equal(triggerStateLabel("pending"), "deposit landing");
   assert.equal(triggerStateLabel("pending_withdraw"), "withdrawal pending");
   assert.equal(triggerStateLabel(null), "not yet synced");
+});
+
+test("health line without a clock yet, short ids and wallets", () => {
+  assert.equal(healthLine({ lastEvaluatedAt: T0 - 12_000, serverWatch: true }, null), "server watch: on");
+  assert.equal(healthLine(null, null), "server watch: off · checking while this tab is open");
+  assert.equal(shortWallet("9U76aBcDeFgHiJkLmNoPqRsTuVwXyZ12345vMQd"), "9U76…vMQd");
+  assert.equal(shortWallet("short"), "short");
+  assert.equal(shortId("abcdef0123456789wxyz"), "abcdef…wxyz");
+  assert.equal(shortId("tiny"), "tiny");
+});
+
+test("Jupiter rows: the one action by order state, the mirrored line, and whose wallet it is", () => {
+  const trigger = (over = {}) =>
+    plan({ mode: "live", execution: "trigger", wallet: "9U76aBcDeFgHiJkLmNoPqRsTuVwXyZ12345vMQd", triggerOrderId: "order0123456789abcdef", triggerState: "open", armUntil: Date.parse("2026-10-22T12:00:00Z"), ...over });
+  assert.equal(triggerAction(trigger()).kind, "cancel");
+  assert.equal(triggerAction(trigger()).label, "Cancel & withdraw");
+  assert.equal(triggerAction(trigger({ status: "holding" })).kind, "cancel");
+  assert.equal(triggerAction(trigger({ triggerState: "pending_withdraw" })).label, "Finish withdrawal");
+  assert.equal(triggerAction(trigger({ status: "expired", triggerState: "expired" })).label, "Withdraw · sign in wallet");
+  assert.equal(triggerAction(trigger({ status: "done", triggerState: "filled" })), null);
+  assert.equal(triggerAction(trigger({ status: "cancelled", triggerState: "cancelled" })), null);
+  assert.equal(triggerAction(trigger({ status: "failed", triggerState: "failed" })), null);
+  // a proposed draft never offers a cancel
+  assert.equal(triggerAction(trigger({ status: "proposed", triggerState: null })), null);
+
+  assert.equal(jupiterLine(trigger(), T0), "Jupiter order · open · order order0…cdef · expires Oct 22");
+  assert.equal(jupiterLine(trigger({ triggerCheckedAt: T0 - 40_000 }), T0), "Jupiter order · open · order order0…cdef · expires Oct 22 · Jupiter status checked 40 s ago");
+  assert.equal(jupiterLine(trigger({ triggerCheckedAt: T0 - 40_000 }), null), "Jupiter order · open · order order0…cdef · expires Oct 22");
+  assert.equal(jupiterLine(trigger({ triggerState: null, triggerOrderId: null, armUntil: null }), T0), "Jupiter order · not yet synced");
+  assert.equal(jupiterLine(trigger({ triggerState: "expired" }), T0), "Jupiter order · expired · funds still in vault · order order0…cdef · expires Oct 22");
+
+  const otoco = trigger({ status: "holding", condition: cond({ action: { side: "buy", amountUsd: 50 }, exits: [{ kind: "target", price: 420 }, { kind: "stop", price: 280 }] }) });
+  assert.equal(jupiterHoldingLine(otoco, 379.48), "holding · now $379.48 · Jupiter watching target $420.00 / stop $280.00");
+  assert.equal(jupiterHoldingLine(otoco, undefined), "holding · Jupiter watching target $420.00 / stop $280.00");
+
+  assert.equal(walletNotice(trigger(), null), "Connect 9U76…vMQd to refresh Jupiter status.");
+  assert.equal(walletNotice(trigger(), "other1234567890wallet"), "armed from 9U76…vMQd");
+  assert.equal(walletNotice(trigger(), "9U76aBcDeFgHiJkLmNoPqRsTuVwXyZ12345vMQd"), null);
+  assert.equal(walletNotice(plan(), null), null);
 });

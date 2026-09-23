@@ -7,14 +7,17 @@ import { PLAN_TEXT_MAX } from "@/lib/plans";
 
 const DEBOUNCE_MS = 400;
 
+/** "armed": the sentence is a plan now, clear the box. "dismissed": the wallet sheet closed without arming; keep the sentence for another go. */
+export type ArmOutcome = "armed" | "dismissed";
+
 interface Props {
   mode: PlanMode;
   /** Signed out: the box is disabled and the parent shows the sign-in copy. */
   disabled?: boolean;
   /** Example sentences built from live prices (three at most). */
   chips: string[];
-  /** Creates and arms; the parent shows the toast. Throws to show an error under the box. */
-  onArm: (text: string, condition: PlanCondition) => Promise<void>;
+  /** Creates and arms (or hands a Jupiter plan to the wallet sheet); the parent shows the toast. Throws to show an error under the box. */
+  onArm: (text: string, condition: PlanCondition) => Promise<ArmOutcome>;
   initialText?: string;
 }
 
@@ -64,9 +67,11 @@ export function PlanComposer({ mode, disabled = false, chips, onArm, initialText
     setError(null);
     setFlash(true);
     try {
-      await onArm(trimmed, current.condition);
-      setText("");
-      setPreview(null);
+      const outcome = await onArm(trimmed, current.condition);
+      if (outcome === "armed") {
+        setText("");
+        setPreview(null);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't arm that plan.");
     } finally {

@@ -178,8 +178,12 @@
   display: flex;
   flex-direction: column;
 }
-.pl-list.past {
+.pl-list.past .pl-row {
   opacity: 0.65;
+}
+/* an expired Jupiter order still holds a deposit: the row stays fully lit until it is withdrawn */
+.pl-list.past .pl-row.needs-you {
+  opacity: 1;
 }
 .pl-row {
   display: grid;
