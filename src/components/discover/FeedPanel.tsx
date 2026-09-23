@@ -157,7 +157,8 @@ export function FeedPanel({ id = "feed" }: { id?: string }) {
       <div className="seg" role="group" aria-label="Feed">
         {FEED_TABS.map((t) => (
           <button key={t.key} type="button" aria-pressed={tab === t.key} onClick={() => setTab(t.key)}>
-            {t.key === "news" && newsCount !== null ? `News · ${newsCount}` : t.label}
+            {t.label}
+            {t.key === "news" && newsCount !== null && <small className="tab-count"> · {newsCount}</small>}
           </button>
         ))}
       </div>
