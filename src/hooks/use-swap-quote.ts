@@ -18,6 +18,8 @@ export interface SwapQuote {
   feeBps: number;
   inUsdValue?: number;
   outUsdValue?: number;
+  /** When Jupiter answered, so the ticket can say how fresh the quote is. */
+  quotedAt: number;
 }
 
 const DEBOUNCE_MS = 400;
@@ -73,6 +75,7 @@ export function useSwapQuote(params: SwapQuoteParams | null): {
               feeBps: order.feeBps,
               inUsdValue: order.inUsdValue,
               outUsdValue: order.outUsdValue,
+              quotedAt: Date.now(),
             },
             isLoading: false,
             error: null,

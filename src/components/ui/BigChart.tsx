@@ -96,13 +96,14 @@ function draw(canvas: HTMLCanvasElement, series: number[], range: HistoryWindow,
   ctx.scale(dpr, dpr);
 
   const css = getComputedStyle(canvas);
-  const token = (name: string, fallback: string) => css.getPropertyValue(name).trim() || fallback;
-  const mono = token("--font-mono", token("--font-figures", "monospace"));
-  const line = token("--ink-tooltip", "#f2f3ff");
-  const grid = token("--line", "#232a40");
-  const muted = token("--text-2", "#8a8fb3");
-  const ink = token("--ink-page", "#0b0d16");
-  const panel = token("--ink-panel", "#10131f");
+  // Tokens are always defined on :root; alpha comes from globalAlpha, never from suffixing the resolved string.
+  const token = (name: string) => css.getPropertyValue(name).trim();
+  const mono = token("--font-mono") || token("--font-figures") || "monospace";
+  const line = token("--ink-tooltip");
+  const grid = token("--line");
+  const muted = token("--text-2");
+  const ink = token("--ink-page");
+  const panel = token("--ink-panel");
 
   let rawLo = Math.min(...series);
   let rawHi = Math.max(...series);
@@ -161,8 +162,8 @@ function draw(canvas: HTMLCanvasElement, series: number[], range: HistoryWindow,
 
   // area + line
   const fill = ctx.createLinearGradient(0, PAD.t, 0, H - PAD.b);
-  fill.addColorStop(0, `${line}33`);
-  fill.addColorStop(1, `${line}00`);
+  fill.addColorStop(0, line);
+  fill.addColorStop(1, "transparent");
   ctx.beginPath();
   ctx.moveTo(x(0), y(series[0]));
   series.forEach((v, i) => ctx.lineTo(x(i), y(v)));
@@ -170,7 +171,9 @@ function draw(canvas: HTMLCanvasElement, series: number[], range: HistoryWindow,
   ctx.lineTo(x(0), H - PAD.b);
   ctx.closePath();
   ctx.fillStyle = fill;
+  ctx.globalAlpha = 0.2;
   ctx.fill();
+  ctx.globalAlpha = 1;
   ctx.beginPath();
   series.forEach((v, i) => (i ? ctx.lineTo(x(i), y(v)) : ctx.moveTo(x(i), y(v))));
   ctx.strokeStyle = line;
@@ -195,11 +198,13 @@ function draw(canvas: HTMLCanvasElement, series: number[], range: HistoryWindow,
   const last = series[series.length - 1];
   const ly = y(last);
   ctx.setLineDash([2, 3]);
-  ctx.strokeStyle = `${line}66`;
+  ctx.strokeStyle = line;
+  ctx.globalAlpha = 0.4;
   ctx.beginPath();
   ctx.moveTo(PAD.l, ly);
   ctx.lineTo(W - PAD.r, ly);
   ctx.stroke();
+  ctx.globalAlpha = 1;
   ctx.setLineDash([]);
   ctx.fillStyle = line;
   ctx.fillRect(W - PAD.r + 4, ly - 8, PAD.r - 6, 16);
@@ -213,7 +218,8 @@ function draw(canvas: HTMLCanvasElement, series: number[], range: HistoryWindow,
   if (hover !== null && hover >= 0 && hover < series.length) {
     const hx = x(hover);
     const hy = y(series[hover]);
-    ctx.strokeStyle = `${line}99`;
+    ctx.strokeStyle = line;
+    ctx.globalAlpha = 0.6;
     ctx.setLineDash([3, 3]);
     ctx.beginPath();
     ctx.moveTo(hx, PAD.t);
@@ -222,6 +228,7 @@ function draw(canvas: HTMLCanvasElement, series: number[], range: HistoryWindow,
     ctx.lineTo(W - PAD.r, hy);
     ctx.stroke();
     ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
     ctx.beginPath();
     ctx.arc(hx, hy, 4, 0, Math.PI * 2);
     ctx.fillStyle = line;

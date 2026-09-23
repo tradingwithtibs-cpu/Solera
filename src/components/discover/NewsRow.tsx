@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { FeedNews } from "@/hooks/use-news";
 import { formatRelativeTime } from "@/lib/format";
 import { COMPANIES, PRESTOCKS_SYMBOLS, type CompanyId } from "@/lib/pre-ipo";
-import { VoteColumn, VOTE_LOCKED } from "./VoteColumn";
+import { VoteColumn, COMMENTS_LOCKED } from "./VoteColumn";
 
 /** The chip text for a scope key: an xStock ticker as is, a company id as its PreStocks symbol. */
 export function scopeSymbol(key: string): string {
@@ -87,7 +87,7 @@ export function NewsRow({ item, held, onOpen }: { item: FeedNews; held: boolean;
           </button>
         )}
         <p className="post-actions">
-          <button type="button" className="tiny" onClick={() => onOpen(item)} title={VOTE_LOCKED}>
+          <button type="button" className="tiny" onClick={() => onOpen(item)} title={COMMENTS_LOCKED}>
             comment
           </button>
           <Link className="tiny" href={`/agent?q=${encodeURIComponent(agentQuestion(item))}`}>

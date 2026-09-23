@@ -6,7 +6,7 @@ export default async function BuyPage({ params }: { params: Promise<{ ticker: st
   const { ticker } = await params;
   return (
     <Suspense fallback={null}>
-      <BuyTicket ticker={decodeURIComponent(ticker)} />
+      <BuyTicket ticker={ticker} />
     </Suspense>
   );
 }

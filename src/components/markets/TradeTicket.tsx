@@ -152,7 +152,7 @@ export function TradeTicket({ target, initialSide = "buy", refInvestorId, compac
     : quoteError
       ? quoteError
       : quote
-        ? "Routed quote from Jupiter Ultra."
+        ? `Routed quote from Jupiter Ultra · ${new Date(quote.quotedAt).toLocaleTimeString("en-GB")}`
         : dollars > 0
           ? "Asking Jupiter for a real quote…"
           : "Enter an amount for a routed Jupiter quote.";
@@ -186,7 +186,7 @@ export function TradeTicket({ target, initialSide = "buy", refInvestorId, compac
   const confirm = async () => {
     if (!canSubmit || pending) return;
     if (token) {
-      const fill = await preIpoBuy.run(token, dollars, payWith);
+      const fill = await preIpoBuy.run(token, dollars, payWith, { note: thesis.note || undefined, wrongIf: thesis.wrongIf || undefined, leg: leg ?? undefined });
       if (fill) {
         persistThesis(token.mint);
         setReviewing(false);
@@ -521,7 +521,7 @@ export function TradeTicket({ target, initialSide = "buy", refInvestorId, compac
                       ? `Token is ${pct(token.premiumPct)} vs the mark. You are saying that number goes toward zero.`
                       : leg === "mark"
                         ? `Mark is ${formatCurrency(token.markPrice)}. You are saying the issuer re-marks higher, whatever the gap does.`
-                        : "Name the leg and the readout later is about whether this leg moved."}
+                        : "Optional. Name which move you expect; the fill carries it."}
                   </small>
                 </div>
               )}

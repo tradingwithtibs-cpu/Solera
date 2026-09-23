@@ -13,7 +13,7 @@ let selected: string = DEFAULT;
 if (typeof window !== "undefined") {
   try {
     const raw = window.localStorage.getItem(KEY);
-    if (raw && /^[A-Z0-9.\-]{1,12}x?$/.test(raw)) selected = raw;
+    if (raw && /^[A-Za-z0-9.\-]{1,44}$/.test(raw)) selected = raw;
   } catch {
     // Storage unavailable — keep the default.
   }

@@ -20,7 +20,8 @@ export type RoomState = ReturnType<typeof useRoomMessages>;
 /** The head line under `// {SYM} ROOM`. */
 export function roomSubtitle(messages: ChatMessage[] | null, configured: boolean | null): string {
   if (configured === false) return "rooms are off for this deployment";
-  const n = messages?.length ?? 0;
+  if (messages === null) return "opening the room…";
+  const n = messages.length;
   return `${n} ${n === 1 ? "message" : "messages"} · wallet sign-in to post`;
 }
 

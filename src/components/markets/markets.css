@@ -54,7 +54,7 @@
 .mk-sort:focus-visible {
   outline: 0;
   border-color: var(--era-3);
-  box-shadow: 0 0 0 3px #0191fd33;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--era-3) 20%, transparent);
 }
 .mk-rows .row {
   position: relative;
@@ -116,18 +116,18 @@
 }
 .mk-rows .liq.thin {
   color: var(--warn);
-  border-color: #ffb02055;
+  border-color: color-mix(in srgb, var(--warn) 33%, transparent);
 }
 .mk-rows .liq.off {
   color: var(--text-3);
 }
 .mk-rows .gap.up {
   color: var(--gain);
-  border-color: #3ddc8444;
+  border-color: color-mix(in srgb, var(--gain) 27%, transparent);
 }
 .mk-rows .gap.down {
   color: var(--loss);
-  border-color: #ff5c7a44;
+  border-color: color-mix(in srgb, var(--loss) 27%, transparent);
 }
 .mk-section {
   padding: 10px 12px 4px;
@@ -376,7 +376,7 @@
   padding: 6px 10px;
   border: 1px solid var(--line);
   border-radius: var(--radius-control);
-  background: linear-gradient(135deg, #482efa14, transparent);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--era-2) 8%, transparent), transparent);
   font-size: 11px;
   color: var(--text-2);
   text-decoration: none;
@@ -444,7 +444,7 @@
   background: var(--ink-inset);
 }
 .compare-rows > div.on {
-  border-color: #3ddc8444;
+  border-color: color-mix(in srgb, var(--gain) 27%, transparent);
 }
 .compare-rows span {
   font-size: 11px;
@@ -487,7 +487,7 @@
   height: 30px;
   border-radius: var(--radius-avatar);
   background: var(--grad-action);
-  color: #fff;
+  color: var(--text-0);
 }
 .room-link b {
   display: block;
@@ -566,9 +566,9 @@
 }
 .ticket-ref {
   padding: 8px 10px;
-  border: 1px solid #3a2f66;
+  border: 1px solid var(--line-accent);
   border-radius: var(--radius-control);
-  background: #482efa12;
+  background: color-mix(in srgb, var(--era-2) 8%, transparent);
   font-size: 11px;
   line-height: 1.45;
   color: var(--text-1);
@@ -886,7 +886,7 @@
 .review-warn {
   margin: 10px 0 0;
   padding: 10px;
-  border: 1px solid #ffb02055;
+  border: 1px solid color-mix(in srgb, var(--warn) 33%, transparent);
   border-radius: var(--radius-control);
   background: var(--warn-tint);
   font-size: 11px;

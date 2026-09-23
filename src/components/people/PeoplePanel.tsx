@@ -13,8 +13,8 @@ const SCORE_EXPLAINER =
 /**
  * The People card (pages.md §3.7): the largest real holders of each
  * tokenized stock, ranked by Solera Score or by how the market moved what
- * they hold. Sample profiles stand in only while the chain source is down,
- * and say so.
+ * they hold. When the chain source is down the card says so; no sample
+ * roster ever stands in (plan §4 R5: no sample investors anywhere).
  */
 export function PeoplePanel({ id = "people" }: { id?: string }) {
   const [view, setView] = useState<PeopleView>("score");
@@ -23,8 +23,9 @@ export function PeoplePanel({ id = "people" }: { id?: string }) {
   const chain = source === "chain";
   // Same cache useInvestors fills; read here to know which names are signature-verified claims.
   const { get: profileFor } = useProfiles(chain ? investors.map((i) => i.id) : []);
+  const down = isLoaded && !chain;
 
-  const ranked = investors
+  const ranked = (chain ? investors : [])
     .map((investor) => {
       const holdings = computeHoldings(investor.holdings);
       const move = window === "30d" && investor.performance30dPct !== undefined ? investor.performance30dPct : investor.performancePct;
@@ -40,14 +41,12 @@ export function PeoplePanel({ id = "people" }: { id?: string }) {
       ? "Largest real holders · ranked by Solera Score"
       : `Largest real holders · ranked by ${window} move`
     : isLoaded
-      ? "Sample profiles · on-chain holders loading"
+      ? "On-chain holders unavailable right now"
       : "Reading on-chain holders";
   const foot =
     view === "score"
       ? SCORE_EXPLAINER
-      : chain
-        ? `Ranks real wallets by how the market moved what they hold over the last ${days} days, value-weighted. Not what they earned since buying — the chain doesn't say what they paid. Past moves do not predict future results.`
-        : "Ranks the sample investors by their simulated monthly return. Past returns do not predict future results.";
+      : `Ranks real wallets by how the market moved what they hold over the last ${days} days, value-weighted. Not what they earned since buying — the chain doesn't say what they paid. Past moves do not predict future results.`;
 
   const tools = (
     <>
@@ -57,8 +56,8 @@ export function PeoplePanel({ id = "people" }: { id?: string }) {
           <span className="people-short">Score</span>
         </button>
         <button type="button" aria-pressed={view === "move"} onClick={() => setView("move")}>
-          <span className="people-long">{chain ? "Market move" : "Monthly return"}</span>
-          <span className="people-short">{chain ? "Move" : "Return"}</span>
+          <span className="people-long">Market move</span>
+          <span className="people-short">Move</span>
         </button>
       </div>
       {chain && (
@@ -85,6 +84,11 @@ export function PeoplePanel({ id = "people" }: { id?: string }) {
             <div key={i} className="skeleton person-skeleton" />
           ))}
         </div>
+      ) : down ? (
+        <div className="empty-state">
+          <h2>Couldn&apos;t read the largest wallets on Solana.</h2>
+          <p>Holders are read live from public Solana data. Try again in a minute.</p>
+        </div>
       ) : (
         <ol className="people-list">
           {ranked.map(({ investor, holdings, score }, index) => (
@@ -105,7 +109,7 @@ export function PeoplePanel({ id = "people" }: { id?: string }) {
         {chain
           ? "Wallets are the largest non-custodial holders of each tokenized stock, read from public Solana data. Identities are unknown."
           : isLoaded
-            ? "Sample profiles shown while on-chain holders load."
+            ? "Nothing is shown in place of real holders."
             : "Reading the largest wallets on Solana…"}
       </p>
     </Panel>

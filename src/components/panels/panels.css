@@ -82,6 +82,10 @@
   }
 }
 @media (max-width: 1100px) {
+  /* One column of auto-height cards: the 24px row unit only applies on the desktop grid. */
+  .panel-grid {
+    grid-auto-rows: auto;
+  }
   .panel-grid > .panel {
     grid-area: auto;
     grid-column: 1 / -1;

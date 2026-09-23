@@ -479,6 +479,9 @@ code,
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
+  flex: 0 1 auto;
+  justify-content: flex-end;
 }
 .panel-body {
   padding: var(--pad);
@@ -492,6 +495,16 @@ code,
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-2);
+}
+/* A sentence-case foot for cards whose disclosure is prose (the leaderboard explainer, the plans feet). */
+.panel-foot.prose {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  line-height: 1.5;
+  padding-bottom: 10px;
 }
 .panel[data-sized] > .panel-body {
   overflow-y: auto;
@@ -1103,6 +1116,9 @@ code,
   position: fixed;
   inset: 0;
   z-index: 70;
+  background: #05060cb8;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
   display: grid;
   place-items: end center;
   padding: 16px;
@@ -1828,7 +1844,7 @@ code,
     bottom: 0;
     z-index: 40;
     display: grid;
-    grid-template-columns: repeat(var(--n, 6), 1fr);
+    grid-template-columns: repeat(var(--n, 6), minmax(0, 1fr));
     padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
     border-top: 1px solid var(--line);
     border-left: 0;

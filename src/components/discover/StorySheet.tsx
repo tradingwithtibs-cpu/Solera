@@ -10,7 +10,7 @@ import { getChange24h, getEffectivePrice, isLivePriced } from "@/lib/live-prices
 import { COMPANIES, type CompanyId } from "@/lib/pre-ipo";
 import { usePreIpo } from "@/hooks/use-pre-ipo";
 import { useActivePortfolio } from "@/hooks/use-active-portfolio";
-import { VoteColumn, VOTE_LOCKED } from "./VoteColumn";
+import { VoteColumn, COMMENTS_LOCKED } from "./VoteColumn";
 import { agentQuestion, scopeHref, scopeSymbol } from "./NewsRow";
 import { actorName, fillSymbol, legLabel, type FeedFill, type FeedItem } from "./feed";
 
@@ -59,9 +59,9 @@ export function StorySheet({ item, profile, onClose }: { item: FeedItem; profile
               }}
             >
               <div className="field">
-                <input disabled placeholder={item.kind === "news" ? "Say something about this story…" : "Say something about this trade…"} title={VOTE_LOCKED} aria-label="Comment" />
+                <input disabled placeholder={item.kind === "news" ? "Say something about this story…" : "Say something about this trade…"} title={COMMENTS_LOCKED} aria-label="Comment" />
               </div>
-              <button type="submit" className="btn btn-primary btn-small" disabled title={VOTE_LOCKED}>
+              <button type="submit" className="btn btn-primary btn-small" disabled title={COMMENTS_LOCKED}>
                 Post
               </button>
             </form>

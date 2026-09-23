@@ -115,7 +115,7 @@ export function FeedPanel({ id = "feed" }: { id?: string }) {
     );
   } else if (tab === "news" && news.error) {
     body = <p className="tr-empty feed-empty">{news.error}</p>;
-  } else if (tab !== "news" && tab !== "mine" && tape.error && fills.length === 0) {
+  } else if (tab === "following" && tape.error && fills.length === 0) {
     body = <p className="tr-empty feed-empty">{tape.error}</p>;
   } else if ((tab === "hot" || tab === "all") && news.error && rows.length === 0) {
     body = <p className="tr-empty feed-empty">{news.error}</p>;
@@ -127,6 +127,11 @@ export function FeedPanel({ id = "feed" }: { id?: string }) {
         {tab === "mine" && !owner && (
           <p className="local-note eyebrow">
             <em>only in this browser</em>
+          </p>
+        )}
+        {tab !== "news" && tab !== "mine" && tape.error && (
+          <p className="local-note eyebrow">
+            <em>{tape.error}</em>
           </p>
         )}
         <ul className="posts">

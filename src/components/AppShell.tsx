@@ -5,6 +5,7 @@ import { Masthead } from "./shell/Masthead";
 import { Strip } from "./shell/Strip";
 import { Foot } from "./shell/Foot";
 import { Palette } from "./shell/Palette";
+import { HolderHighlight } from "./people/HolderHighlight";
 
 /**
  * The frame every route renders in: sidenav on desktop, then the content
@@ -29,6 +30,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
       <BottomNav />
       <Palette />
+      <HolderHighlight />
     </div>
   );
 }

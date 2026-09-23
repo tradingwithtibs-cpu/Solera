@@ -27,6 +27,8 @@ interface Entry {
   isLoaded: boolean;
   error: string | null;
   at: number;
+  /** One automatic retry per error; after that only a fresh mount or the TTL asks again. */
+  retried?: boolean;
 }
 
 const EMPTY: Entry = { items: [], isLoaded: false, error: null, at: 0 };
@@ -55,7 +57,7 @@ function subscribe(l: () => void) {
 function load(query: string) {
   if (inflight.has(query)) return;
   const current = entries[query];
-  if (current?.isLoaded && !current.error && Date.now() - current.at < TTL_MS) return;
+  if (current?.isLoaded && Date.now() - current.at < (current.error ? RETRY_MS : TTL_MS)) return;
   inflight.add(query);
   fetch(`/api/news${query}`)
     .then(async (res) => {
@@ -64,11 +66,14 @@ function load(query: string) {
       entries = { ...entries, [query]: { items: data.items, isLoaded: true, error: null, at: Date.now() } };
     })
     .catch((err: unknown) => {
-      entries = { ...entries, [query]: { items: [], isLoaded: true, error: err instanceof Error ? err.message : "News unavailable", at: Date.now() } };
-      // A slow provider answers on the next try more often than not; retry once the dust settles.
-      setTimeout(() => {
-        if (entries[query]?.error && listeners.size > 0) load(query);
-      }, RETRY_MS);
+      const retried = current?.retried === true;
+      entries = { ...entries, [query]: { items: [], isLoaded: true, error: err instanceof Error ? err.message : "News unavailable", at: Date.now(), retried: true } };
+      // A slow provider answers on the next try more often than not: one retry, then the next mount or TTL asks again.
+      if (!retried) {
+        setTimeout(() => {
+          if (entries[query]?.error && listeners.size > 0) load(query);
+        }, RETRY_MS);
+      }
     })
     .finally(() => {
       inflight.delete(query);

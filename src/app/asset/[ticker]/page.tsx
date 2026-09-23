@@ -10,7 +10,7 @@ export default async function AssetPage({ params }: { params: Promise<{ ticker: 
   const { ticker } = await params;
   return (
     <Suspense fallback={<MarketsGridFallback />}>
-      <MarketsGrid selected={decodeURIComponent(ticker)} phoneTab="trade" />
+      <MarketsGrid selected={ticker} phoneTab="trade" />
     </Suspense>
   );
 }

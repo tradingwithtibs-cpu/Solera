@@ -8,6 +8,9 @@ import { isOwner } from "@/lib/owner";
 const SOLANA_RPC = process.env.SOLANA_RPC_URL ?? "https://api.mainnet-beta.solana.com";
 
 interface LiveFillBody extends ThesisFields {
+  /** Pre-IPO legs: the gap and the issuer mark at buy time, so the scorecard has its baseline. */
+  gapAtBuy?: number;
+  refAtBuy?: number;
   signature: string;
   ticker?: string;
   mint?: string;
@@ -88,6 +91,9 @@ export async function POST(request: NextRequest) {
     const thesisProblem = validateThesis(body);
     if (thesisProblem) throw new HttpError(400, thesisProblem);
     const thesis = normalizeThesis(body);
+    for (const n of [body.gapAtBuy, body.refAtBuy]) {
+      if (n !== undefined && !(typeof n === "number" && Number.isFinite(n))) throw new HttpError(400, "Invalid leg baseline.");
+    }
     const verified = await verifyOnChain(body.signature, wallet);
     if (verified === false) throw new HttpError(400, "That transaction failed or was sent by another wallet.");
 
@@ -109,6 +115,8 @@ export async function POST(request: NextRequest) {
       via: thesis.via ?? "ticket",
       plan_id: thesis.planId ?? null,
       copied_from: thesis.copiedFrom ?? null,
+      gap_at_buy: body.gapAtBuy ?? null,
+      ref_at_buy: body.refAtBuy ?? null,
       verified: verified === true,
     };
     const { data, error } = await service.from("live_fills").upsert(row, { onConflict: "signature" }).select(LIVE_COLUMNS).single();

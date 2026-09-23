@@ -67,7 +67,7 @@ export function PositionCard({
   }
 
   return (
-    <li id={`pos-${position.key}`} className={`pf-pos ${pinned ? "pinned" : ""} ${liProps.className ?? ""}`} {...liProps}>
+    <li {...liProps} id={`pos-${position.key}`} className={`pf-pos ${pinned ? "pinned" : ""} ${liProps.className ?? ""}`}>
       <div className="pf-pos-head">
         <button type="button" className="pf-grip" aria-label={`Move ${sym}. Arrow keys reorder.`} title="Drag to reorder" {...gripProps}>
           ⋮⋮
@@ -144,7 +144,7 @@ export function PositionCard({
       <div className="pf-pos-actions">
         {position.kind === "xstock" ? (
           <>
-            <Link href={`/buy/${position.ticker}`} className="btn-secondary btn-small" aria-label={`Buy ${sym}`}>
+            <Link href={`/asset/${position.ticker}`} className="btn-secondary btn-small" aria-label={`Buy ${sym}`}>
               Buy
             </Link>
             <Link href={`/buy/${position.ticker}?side=sell`} className="btn-secondary btn-small" aria-label={`Sell ${sym}`}>

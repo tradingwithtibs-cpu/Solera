@@ -1,6 +1,9 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
+
+const subscribeNever = () => () => {};
 
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
@@ -27,6 +30,8 @@ interface Props {
 export function Sheet({ label, labelledBy, onClose, locked = false, narrow = false, className = "", children }: Props) {
   const boxRef = useRef<HTMLDivElement>(null);
   const latest = useRef({ onClose, locked });
+  // Rendered through a portal: glass (backdrop-filter) and panels (container-type) would otherwise box a fixed overlay inside themselves.
+  const mounted = useSyncExternalStore(subscribeNever, () => true, () => false);
 
   useEffect(() => {
     latest.current = { onClose, locked };
@@ -37,7 +42,8 @@ export function Sheet({ label, labelledBy, onClose, locked = false, narrow = fal
     if (!box) return;
     const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const focusables = () => Array.from(box.querySelectorAll<HTMLElement>(FOCUSABLE)).filter((el) => el.getAttribute("aria-hidden") !== "true");
-    (focusables()[0] ?? box).focus({ preventScroll: true });
+    const preferred = box.querySelector<HTMLElement>("[data-autofocus]");
+    (preferred ?? focusables()[0] ?? box).focus({ preventScroll: true });
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -68,9 +74,10 @@ export function Sheet({ label, labelledBy, onClose, locked = false, narrow = fal
       box.removeEventListener("keydown", onKey);
       if (opener && document.contains(opener)) opener.focus({ preventScroll: true });
     };
-  }, []);
+  }, [mounted]);
 
-  return (
+  if (!mounted) return null;
+  return createPortal(
     <div
       className="sheet scrim"
       role="presentation"
@@ -89,7 +96,8 @@ export function Sheet({ label, labelledBy, onClose, locked = false, narrow = fal
       >
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

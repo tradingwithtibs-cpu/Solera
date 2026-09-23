@@ -52,7 +52,6 @@ export function TransactionRow({ transaction }: { transaction: Transaction }) {
           {side === "sell" ? "+" : ""}
           {formatCurrency(transaction.totalValue)}
         </p>
-        <p className="text-[11px] text-muted">{formatShares(transaction.quantity)} shares</p>
       </div>
     </div>
   );

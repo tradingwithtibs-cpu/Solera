@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore, useMemo } from "react";
 import Link from "next/link";
 import { Panel } from "@/components/panels/Panel";
 import { RangeSwitch, rangeCaption } from "@/components/ui/RangeSwitch";
@@ -26,6 +26,7 @@ import { HeldBy } from "./HeldBy";
 import { LiveRoomLink } from "./RoomLink";
 import { TradeTicket } from "./TradeTicket";
 
+const EMPTY_SERIES: number[] = [];
 const CADENCE: Record<HistoryWindow, string> = { "24h": "5-minute", "7d": "6-hourly", "30d": "6-hourly", "180d": "daily" };
 
 function pct(n: number, digits = 2): string {
@@ -100,7 +101,9 @@ function XStockCard({ id, symbol, phoneRoom }: { id: string; symbol: TickerSymbo
   useHistoryRange([symbol], range);
   const { underlying, premiumPct } = useEffectivePrice(symbol);
   const live = isLiveHistory(symbol, range);
-  const history = live ? getEffectiveHistory(symbol, range) : [];
+  // The 30d series is a stable store reference; the 7d slice is memoised so BigChart's effect doesn't re-arm on every price tick.
+  const base = live ? getEffectiveHistory(symbol, range === "7d" ? "30d" : range) : EMPTY_SERIES;
+  const history = useMemo(() => (range === "7d" ? base.slice(-Math.max(2, Math.round((base.length * 7) / 30))) : base), [base, range]);
   const liquidity = catalog?.liquidityUsd;
   const thin = !featured && (liquidity ?? 0) < THIN_LIQUIDITY_USD;
   const reference = underlying && !underlying.stale ? underlying.price : undefined;

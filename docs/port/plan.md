@@ -11,7 +11,7 @@ npm run typecheck && npm run lint && npm test && npm run build
 Where the docs disagree, **this file wins**, then `backend.md` for anything server-side, `design-system.md` for tokens and class names, `layout-engine.md` for placement, `agent-ux.md` for the Agent surface, `pages.md` for per-route content, `platform-notes.md` for toolchain facts.
 
 
-## Status (updated Sept 22, 20:50 CDT)
+## Status (updated Sept 23, 02:00 CDT)
 
 Done on branch `redesign`, gate green (63 tests):
 
@@ -26,7 +26,11 @@ Done on branch `redesign`, gate green (63 tests):
 
 Deviations from §4 the page tasks must know: `TopBar.tsx` keeps its name (it is the static back bar); the new top bar is `src/components/shell/Masthead.tsx`. `SegmentedControl.tsx` still exists (restyled via `.segmented-control`) and may be used or replaced per page. `BigChart` is owned by R2 (`src/components/ui/BigChart.tsx`); R1's hero uses `PriceChart` until then. `RoomPanel` (the room body as a component) is owned by R6 at `src/components/rooms/RoomPanel.tsx`; R2's room card imports it, and until R6 lands R2 may render `ChatRoomCard`. The `usePortfolio()` façade exposes `source: "local" | "server"`. Practice orders for signed-in users go through `/api/practice/fill` automatically inside `useExecuteTrade`.
 
-Not done: R1–R6 (fleet running in `.claude/worktrees/wf_5c94439d-165-*`), A2, A4, A5, S1–S3, M1, P1–P3.
+- **R1–R6** all six page groups, built in parallel worktrees (run `wf_dc4c9551-efe`), reviewed, merged (`708008a`) and the reviewers' fixes applied: portfolio grid + `/activity`; markets grid with `BigChart`, the `TradeTicket` with thesis fields, options deleted; discover feed + trending + `/news`; `/pre-ipo` grid; people + `/investor/[id]` with no sample roster; rooms as `RoomPanel`, `AuthSheet` + `Sheet` (portalled), wallet sheets restyled. Shell follow-ups landed with them: tablet `grid-auto-rows: auto` in `panels.css`, six-tab bar `minmax(0,1fr)`, `.panel-tools` shrinkable, `.panel-foot.prose`, `.sheet` carries its own scrim, `HolderHighlight` mounted once in `AppShell`, LOG IN / SIGN UP and the me-pill in `Masthead`, `SidebarAccount` opens the auth sheet and has the email-account state, `/api/fills` stores `gap_at_buy` / `ref_at_buy`, `useSwapQuote` exposes `quotedAt`.
+
+Deviations recorded by the page tasks: `src/hooks/use-visit.ts` is R1's (SincePanel), not R3's; `/pre-ipo` renders its own pre-IPO list (`PreIpoRow`) rather than the shared markets component; the portfolio Buy link goes to `/asset/[ticker]` and Sell to `/buy/[ticker]?side=sell`; `use-plan-prefill.ts` in `src/components/markets/` is a no-op until A2 reads `GET /api/plans/:id`; pre-IPO iPhone continuations do not yet carry the thesis (`deferred-signing.ts`, R4 request); `use-history-range` has no failed marker, so a range whose upstream answers 502 keeps saying "loading…" (F4 request).
+
+Not done: A2, A4, A5, S1–S3, M1, P1–P3.
 
 ## 0. Rulings on the review issues
 

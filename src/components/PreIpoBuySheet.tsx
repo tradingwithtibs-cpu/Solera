@@ -19,18 +19,23 @@ export function PreIpoBuySheet({ token, onClose }: { token: PreIpoToken; onClose
   const boxRef = useRef<HTMLDivElement>(null);
   const { preIpoHoldings } = useActivePortfolio();
 
+  // Callers pass inline arrows and the parents re-render on every poll, so the effect must not re-run on `onClose`.
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
   useEffect(() => {
     const opener = document.activeElement as HTMLElement | null;
     boxRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") onCloseRef.current();
     };
     document.addEventListener("keydown", onKey);
     return () => {
       document.removeEventListener("keydown", onKey);
       opener?.focus?.();
     };
-  }, [onClose]);
+  }, []);
 
   return (
     <div className="sheet scrim" role="presentation" onClick={onClose}>

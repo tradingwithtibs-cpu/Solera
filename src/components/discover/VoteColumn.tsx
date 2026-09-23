@@ -1,4 +1,5 @@
 export const VOTE_LOCKED = "Voting opens with sign-in";
+export const COMMENTS_LOCKED = "Comments open with sign-in";
 
 /**
  * ▲ score ▼. Renders on every post; the buttons post nothing until votes

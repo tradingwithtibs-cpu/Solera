@@ -106,12 +106,14 @@ export function fillSymbol(f: FeedFill): string {
 
 /** Display name for a fill's actor: the claimed profile, else the short wallet, else a short account id. */
 export function actorName(f: FeedFill, profile: Profile | null | undefined): string {
+  if (f.local || (f.mine && !f.wallet)) return "You";
   if (profile?.name) return profile.name;
   if (f.wallet) return shortAddress(f.wallet);
   return `Account ${f.owner.slice(0, 4)}`;
 }
 
 export function actorInitials(f: FeedFill, profile: Profile | null | undefined): string {
+  if (f.local || (f.mine && !f.wallet)) return "ME";
   if (profile?.name) {
     return profile.name
       .split(/\s+/)

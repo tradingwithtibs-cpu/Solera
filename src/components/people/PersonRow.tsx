@@ -80,12 +80,7 @@ export function PersonRow({ rank, investor, holdings, claimed, view, window, sco
               </>
             )}
           </>
-        ) : (
-          <>
-            <b className={signClass(investor.performancePct)}>{formatPercent(investor.performancePct)}</b>
-            <small>mo</small>
-          </>
-        )}
+        ) : null}
       </span>
       <span className="person-actions">
         <FollowButton investorId={investor.id} name={investor.name} />

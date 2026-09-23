@@ -2,12 +2,56 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useWallet } from "@solana/wallet-adapter-react";
 import { useTradeMode } from "@/hooks/use-trade-mode";
+import { useAuthUser } from "@/hooks/use-auth-user";
+import { useProfile } from "@/hooks/use-profiles";
+import { avatarColorFor, shortAddress } from "@/lib/investors";
+import { fillFor } from "@/lib/palette";
+import { openAuthSheet } from "../auth/auth-sheet-store";
 import { Logo } from "../Logo";
 import { MyWalletBadge } from "../MyWalletBadge";
 import { ModeToggle } from "./ModeToggle";
 import { SearchGlyph } from "../icons";
 import { openPalette } from "./Palette";
+
+/** LOG IN / SIGN UP when nobody is signed in; the me-pill (opens the account sheet) once a wallet or an email account is. */
+function AuthGroup() {
+  const { connected, publicKey } = useWallet();
+  const user = useAuthUser();
+  const address = connected && publicKey ? publicKey.toBase58() : null;
+  const owner = address ?? user?.id ?? null;
+  const profile = useProfile(owner);
+  if (!owner) {
+    return (
+      <>
+        <button type="button" className="btn-secondary btn-small max-md:hidden" onClick={() => openAuthSheet("login")}>
+          Log in
+        </button>
+        <button type="button" className="btn-primary btn-small" onClick={() => openAuthSheet("signup")}>
+          Sign up
+        </button>
+      </>
+    );
+  }
+  const displayName = typeof user?.user_metadata?.display_name === "string" ? (user.user_metadata.display_name as string) : undefined;
+  const name = profile?.name ?? displayName ?? (address ? shortAddress(address) : "Account");
+  const initials = name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? "")
+    .join("")
+    .slice(0, 2);
+  return (
+    <button type="button" className="me-pill" onClick={() => openAuthSheet("account")} aria-label="Your account">
+      <span className="avatar sm" style={{ background: fillFor(avatarColorFor(owner), initials) }} aria-hidden="true">
+        {initials}
+      </span>
+      <span className="truncate">{name}</span>
+      {address && profile?.name && <small className="max-md:hidden">{shortAddress(address)}</small>}
+    </button>
+  );
+}
 
 function useClock() {
   const [now, setNow] = useState<Date | null>(null);
@@ -65,6 +109,7 @@ export function Masthead() {
           {clock}
         </span>
         <MyWalletBadge />
+        <AuthGroup />
       </div>
     </header>
   );

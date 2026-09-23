@@ -21,14 +21,14 @@ import { InvestorFills } from "./InvestorFills";
 /**
  * /investor/[id] (pages.md §3.8): one real wallet as a static panel —
  * holdings straight from the chain, identity unknown unless a profile was
- * claimed, and the fills it made through Solera. Before real data loads,
- * a sample profile that says it is one.
+ * claimed, and the fills it made through Solera. Only real wallets have a
+ * page: a sample id is "not found" once the holder source has answered.
  */
 export function InvestorPanel({ id }: { id: string }) {
   const { isLoaded } = useInvestors();
-  const investor = useInvestor(id);
-  const isWallet = investor?.kind === "wallet";
-  const profile = useProfile(isWallet ? investor.id : null);
+  const found = useInvestor(id);
+  const investor = found?.kind === "wallet" ? found : undefined;
+  const profile = useProfile(investor?.id ?? null);
 
   if (!investor) {
     return (
@@ -57,7 +57,7 @@ export function InvestorPanel({ id }: { id: string }) {
 
   const holdings = computeHoldings(investor.holdings);
   const total = holdings.reduce((sum, h) => sum + h.value, 0);
-  const claimed = isWallet && !!profile;
+  const claimed = !!profile;
   const avatarStyle = { "--tk": fillFor(investor.avatarColor, investor.initials) } as CSSProperties;
   const move30 = investor.performance30dPct;
 
@@ -69,11 +69,7 @@ export function InvestorPanel({ id }: { id: string }) {
         subtitle={investor.handle}
         tools={<BackLink />}
         className="investor-panel prose-foot"
-        foot={
-          isWallet
-            ? "Holdings are read live from public Solana data. Identity is unknown unless the wallet claimed a profile."
-            : "A sample profile, shown while on-chain holders load. Nothing here is a real wallet."
-        }
+        foot="Holdings are read live from public Solana data. Identity is unknown unless the wallet claimed a profile."
       >
         <header className="investor-head" data-holder={investor.id}>
           <span className="avatar lg" style={avatarStyle} aria-hidden="true">
@@ -88,14 +84,14 @@ export function InvestorPanel({ id }: { id: string }) {
             <p className="investor-bio">{investor.bio}</p>
             <div className="investor-meta">
               <span className={`chip ${investor.performancePct >= 0 ? "gain" : "loss"}`}>{formatPercent(investor.performancePct)}</span>
-              <span>{isWallet ? "7-day move of holdings" : "this month"}</span>
-              {isWallet && move30 !== undefined && (
+              <span>7-day move of holdings</span>
+              {move30 !== undefined && (
                 <>
                   <span className={`chip ${move30 >= 0 ? "gain" : "loss"}`}>{formatPercent(move30)}</span>
                   <span>30-day</span>
                 </>
               )}
-              <OnChainBadge walletAddress={investor.walletAddress} verified={isWallet} />
+              <OnChainBadge walletAddress={investor.walletAddress} verified />
             </div>
             <div className="investor-actions">
               <FollowButton investorId={investor.id} name={investor.name} size="md" />
@@ -133,7 +129,7 @@ export function InvestorPanel({ id }: { id: string }) {
               Fills on Solera
             </p>
           </div>
-          <InvestorFills key={investor.id} owner={investor.id} onChain={isWallet} />
+          <InvestorFills key={investor.id} owner={investor.id} onChain />
         </section>
       </Panel>
     </div>

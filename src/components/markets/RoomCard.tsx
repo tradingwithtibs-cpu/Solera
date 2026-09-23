@@ -3,7 +3,7 @@
 import { Panel } from "@/components/panels/Panel";
 import { useRoomMessages } from "@/hooks/use-chat";
 import { getCatalogToken, isFeatured, isKnownTicker } from "@/lib/catalog";
-import { RoomLink } from "./RoomLink";
+import { RoomPanel, roomSubtitle } from "@/components/rooms/RoomPanel";
 
 interface Props {
   id: string;
@@ -14,7 +14,8 @@ interface Props {
 
 /**
  * The selected ticker's room. Rooms exist for tokenized stocks; the body is
- * the link card until the room component (task R6) replaces it.
+ * the room itself (messages, the sign-in gate, the composer) with one
+ * subscription owned here so the head can show the count.
  */
 export function RoomCard({ id, ticker, active = true }: Props) {
   const hasRoom = isKnownTicker(ticker) && (isFeatured(ticker) || !!getCatalogToken(ticker));
@@ -36,13 +37,10 @@ export function RoomCard({ id, ticker, active = true }: Props) {
 }
 
 function LiveRoomCard({ id, ticker }: { id: string; ticker: string }) {
-  const { messages, configured } = useRoomMessages(ticker);
-  const n = messages?.length ?? 0;
-  const subtitle =
-    messages === null ? "opening the room…" : configured === false ? "not switched on here" : `${n} ${n === 1 ? "message" : "messages"} · wallet sign-in to post`;
+  const room = useRoomMessages(ticker);
   return (
-    <Panel id={id} title={`${ticker} room`} subtitle={subtitle}>
-      <RoomLink ticker={ticker} messages={messages} configured={configured} />
+    <Panel id={id} title={`${ticker} room`} subtitle={roomSubtitle(room.messages, room.configured)} bodyClassName="room-card-body">
+      <RoomPanel ticker={ticker} room={room} />
     </Panel>
   );
 }
