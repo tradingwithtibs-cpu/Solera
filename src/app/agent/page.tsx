@@ -1,9 +1,9 @@
 "use client";
 
 import { PanelGrid } from "@/components/panels/PanelGrid";
-import { Panel } from "@/components/panels/Panel";
 import { ResetLayoutLink } from "@/components/panels/ResetLayoutLink";
 import { AgentPanel } from "@/components/agent/AgentPanel";
+import { PlansPanel } from "@/components/plans/PlansPanel";
 
 /** The Agent tab (docs/port/agent-ux.md §1): the agent card beside the plans slot, on the panel grid. */
 export default function AgentPage() {
@@ -11,9 +11,7 @@ export default function AgentPage() {
     <>
       <PanelGrid page="agent" phoneTab="agent">
         <AgentPanel id="agent" />
-        <Panel id="plans" title="Plans" subtitle="standing orders in plain words">
-          <p className="muted p-2 text-xs">No plans yet. Once the Agent is here, a sentence like &ldquo;buy AAPLx if it goes over $345&rdquo; becomes one.</p>
-        </Panel>
+        <PlansPanel id="plans" />
       </PanelGrid>
       <p className="px-6 pb-4 text-center text-[10px] uppercase tracking-wider text-muted">
         <ResetLayoutLink page="agent" />

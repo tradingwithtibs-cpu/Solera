@@ -1,5 +1,7 @@
 "use client";
 
+import { openCancelPlanSheet } from "@/components/trigger/trigger-sheet-store";
+
 import { useState } from "react";
 import Link from "next/link";
 import { useEffectivePrice } from "@/hooks/use-effective-price";
@@ -107,8 +109,8 @@ export function PlanRow({ plan, now, onCancel, highlighted = false }: Props) {
             </Link>
           )}
           {isTrigger ? (
-            <button type="button" className="btn-ghost btn-small" disabled title="Cancelling a Jupiter order needs the wallet sheet, which arrives with Jupiter Trigger.">
-              Cancel &amp; withdraw
+            <button type="button" className="btn-ghost btn-small" onClick={() => openCancelPlanSheet(plan.id)} disabled={busy}>
+              {plan.triggerState === "expired" ? "Get funds back" : plan.triggerState === "pending_withdraw" ? "Finish withdrawal" : "Cancel & withdraw"}
             </button>
           ) : (
             onCancel &&

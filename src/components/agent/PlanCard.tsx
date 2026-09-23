@@ -8,6 +8,7 @@ import { useEffectivePrice } from "@/hooks/use-effective-price";
 import { useLivePriceFor } from "@/hooks/use-live-price-for";
 import { useConnectWallet } from "@/components/ConnectWalletProvider";
 import { openAuthSheet } from "@/components/auth/auth-sheet-store";
+import { openArmPlanSheet } from "@/components/trigger/trigger-sheet-store";
 import { useNow } from "@/components/portfolio/use-now";
 import { plansClient } from "@/lib/plans-client";
 import { describe, validateCondition, type PlanCondition } from "@/lib/plans";
@@ -99,6 +100,25 @@ export function PlanCard({ card, state, onChange }: Props) {
         const created = await plansClient.create(token, { text: card.text, condition: next, mode: card.mode, source: "agent" });
         if (id) plansClient.discard(token, id).catch(() => {});
         id = created.id;
+      }
+      if (cardLive && card.execution === "trigger") {
+        // Jupiter holds this one: the sheet signs the person in and lands the deposit; the card follows once the plan is armed.
+        const planId = id;
+        const follow = async () => {
+          try {
+            const plan = await plansClient.get(token, planId);
+            if (plan.status === "armed") {
+              onChange({ status: "armed", planId: plan.id, condition: plan.condition, summary: plan.summary, armUntil: plan.armUntil });
+              window.removeEventListener("solera:plans-changed", follow);
+            }
+          } catch {
+            // The Plans panel shows the truth either way.
+          }
+        };
+        window.addEventListener("solera:plans-changed", follow);
+        if (id !== planId || !planId) onChange({ planId: id });
+        openArmPlanSheet(planId);
+        return;
       }
       const plan = await plansClient.arm(token, id);
       onChange({ status: "armed", planId: plan.id, condition: plan.condition, summary: plan.summary, armUntil: plan.armUntil });

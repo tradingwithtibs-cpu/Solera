@@ -4,8 +4,11 @@ import "./plans.css";
 import { useSyncExternalStore } from "react";
 import { Panel } from "@/components/panels/Panel";
 import { openAuthSheet } from "@/components/auth/auth-sheet-store";
-import { usePlans } from "@/hooks/use-plans";
+import { refreshPlans, usePlans } from "@/hooks/use-plans";
 import { useSession } from "@/hooks/use-session";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useTriggerSync } from "@/hooks/use-trigger-sync";
+import { openArmPlanSheet } from "@/components/trigger/trigger-sheet-store";
 import { useTradeMode } from "@/hooks/use-trade-mode";
 import { getEffectivePrice, getLivePrices, isLivePriced, subscribeLivePrices } from "@/lib/live-prices";
 import type { Plan, PlanCondition } from "@/lib/plans";
@@ -40,8 +43,10 @@ interface Props {
  */
 export function PlansPanel({ id = "plans", initialText, highlightId = null }: Props) {
   const { mode } = useTradeMode();
-  const { signedIn } = useSession();
+  const { signedIn, token } = useSession();
+  const { publicKey } = useWallet();
   const plans = usePlans();
+  useTriggerSync(plans.live, publicKey?.toBase58() ?? null, token, () => void refreshPlans());
   const now = useClock();
   const chips = useExampleChips();
 
@@ -51,6 +56,11 @@ export function PlansPanel({ id = "plans", initialText, highlightId = null }: Pr
 
   const armFromComposer = async (text: string, condition: PlanCondition) => {
     const created = await plans.create(text, condition, mode, "ui");
+    if (created.mode === "live" && created.execution === "trigger") {
+      // Jupiter holds this one: the sheet walks through sign-in and the deposit, then records the arm.
+      openArmPlanSheet(created.id);
+      return;
+    }
     let armed: Plan;
     try {
       armed = await plans.arm(created.id);

@@ -100,6 +100,11 @@ function start() {
     evalTimer = setInterval(evaluateSelf, EVALUATE_MS);
   }
   window.addEventListener("focus", onFocus);
+  window.addEventListener("solera:plans-changed", onChanged);
+}
+
+function onChanged() {
+  void refreshPlans();
 }
 
 function stop() {
@@ -108,6 +113,7 @@ function stop() {
   if (evalTimer) clearInterval(evalTimer);
   listTimer = healthTimer = evalTimer = null;
   window.removeEventListener("focus", onFocus);
+  window.removeEventListener("solera:plans-changed", onChanged);
 }
 
 function attach(token: string | null): () => void {
