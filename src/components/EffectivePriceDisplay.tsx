@@ -1,33 +1,31 @@
 "use client";
 
 import { formatCurrency } from "@/lib/format";
+import { getChange24h } from "@/lib/live-prices";
 import { useEffectivePrice } from "@/hooks/use-effective-price";
-import { PremiumBadge } from "./PremiumBadge";
 import { isFeatured } from "@/lib/catalog";
 import type { TickerSymbol } from "@/lib/types";
 
 /**
- * The headline price on the asset page — live from Pyth when the feed is
- * up, simulated otherwise — with the premium/discount to the underlying
- * share beneath it. A tiny client island inside an otherwise
- * server-rendered page, since the live price needs to update in the
- * browser without a full page reload.
+ * The headline price block of an asset: the live Solana price in mono,
+ * Jupiter's 24h move beneath it, and where the number comes from. Real
+ * figures only: before the first fetch the move reads "—".
  */
-export function EffectivePriceDisplay({ ticker }: { ticker: TickerSymbol }) {
+export function EffectivePriceDisplay({ ticker, className = "" }: { ticker: TickerSymbol; className?: string }) {
   const { price, isLive } = useEffectivePrice(ticker);
+  const change = getChange24h(ticker);
   return (
-    <div>
-      <p className="font-mono text-2xl font-semibold tabular-nums text-neutral-900">
-        {formatCurrency(price)}
-        {isLive && (
-          <span className="ml-2 align-middle text-xs font-semibold text-emerald-600">
-            {isFeatured(ticker) ? "Live · Pyth" : "Live · Jupiter"}
-          </span>
-        )}
-      </p>
-      <p className="mt-0.5 min-h-[1rem]">
-        <PremiumBadge ticker={ticker} />
-      </p>
+    <div className={className}>
+      <b>{isLive ? formatCurrency(price) : "—"}</b>
+      {change !== undefined ? (
+        <small className={change >= 0 ? "up" : "down"}>
+          {change >= 0 ? "+" : ""}
+          {change.toFixed(1)}% 24h
+        </small>
+      ) : (
+        <small className="muted">— 24h</small>
+      )}
+      <span className="src">{isLive ? (isFeatured(ticker) ? "Live · Pyth" : "Live · Jupiter") : "waiting for Jupiter"}</span>
     </div>
   );
 }

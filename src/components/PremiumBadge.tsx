@@ -8,7 +8,7 @@ import type { TickerSymbol } from "@/lib/types";
  * How the xStock is trading relative to the real listed share, from Pyth's
  * underlying-equity feed. Three states:
  *
- * - Market open and both feeds live: "+0.12% vs AAPL" (green above, red
+ * - Market open and both feeds live: "+0.12% vs AAPL" (amber above, green
  *   below). This is the number a tokenized-stock trader actually cares about
  *   — it's the cost of on-chain access right now.
  * - Market closed: "NYSE closed · vs AAPL" — the token still trades, the
@@ -26,18 +26,17 @@ export function PremiumBadge({ ticker, compact = false }: { ticker: TickerSymbol
 
   if (underlying.stale || premiumPct === undefined) {
     return (
-      <span className="text-[10px] font-medium text-neutral-400" title={`${vs} last regular-session price`}>
+      <span className="text-[10px] font-medium text-muted" title={`${vs} last regular-session price`}>
         {compact ? "NYSE closed" : `NYSE closed · ${vs} pricing resumes at open`}
       </span>
     );
   }
 
   const sign = premiumPct > 0 ? "+" : premiumPct < 0 ? "−" : "";
-  const tone =
-    Math.abs(premiumPct) < 0.05 ? "text-neutral-500" : premiumPct > 0 ? "text-amber-600" : "text-emerald-600";
+  const tone = Math.abs(premiumPct) < 0.05 ? "text-muted" : premiumPct > 0 ? "text-warn" : "text-gain";
   return (
     <span
-      className={`text-[10px] font-medium tabular-nums ${tone}`}
+      className={`font-mono text-[10px] font-medium tabular-nums ${tone}`}
       title={`${ticker} is trading ${Math.abs(premiumPct).toFixed(2)}% ${premiumPct >= 0 ? "above" : "below"} ${vs} on the exchange`}
     >
       {sign}
