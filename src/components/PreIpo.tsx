@@ -1,43 +1,31 @@
 "use client";
 
-import {
-  COMPANIES,
-  formatCompactUsd,
-  formatValuation,
-  type CompanyComparison,
-  type PreIpoToken,
-} from "@/lib/pre-ipo";
-import { formatCurrency } from "@/lib/format";
 import { useState } from "react";
+import { COMPANIES, formatCompactUsd, formatValuation, type CompanyComparison, type PreIpoToken } from "@/lib/pre-ipo";
+import { formatCurrency } from "@/lib/format";
+import { fillFor } from "@/lib/palette";
 import { PreIpoBuySheet } from "./PreIpoBuySheet";
 import { NewsList } from "./NewsList";
+import { gapTone, signedPct } from "./preipo/format";
 
 /** A Buy button that opens the in-app buy sheet for `token`. */
-function BuyButton({ token, primary = false }: { token: PreIpoToken; primary?: boolean }) {
+export function BuyButton({ token, primary = false, label }: { token: PreIpoToken; primary?: boolean; label?: string }) {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className={
-          primary
-            ? "btn-primary mt-3 block w-full rounded-full py-2 text-center text-xs font-semibold"
-            : "rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-600 active:bg-violet-100"
-        }
-      >
-        Buy {primary ? token.issuer : ""}
+      <button type="button" onClick={() => setOpen(true)} className={primary ? "btn-live btn-small" : "btn-secondary btn-small"}>
+        {label ?? (primary ? `Buy ${token.issuer}` : "Buy")}
       </button>
       {open && <PreIpoBuySheet token={token} onClose={() => setOpen(false)} />}
     </>
   );
 }
 
-function CompanyBadge({ company, size = "sm" }: { company: PreIpoToken["company"]; size?: "sm" | "lg" }) {
+/** Initials tile for a company, on one of the ink-safe fills. */
+export function CompanyBadge({ company, size = "sm" }: { company: PreIpoToken["company"]; size?: "sm" | "md" | "lg" }) {
   const c = COMPANIES[company];
-  const sizing = size === "lg" ? "h-12 w-12 text-sm" : "h-9 w-9 text-[11px]";
   return (
-    <span className={`flex shrink-0 items-center justify-center rounded-full font-bold text-white ${sizing} ${c.color}`}>
+    <span className={`pi-badge ${size}`} style={{ background: fillFor(c.color, c.id) }} aria-hidden="true">
       {c.short}
     </span>
   );
@@ -46,66 +34,113 @@ function CompanyBadge({ company, size = "sm" }: { company: PreIpoToken["company"
 /** "+8.9% vs mark" in amber (paying up) or "−2.3% vs mark" in green (a discount). */
 export function MarkPremiumBadge({ premiumPct, compact = false }: { premiumPct: number; compact?: boolean }) {
   if (!Number.isFinite(premiumPct)) return null;
-  const sign = premiumPct > 0 ? "+" : premiumPct < 0 ? "−" : "";
-  const tone =
-    Math.abs(premiumPct) < 0.5 ? "text-neutral-500" : premiumPct > 0 ? "text-amber-600" : "text-emerald-600";
+  const tone = gapTone(premiumPct);
   return (
     <span
-      className={`text-[10px] font-medium tabular-nums ${tone}`}
+      className={`font-mono text-[10px] font-medium tabular-nums ${tone === "warn" ? "text-warn" : tone === "up" ? "text-gain" : "text-muted"}`}
       title={`Token trades ${Math.abs(premiumPct).toFixed(1)}% ${premiumPct >= 0 ? "above" : "below"} the issuer's mark price`}
     >
-      {sign}
-      {Math.abs(premiumPct).toFixed(1)}%{compact ? "" : " vs mark"}
+      {signedPct(premiumPct)}
+      {compact ? "" : " vs mark"}
     </span>
   );
 }
 
-function IssuerPill({ issuer }: { issuer: PreIpoToken["issuer"] }) {
-  const tone = issuer === "Tessera" ? "bg-sky-50 text-sky-700" : "bg-violet-50 text-violet-700";
-  return <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${tone}`}>{issuer}</span>;
+/** The boxed "+29.6% vs mark" cell on a market row. */
+export function GapChip({ premiumPct }: { premiumPct: number }) {
+  return (
+    <span className={`gap pi-gap ${gapTone(premiumPct)}`} title="Token price vs the issuer's mark">
+      {signedPct(premiumPct)} vs mark
+    </span>
+  );
 }
 
-/** One row in the pre-IPO market list. */
-export function PreIpoRow({ token }: { token: PreIpoToken }) {
+export function IssuerPill({ issuer }: { issuer: PreIpoToken["issuer"] }) {
+  return <span className={`pi-issuer ${issuer === "Tessera" ? "tessera" : "prestocks"}`}>{issuer}</span>;
+}
+
+/**
+ * One row in the pre-IPO market list: badge, symbol + issuer, the company
+ * and its mark, the live price with the 24h move, the gap chip and the
+ * watchlist star. Clicking the row selects it; the star is its own button.
+ */
+export function PreIpoRow({
+  token,
+  selected = false,
+  onSelect,
+  star,
+}: {
+  token: PreIpoToken;
+  selected?: boolean;
+  onSelect?: (token: PreIpoToken) => void;
+  /** The watchlist control, rendered as the trailing cell. */
+  star?: React.ReactNode;
+}) {
   const company = COMPANIES[token.company];
+  const change = token.change24hPct;
   return (
-    <article className="market-item">
-      <div className="market-main">
+    <div className={`row pi-row ${selected ? "on" : ""}`} data-sym={token.symbol}>
+      <button type="button" className="pi-row-select" aria-pressed={selected} onClick={() => onSelect?.(token)}>
         <CompanyBadge company={token.company} />
-        <div className="min-w-0 flex-1">
-          <h2 className="flex items-center gap-2 text-sm font-semibold">
-            {company.name} <IssuerPill issuer={token.issuer} />
-          </h2>
-          <p className="truncate text-xs text-neutral-500">
-            {token.symbol} · implies {formatValuation(token.impliedValuation)}
-          </p>
-        </div>
-        <div className="shrink-0 text-right">
-          <p className="mb-1 font-mono text-sm font-semibold">{formatCurrency(token.tokenPrice)}</p>
-          <p className="mb-1">
-            <MarkPremiumBadge premiumPct={token.premiumPct} />
-          </p>
-        </div>
-      </div>
-      <div className="market-meta">
-        <span>
-          Mark <span className="font-mono">{formatCurrency(token.markPrice)}</span>
-          {token.holders !== undefined && (
-            <>
-              {" · "}
-              <span className="font-mono">{token.holders.toLocaleString()}</span> holders
-            </>
-          )}
-          {token.liquidityUsd !== undefined && (
-            <>
-              {" · "}
-              <span className="font-mono">{formatCompactUsd(token.liquidityUsd)}</span> liquidity
-            </>
-          )}
+        <span className="row-main">
+          <b>
+            {token.symbol} <IssuerPill issuer={token.issuer} />
+          </b>
+          <small>
+            {company.name} · {token.issuer} · mark {formatCurrency(token.markPrice)}
+          </small>
         </span>
-        <BuyButton token={token} />
+        <span className="row-num">
+          <b>{token.tokenPrice > 0 ? formatCurrency(token.tokenPrice) : "—"}</b>
+          <small className={change === undefined ? "" : change >= 0 ? "up" : "down"}>
+            {change === undefined ? "—" : signedPct(change)} 24h
+          </small>
+        </span>
+        <GapChip premiumPct={token.premiumPct} />
+      </button>
+      {star ? <span className="flex shrink-0 items-center self-stretch px-2">{star}</span> : <span aria-hidden="true" />}
+    </div>
+  );
+}
+
+/** The two issuers' tokens for one company, side by side: the compact block inside the asset card. */
+function CompactComparison({
+  comparison,
+  selectedMint,
+  onSelect,
+}: {
+  comparison: CompanyComparison;
+  selectedMint?: string;
+  onSelect?: (token: PreIpoToken) => void;
+}) {
+  const { tokens, cheapest, priciest, cheaperByPct } = comparison;
+  return (
+    <div>
+      <div className="pi-compare-rows">
+        {tokens.map((t) => (
+          <button
+            key={t.mint}
+            type="button"
+            className={t.mint === selectedMint ? "on" : ""}
+            aria-pressed={t.mint === selectedMint}
+            onClick={() => onSelect?.(t)}
+            title={`Show ${t.symbol}`}
+          >
+            <span>
+              <IssuerPill issuer={t.issuer} /> {t.symbol}
+            </span>
+            <b>{t.tokenPrice > 0 ? formatCurrency(t.tokenPrice) : "—"}</b>
+            <small className={gapTone(t.premiumPct)}>{signedPct(t.premiumPct)} vs mark</small>
+            <small>implies {formatValuation(t.impliedValuation)}</small>
+          </button>
+        ))}
       </div>
-    </article>
+      <p className="pi-note">
+        <b>{cheapest.issuer}</b> is the lower valuation, {cheaperByPct.toFixed(0)}% below {priciest.issuer}&apos;s{" "}
+        {formatValuation(priciest.impliedValuation)}. Token prices can&apos;t be compared directly: one token from each issuer is a
+        different slice of the company, and neither is a share.
+      </p>
+    </div>
   );
 }
 
@@ -113,115 +148,113 @@ export function PreIpoRow({ token }: { token: PreIpoToken }) {
  * The same company from two issuers, side by side, ordered cheapest first
  * by the valuation each token's price implies. The headline is the one
  * sentence a buyer needs: which token is the cheaper way in, and by how
- * much.
+ * much. `compact` is the short form inside the asset card.
  */
-export function CompanyComparisonCard({ comparison }: { comparison: CompanyComparison }) {
+export function CompanyComparisonCard({
+  comparison,
+  compact = false,
+  selectedMint,
+  onSelect,
+}: {
+  comparison: CompanyComparison;
+  compact?: boolean;
+  selectedMint?: string;
+  onSelect?: (token: PreIpoToken) => void;
+}) {
   const { company, tokens, cheapest, priciest, cheaperByPct, markDisagreementPct, bestDiscountToMark } = comparison;
+  if (compact) return <CompactComparison comparison={comparison} selectedMint={selectedMint} onSelect={onSelect} />;
   const marksDisagree = markDisagreementPct >= 30;
   return (
-    <section className="card-elevated rounded-3xl border border-neutral-100 p-5">
-      <div className="flex items-center gap-3">
-        <CompanyBadge company={company.id} size="lg" />
+    <article className="pi-company" data-company={company.id}>
+      <div className="pi-company-head">
+        <CompanyBadge company={company.id} size="md" />
         <div className="min-w-0">
-          <h2 className="text-base font-semibold text-neutral-900">{company.name}</h2>
-          <p className="text-xs text-neutral-500">{company.sector} · sold by {tokens.length} issuers</p>
+          <h4>{company.name}</h4>
+          <p>
+            {company.sector} · sold by {tokens.length} issuers
+          </p>
         </div>
       </div>
 
       {/* Two honest answers to "which is cheaper?", labelled so they can't be confused. */}
-      <div className="mt-4 space-y-2">
-        <p className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm leading-snug text-emerald-900">
-          <span className="block text-[10px] font-semibold uppercase tracking-wide text-emerald-700">Lower company valuation</span>
-          <span className="font-semibold">{cheapest.issuer}</span> · {formatValuation(cheapest.impliedValuation)} implied,{" "}
-          <span className="font-mono font-semibold">{cheaperByPct.toFixed(0)}%</span> below {priciest.issuer}&apos;s{" "}
-          {formatValuation(priciest.impliedValuation)}
-        </p>
-        <p className="rounded-2xl bg-neutral-50 px-4 py-3 text-sm leading-snug text-neutral-700">
-          <span className="block text-[10px] font-semibold uppercase tracking-wide text-neutral-500">Vs each issuer&apos;s own mark</span>
-          {tokens.map((t, i) => (
-            <span key={t.mint}>
-              {i > 0 && " · "}
-              {t.issuer}{" "}
-              <span className={`font-mono font-semibold ${t.premiumPct < 0 ? "text-emerald-700" : "text-amber-700"}`}>
-                {Math.abs(t.premiumPct).toFixed(0)}% {t.premiumPct < 0 ? "below" : "above"}
-              </span>
+      <div className="pi-callout gain">
+        <span className="eyebrow">Lower company valuation</span>
+        <b>{cheapest.issuer}</b> · {formatValuation(cheapest.impliedValuation)} implied,{" "}
+        <span className="font-mono font-semibold">{cheaperByPct.toFixed(0)}%</span> below {priciest.issuer}&apos;s{" "}
+        {formatValuation(priciest.impliedValuation)}
+      </div>
+      <div className="pi-callout">
+        <span className="eyebrow">Vs each issuer&apos;s own mark</span>
+        {tokens.map((t, i) => (
+          <span key={t.mint}>
+            {i > 0 && " · "}
+            {t.issuer}{" "}
+            <span className={`font-mono font-semibold ${t.premiumPct < 0 ? "text-gain" : "text-warn"}`}>
+              {Math.abs(t.premiumPct).toFixed(0)}% {t.premiumPct < 0 ? "below" : "above"}
             </span>
-          ))}
-          {bestDiscountToMark !== cheapest && (
-            <span className="block text-xs text-neutral-500">
-              {bestDiscountToMark.issuer} is the bigger discount to its own mark; {cheapest.issuer} is the lower valuation.
-            </span>
-          )}
-        </p>
-        {marksDisagree && (
-          <details className="rounded-2xl bg-amber-50 px-4 py-2 text-xs leading-relaxed text-amber-900">
-            <summary className="cursor-pointer font-semibold">
-              Issuers disagree on {company.name}&apos;s value ({tokens.map((t) => formatValuation(t.markValuation)).join(" vs ")})
-            </summary>
-            <p className="mt-1">
-              At least one mark is stale. Implied valuation compares what you actually pay for the company; discount-to-mark
-              only says how each token trades against its own issuer&apos;s number.
-            </p>
-          </details>
+          </span>
+        ))}
+        {bestDiscountToMark !== cheapest && (
+          <small>
+            {bestDiscountToMark.issuer} is the bigger discount to its own mark; {cheapest.issuer} is the lower valuation.
+          </small>
         )}
       </div>
+      {marksDisagree && (
+        <details className="pi-callout warn">
+          <summary>
+            Issuers disagree on {company.name}&apos;s value ({tokens.map((t) => formatValuation(t.markValuation)).join(" vs ")})
+          </summary>
+          <small>
+            At least one mark is stale. Implied valuation compares what you actually pay for the company; discount-to-mark only says
+            how each token trades against its own issuer&apos;s number.
+          </small>
+        </details>
+      )}
 
-      <div className="mt-4 grid grid-cols-2 gap-3">
+      <div className="pi-tiles">
         {tokens.map((t) => (
-          <div
-            key={t.mint}
-            className={`rounded-2xl border p-3 ${t === cheapest ? "border-emerald-200 bg-emerald-50/40" : "border-neutral-100"}`}
-          >
-            <div className="flex items-center justify-between">
+          <div key={t.mint} className={`pi-tile ${t === cheapest ? "best" : ""}`}>
+            <div className="pi-tile-top">
               <IssuerPill issuer={t.issuer} />
-              {t === cheapest && <span className="text-[10px] font-semibold text-emerald-700">Lowest valuation</span>}
+              {t === cheapest && <span className="chip gap">Lowest valuation</span>}
             </div>
-            <p className="mt-2 font-mono text-lg font-semibold tabular-nums">{formatCurrency(t.tokenPrice)}</p>
-            <p className="text-[11px] text-neutral-500">{t.symbol} token price</p>
-            <dl className="mt-3 space-y-1.5 text-[11px]">
-              <div className="flex justify-between gap-2">
-                <dt className="text-neutral-500">Implied valuation</dt>
-                <dd className="font-mono font-medium">{formatValuation(t.impliedValuation)}</dd>
-              </div>
-              <div className="flex justify-between gap-2">
-                <dt className="text-neutral-500">Vs issuer mark</dt>
-                <dd>
-                  <MarkPremiumBadge premiumPct={t.premiumPct} compact />
-                </dd>
-              </div>
+            <div className="pi-tile-price">
+              <b>{t.tokenPrice > 0 ? formatCurrency(t.tokenPrice) : "—"}</b>
+              <small>{t.symbol} token price</small>
+            </div>
+            <dl>
+              <dt>Implied valuation</dt>
+              <dd>{formatValuation(t.impliedValuation)}</dd>
+              <dt>Vs issuer mark</dt>
+              <dd>
+                <MarkPremiumBadge premiumPct={t.premiumPct} compact />
+              </dd>
               {t.holders !== undefined && (
-                <div className="flex justify-between gap-2">
-                  <dt className="text-neutral-500">Holders</dt>
-                  <dd className="font-mono font-medium">{t.holders.toLocaleString()}</dd>
-                </div>
+                <>
+                  <dt>Holders</dt>
+                  <dd>{t.holders.toLocaleString()}</dd>
+                </>
               )}
               {t.liquidityUsd !== undefined && (
-                <div className="flex justify-between gap-2">
-                  <dt className="text-neutral-500">Liquidity</dt>
-                  <dd className="font-mono font-medium">{formatCompactUsd(t.liquidityUsd)}</dd>
-                </div>
+                <>
+                  <dt>Liquidity</dt>
+                  <dd>{formatCompactUsd(t.liquidityUsd)}</dd>
+                </>
               )}
             </dl>
-            {t === cheapest ? (
-              <BuyButton token={t} primary />
-            ) : (
-              <div className="mt-3">
-                <BuyButton token={t} />
-              </div>
-            )}
+            <BuyButton token={t} primary={t === cheapest} />
           </div>
         ))}
       </div>
-      <p className="mt-3 text-[11px] leading-relaxed text-neutral-400">
-        Token prices can&apos;t be compared directly — one token from each issuer represents a different slice of the
-        company. Implied valuation = live token price ÷ issuer mark × the valuation that mark stands for.
+      <p className="pi-note">
+        Token prices can&apos;t be compared directly — one token from each issuer represents a different slice of the company.
+        Implied valuation = live token price ÷ issuer mark × the valuation that mark stands for.
       </p>
-      <details className="mt-3 rounded-2xl bg-neutral-50 px-4 py-2">
-        <summary className="cursor-pointer text-xs font-semibold text-neutral-700">Latest on {company.name}</summary>
-        <div className="pb-1">
-          <NewsList scope={{ kind: "company", company: company.id }} limit={3} />
-        </div>
+      <details className="pi-latest">
+        <summary>Latest on {company.name}</summary>
+        <NewsList scope={{ kind: "company", company: company.id }} limit={3} />
       </details>
-    </section>
+    </article>
   );
 }
