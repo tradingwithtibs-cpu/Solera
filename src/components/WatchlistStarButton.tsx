@@ -2,9 +2,9 @@
 
 import { useWatchlist } from "@/hooks/use-watchlist";
 import type { TickerSymbol } from "@/lib/types";
-import { StarIcon } from "./icons";
 
-export function WatchlistStarButton({ ticker, size = "md" }: { ticker: TickerSymbol; size?: "sm" | "md" }) {
+/** The ★ beside a symbol: `.star` from the design system, amber when on. Stops the click so a row behind it does not select. */
+export function WatchlistStarButton({ ticker, size = "md", className = "" }: { ticker: TickerSymbol; size?: "sm" | "md"; className?: string }) {
   const { isWatched, toggleWatch } = useWatchlist();
   const watched = isWatched(ticker);
 
@@ -12,11 +12,15 @@ export function WatchlistStarButton({ ticker, size = "md" }: { ticker: TickerSym
     <button
       type="button"
       aria-pressed={watched}
-      onClick={() => toggleWatch(ticker)}
+      onClick={(e) => {
+        e.stopPropagation();
+        toggleWatch(ticker);
+      }}
       aria-label={watched ? `Remove ${ticker} from watchlist` : `Add ${ticker} to watchlist`}
-      className="text-amber-400"
+      title={watched ? "On your watchlist" : "Watch"}
+      className={`star ${watched ? "on" : ""} ${size === "sm" ? "star-sm" : ""} ${className}`.replace(/\s+/g, " ").trim()}
     >
-      <StarIcon className={size === "md" ? "h-6 w-6" : "h-5 w-5"} filled={watched} />
+      ★
     </button>
   );
 }
