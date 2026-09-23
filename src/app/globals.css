@@ -1519,6 +1519,15 @@ code,
   margin-right: 7px;
   vertical-align: 1px;
 }
+/* A head subtitle that is only the dot: sit it right after the title and let its pulse glow past the box (the truncating wrapper would clip the glow into a square). */
+.panel-head > .truncate:has(> .live-dot:only-child) {
+  overflow: visible;
+  margin-left: -4px;
+  line-height: 0;
+}
+.panel-head > .truncate > .live-dot:only-child {
+  margin-right: 0;
+}
 @keyframes pulse {
   0% {
     box-shadow: 0 0 0 0 #01eaf480;

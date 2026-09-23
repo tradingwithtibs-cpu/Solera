@@ -151,10 +151,11 @@
 .post-hl {
   grid-area: hl;
   margin: 0;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 14px;
   line-height: 1.4;
   font-weight: 600;
+  letter-spacing: -0.01em;
   color: var(--text-0);
 }
 .post-hl-open {
@@ -205,7 +206,24 @@
   margin: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 2px 4px;
+}
+/* Row actions read as quiet text links; the border only appears under the pointer. */
+.post-actions .tiny,
+.row-actions .tiny {
+  border-color: transparent;
+  color: var(--text-3);
+  padding-left: 5px;
+  padding-right: 5px;
+}
+.post-actions .tiny:hover,
+.row-actions .tiny:hover {
+  border-color: var(--line);
+  color: var(--text-1);
+  background: var(--ink-inset);
+}
+.keep-case {
+  text-transform: none;
 }
 .tiny {
   display: inline-flex;
@@ -257,11 +275,11 @@
   padding-top: 2px;
 }
 .vote button {
-  min-height: 20px;
-  padding: 3px 6px;
-  font-size: 11px;
+  min-height: 22px;
+  padding: 3px 7px;
+  font-size: 14px;
   line-height: 1;
-  color: var(--text-3);
+  color: var(--text-2);
   transition:
     color var(--t) var(--ease-soft),
     transform var(--t) var(--ease);
@@ -284,10 +302,10 @@
 }
 .vote b {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  color: var(--text-2);
+  color: var(--text-1);
 }
 .vote b.up {
   color: var(--gain);
@@ -845,28 +863,38 @@
   }
 }
 
-/* ---- the Discover head: five tabs that never spill past the card ---- */
-.feed-card > .panel-head {
-  flex-wrap: wrap;
-  height: auto;
-  min-height: var(--head-h);
-  row-gap: 6px;
-  padding-top: 6px;
-  padding-bottom: 6px;
-}
+/* ---- the Discover head: five tabs in the head row, one control, not a second panel ---- */
 .feed-card > .panel-head > .panel-tools {
   flex: 1 1 auto;
   min-width: 0;
 }
 .feed-tools .seg {
   max-width: 100%;
+  padding: 2px;
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
 }
 .feed-tools .seg > button {
-  padding-left: 9px;
-  padding-right: 9px;
+  padding: 4px 9px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
 }
-/* Narrow card: the tabs drop under the title and fill the row. */
-@container (max-width: 720px) {
+.feed-tools .tab-count {
+  font-size: inherit;
+  font-weight: 500;
+  opacity: 0.8;
+}
+/* Narrow card (under 560px, phones and tight grids): the head grows a row and the tabs drop under the title, filling it. */
+@container (max-width: 560px) {
+  .feed-card > .panel-head {
+    flex-wrap: wrap;
+    height: auto;
+    min-height: var(--head-h);
+    row-gap: 4px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
   .feed-card > .panel-head > .panel-tools {
     flex: 1 0 100%;
     justify-content: flex-start;

@@ -88,8 +88,20 @@ function stripSourceSuffix(headline: string, source: string): string {
   return trimmed.replace(bySource, "");
 }
 
+/**
+ * A picture that several stories in one batch share is the publisher's
+ * logo, not a thumbnail (Yahoo sends the same "y! finance" banner on every
+ * story without a photo). Finnhub's own /logo/ placeholders are the other
+ * known case. Neither is worth a thumbnail box.
+ */
+function withoutPlaceholderImages(items: NewsItem[]): NewsItem[] {
+  const uses = new Map<string, number>();
+  for (const i of items) if (i.image) uses.set(i.image, (uses.get(i.image) ?? 0) + 1);
+  return items.map((i) => (i.image && ((uses.get(i.image) ?? 0) >= 3 || /\/logo\/|yimg\.com\/rz\/stage|default_logo/i.test(i.image)) ? { ...i, image: undefined } : i));
+}
+
 function fromFinnhub(articles: FinnhubArticle[]): NewsItem[] {
-  return articles
+  return withoutPlaceholderImages(articles
     .filter((a) => a.headline && a.url && a.datetime)
     .map((a) => ({
       id: String(a.id),
@@ -101,7 +113,7 @@ function fromFinnhub(articles: FinnhubArticle[]): NewsItem[] {
       // Finnhub substitutes the publisher's logo (a dark square) when a story has no picture; that is not a thumbnail.
       image: a.image && !/\/logo\//i.test(a.image) ? a.image : undefined,
       summary: a.summary || undefined,
-    }));
+    })));
 }
 
 async function finnhub(path: string): Promise<FinnhubArticle[] | null> {

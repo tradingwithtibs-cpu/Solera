@@ -34,17 +34,19 @@ export function agentQuestion(item: FeedNews): string {
  */
 export function NewsRow({ item, post, held, onOpen }: { item: FeedNews; post?: FeedPost; held: boolean; onOpen: (item: FeedNews) => void }) {
   const n = item.item;
-  const kind = item.scope === "market" ? "MARKET" : item.scope === "company" ? "PRE-IPO" : scopeSymbol(item.tickers[0] ?? "");
   const first = item.tickers[0];
+  // The tag names the story's scope once: MARKET, PRE-IPO, or the first ticker (its case kept: the x is lowercase). Further tickers follow it.
+  const kind = item.scope === "market" ? "MARKET" : item.scope === "company" ? "PRE-IPO" : scopeSymbol(first ?? "");
+  const others = item.tickers.slice(1);
   return (
     <li className={`post news-post ${n.image ? "has-img" : "no-img"}`} data-sym={first ?? undefined}>
       <VoteColumn target={feedTargetOf(item)} post={post} />
       <div className="post-body">
         <p className="post-meta">
-          <i className="post-tag">{kind}</i>
+          <i className={`post-tag ${item.scope === "ticker" ? "keep-case" : ""}`}>{kind}</i>
           <b>{n.source}</b>
           <span>· {formatRelativeTime(n.publishedAt)}</span>
-          {item.tickers.map((t) => (
+          {others.map((t) => (
             <Link key={t} href={scopeHref(t)} className="post-sym">
               {scopeSymbol(t)}
             </Link>
@@ -98,7 +100,7 @@ export function NewsRow({ item, post, held, onOpen }: { item: FeedNews; post?: F
           </Link>
           {first && (
             <Link className="tiny" href={scopeHref(first)}>
-              open {scopeSymbol(first)}
+              open <span className="keep-case">{scopeSymbol(first)}</span>
             </Link>
           )}
         </p>
