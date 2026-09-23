@@ -43,7 +43,9 @@ Deviations recorded by the page tasks: `src/hooks/use-visit.ts` is R1's (SincePa
 - **S2** feed votes and comments UI (fleet `wf_c489c171-0c6`, merged `8b2db70`, review fixes applied): `feed-store.ts` (posts keyed by news url / fill id, optimistic votes, comments cache, quiet on 501/502), `feed-posts.ts` (pure helpers), `use-feed.ts`, real `VoteColumn`, `CommentList` + composer in `StorySheet`, counts on rows, Hot ranked over real scores, `/news` rows read the store. S2 now owns `src/components/discover/{VoteColumn,CommentList,StorySheet,FeedPanel,FeedRow,NewsPanel,NewsRow}.tsx`, `{feed,feed-posts,feed-store}.ts`, `discover.css`, `src/hooks/use-feed.ts`, `tests/feed-ui.test.mjs`. Known limit: the store reads one page of 100 newest posts, so an older post's score can read 0 until a cursor follow-up lands.
 - **A2, A4** Plans panel + inbox + ticket prefill, and the Agent tab (fleet `wf_8ae4565a-f83`, merged `108b4d6` / `c92ced1`, wired in `ec6475c`).
 
-Not done: review fixes for A2/A4 as they land, A5 fill hand-off, dedupe of the two PlanEditorSheet/toast copies (agent/ vs plans/), M1, P1–P3.
+- **A4 review fixes** (`58fc9cc`): the agent's toasts ride the plans toast store (one host), `agent.css` scoped under `.agent`, the agent's EDIT opens A2's `PlanEditorSheet` when signed in (the agent copy stays for the signed-out card), card actions call `notifyPlansChanged()`, the session token is read at send time (`?q=` auto-send), the bubble eyebrow says "from Finnhub" / "from Google News".
+
+Not done: the A2 follow-up commit from the harness's re-run (merge when it lands), A5 fill hand-off (Jupiter fills → /api/fills with the vault check), M1 phone QA pass, P1 (a11y/perf pass), P3 (code review, preview deploy, promotion).
 
 ## 0. Rulings on the review issues
 
