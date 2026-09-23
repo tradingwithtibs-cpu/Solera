@@ -6,6 +6,8 @@ import { useCallback, useState } from "react";
 import { Panel } from "@/components/panels/Panel";
 import { useNewsScopes, type FeedNews, type NewsScope } from "@/hooks/use-news";
 import { useActivePortfolio } from "@/hooks/use-active-portfolio";
+import { useFeed } from "@/hooks/use-feed";
+import type { FeedPost } from "@/lib/feed";
 import { getTickerInfo } from "@/lib/catalog";
 import { COMPANIES, PRE_IPO_MINTS, type CompanyId } from "@/lib/pre-ipo";
 import { ArrowLeftIcon } from "@/components/icons";
@@ -30,6 +32,7 @@ export function NewsPanel() {
   const [open, setOpen] = useState<FeedNews | null>(null);
   const close = useCallback(() => setOpen(null), []);
   const { holdings, preIpoHoldings, isLoaded } = useActivePortfolio();
+  const { postFor } = useFeed();
   const heldTickers = holdings.map((h) => h.ticker);
   const heldCompanies = [...new Set(Object.keys(preIpoHoldings).map((m) => PRE_IPO_MINTS[m]?.company).filter(Boolean))];
 
@@ -69,7 +72,7 @@ export function NewsPanel() {
         ) : (
           <div className="news-sections">
             {sections.map((s) => (
-              <NewsSection key={s.key} heading={s.heading} sub={s.sub} scope={s.scope} held={heldTickers.includes(s.key) || heldCompanies.includes(s.key as CompanyId)} onOpen={setOpen} />
+              <NewsSection key={s.key} heading={s.heading} sub={s.sub} scope={s.scope} held={heldTickers.includes(s.key) || heldCompanies.includes(s.key as CompanyId)} postFor={postFor} onOpen={setOpen} />
             ))}
           </div>
         )}
@@ -79,7 +82,7 @@ export function NewsPanel() {
   );
 }
 
-function NewsSection({ heading, sub, scope, held, onOpen }: { heading: string; sub?: string; scope: NewsScope; held: boolean; onOpen: (item: FeedNews) => void }) {
+function NewsSection({ heading, sub, scope, held, postFor, onOpen }: { heading: string; sub?: string; scope: NewsScope; held: boolean; postFor: (item: FeedNews) => FeedPost | undefined; onOpen: (item: FeedNews) => void }) {
   const { items, isLoaded, error } = useNewsScopes([scope]);
   return (
     <section>
@@ -102,7 +105,7 @@ function NewsSection({ heading, sub, scope, held, onOpen }: { heading: string; s
       ) : (
         <ul className="posts">
           {items.map((item) => (
-            <NewsRow key={item.id} item={item} held={held} onOpen={onOpen} />
+            <NewsRow key={item.id} item={item} post={postFor(item)} held={held} onOpen={onOpen} />
           ))}
         </ul>
       )}
