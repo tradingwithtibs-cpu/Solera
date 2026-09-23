@@ -110,7 +110,7 @@ export function Masthead() {
         <small>{date || " "}</small>
       </div>
       <Link href="/" className="brand md:hidden" aria-label="Solera home">
-        <Logo size={32} />
+        <Logo size={40} />
       </Link>
       <div className="top-mid">
         <button type="button" className="search-btn field" onClick={() => openPalette()} aria-label="Search tickers, people, notes">

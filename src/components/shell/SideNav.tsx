@@ -21,7 +21,7 @@ export function SideNav() {
   return (
     <aside className="sidenav" aria-label="Main navigation">
       <Link href="/" className="side-brand" aria-label="Solera home">
-        <Logo size={40} />
+        <Logo size={64} />
       </Link>
       <p className="side-tag">A little more perspective.</p>
       <ul>
