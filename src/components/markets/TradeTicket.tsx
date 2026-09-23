@@ -11,7 +11,11 @@ import { useEffectivePrice } from "@/hooks/use-effective-price";
 import { useSwapQuote } from "@/hooks/use-swap-quote";
 import { useInvestor } from "@/hooks/use-investors";
 import { useNotes } from "@/hooks/use-notes";
+import { useSession } from "@/hooks/use-session";
+import { refreshPlans } from "@/hooks/use-plans";
 import { useConnectWallet } from "@/components/ConnectWalletProvider";
+import { relTime } from "@/components/plans/plan-format";
+import { useClock } from "@/components/plans/use-clock";
 import { TickerBadge } from "@/components/TickerBadge";
 import { CheckCircleIcon } from "@/components/icons";
 import { computeHoldings } from "@/lib/portfolio";
@@ -24,6 +28,8 @@ import { HORIZON_MAX, NOTE_MAX, WRONG_IF_MAX } from "@/lib/notes";
 import { solscanTxUrl } from "@/lib/jupiter";
 import { celebrateTrade } from "@/lib/celebrate";
 import { fillFor } from "@/lib/palette";
+import { met } from "@/lib/plans";
+import { plansClient } from "@/lib/plans-client";
 import type { TradeSide } from "@/lib/types";
 import { usePlanPrefill } from "./use-plan-prefill";
 import type { TicketTarget } from "./types";
@@ -80,22 +86,41 @@ export function TradeTicket({ target, initialSide = "buy", refInvestorId, compac
   const { openConnect } = useConnectWallet();
   const { wallet } = useWallet();
   const walletName = wallet?.adapter.name ?? "wallet";
+  const { token: sessionToken } = useSession();
+  const clock = useClock();
 
-  const [side, setSide] = useState<TradeSide>(token ? "buy" : (prefill?.side ?? initialSide));
+  const [side, setSide] = useState<TradeSide>(token ? "buy" : initialSide);
   const [payWith, setPayWith] = useState<SettlementCurrency>("SOL");
-  const [amount, setAmount] = useState(() =>
-    prefill?.amount !== undefined ? String(prefill.amount) : initialSide === "sell" || refInvestorId ? "0" : "100",
-  );
+  const [amount, setAmount] = useState(() => (initialSide === "sell" || refInvestorId ? "0" : "100"));
   const [sellFraction, setSellFraction] = useState<number | null>(null);
-  const [note, setNote] = useState(prefill?.note ?? "");
+  const [note, setNote] = useState("");
   const [wrongIf, setWrongIf] = useState("");
   const [horizon, setHorizon] = useState("");
   const [leg, setLeg] = useState<Leg | null>(null);
   const [reviewing, setReviewing] = useState(false);
+  const [appliedPrefill, setAppliedPrefill] = useState<string | null>(null);
 
   const owned = token ? undefined : computeHoldings(rawHoldings).find((h) => h.ticker === symbol);
   const ownedShares = token ? (preIpoHoldings[token.mint] ?? 0) : (owned?.shares ?? 0);
   const ownedValue = token ? ownedShares * token.tokenPrice : (owned?.value ?? 0);
+
+  // A plan or the agent's order card prefills the form once, when it arrives (a fetch for `?plan=`),
+  // without overwriting anything typed afterwards: the classic "adjust state on a new prop" pattern.
+  if (prefill && prefill.key !== appliedPrefill && (prefill.shares === undefined || price > 0)) {
+    setAppliedPrefill(prefill.key);
+    const nextSide: TradeSide = token ? "buy" : (prefill.side ?? side);
+    if (nextSide !== side) setSide(nextSide);
+    setSellFraction(null);
+    if (prefill.amount !== undefined) setAmount(prefill.amount.toFixed(2));
+    else if (prefill.shares !== undefined) setAmount((prefill.shares * price).toFixed(2));
+    else if (prefill.fraction !== undefined && nextSide === "sell") {
+      setSellFraction(prefill.fraction);
+      setAmount((prefill.fraction * ownedValue).toFixed(2));
+    }
+    if (prefill.note) setNote(prefill.note);
+  }
+  const plan = prefill?.plan ?? null;
+  const planMoved = !!plan && priceIsLive && price > 0 && !met(plan.condition.trigger, price);
 
   const dollars = side === "sell" && sellFraction !== null ? ownedValue * sellFraction : Math.max(0, Number(amount) || 0);
   const shares = side === "sell" && sellFraction !== null ? ownedShares * sellFraction : price > 0 ? dollars / price : 0;
@@ -232,6 +257,14 @@ export function TradeTicket({ target, initialSide = "buy", refInvestorId, compac
       persistThesis(symbol);
       setReviewing(false);
       celebrateTrade();
+      // The notify path's last step: the tap's fill landed, so the plan is done (backend §9.8).
+      // Practice fills carry a reference id; live fills carry the signature.
+      if (planId && sessionToken) {
+        plansClient
+          .done(sessionToken, planId, result.txId)
+          .then(() => refreshPlans())
+          .catch(() => undefined);
+      }
     }
   };
 
@@ -401,6 +434,23 @@ export function TradeTicket({ target, initialSide = "buy", refInvestorId, compac
             </div>
           ) : (
             <>
+              {plan && (
+                <div className="ticket-ref ticket-plan">
+                  From your plan: <q>{plan.text}</q>
+                  {plan.readyAt && clock ? ` · ready since ${relTime(plan.readyAt, clock)} ago` : plan.status === "armed" ? " · still armed" : ""}
+                  {planMoved && (
+                    <small>
+                      {symbol} has moved back to {formatCurrency(price)} — the plan&apos;s condition isn&apos;t met right now. You can still {side}, or wait; the plan stays armed.
+                    </small>
+                  )}
+                </div>
+              )}
+              {!plan && prefill?.source === "agent" && (
+                <div className="ticket-ref ticket-plan">
+                  Prefilled by the agent
+                  <small>Review it; nothing is placed until you confirm.</small>
+                </div>
+              )}
               <div className="ticket-amount">
                 <div className="ticket-amount-row">
                   <label htmlFor={`amount-${symbol}`}>Amount</label>

@@ -9,6 +9,7 @@ import { useProfile } from "@/hooks/use-profiles";
 import { avatarColorFor, shortAddress } from "@/lib/investors";
 import { fillFor } from "@/lib/palette";
 import { openAuthSheet } from "../auth/auth-sheet-store";
+import { InboxBell } from "../inbox/InboxBell";
 import { Logo } from "../Logo";
 import { MyWalletBadge } from "../MyWalletBadge";
 import { ModeToggle } from "./ModeToggle";
@@ -123,6 +124,7 @@ export function Masthead() {
         <span className="clock" aria-hidden="true">
           {clock}
         </span>
+        <InboxBell />
         <span className="wallet-slot">
           <MyWalletBadge />
         </span>
