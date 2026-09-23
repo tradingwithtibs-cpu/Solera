@@ -27,6 +27,18 @@ export type NewsQuery = { ticker: string } | { company: string } | Record<string
 
 const cache = new Map<string, { at: number; body: NewsResponse }>();
 
+/** A headline the app fetched recently, by its item id, with the scope it came in under. The feed's news posts are minted from here, never from client-supplied fields. */
+export function findCachedNews(id: string): { item: NewsItem; ticker?: string; company?: string } | null {
+  for (const [key, entry] of cache) {
+    const item = entry.body.items.find((i) => i.id === id);
+    if (!item) continue;
+    if (key.startsWith("ticker:")) return { item, ticker: key.slice(7) };
+    if (key.startsWith("company:")) return { item, company: key.slice(8) };
+    return { item };
+  }
+  return null;
+}
+
 /** News for a ticker, a private company, or the market. Throws HttpError 404 for unknown keys and 502 when every source failed and nothing is cached. */
 export async function loadNews(q: NewsQuery): Promise<NewsResponse> {
   let key: string;

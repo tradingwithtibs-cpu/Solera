@@ -32,7 +32,9 @@ Deviations recorded by the page tasks: `src/hooks/use-visit.ts` is R1's (SincePa
 
 - **S3** email + password on Supabase Auth: `src/components/auth/EmailForm.tsx` (sign up with the display name in user metadata, log in, "Email me a reset link", the new-password form after a recovery link via `useRecoveryPending`), pure wording/checks in `src/lib/auth-copy.ts` (`tests/auth.test.mjs`). Both paths trade the Supabase token for Solera's session (`completeEmailSignIn`). The user still has to switch the Email provider on in the Supabase dashboard (confirmation off; add the site URL to the redirect list for reset links). Not done: `LinkWalletSheet` (an email account signs the wallet-link message) — the account sheet's "Link a wallet" connects only.
 
-Not done: A2, A4 (fleet `wf_8ae4565a-f83` running), A5, S1–S2, M1, P1–P3, LinkWalletSheet.
+- **S1** feed backend: `src/lib/feed.ts` (hot = score / (ageHours + 2)^1.4 ranked in code over the newest 400 rows, fill titles, cursors, target parsing), `src/lib/feed-server.ts` (posts minted on first vote or comment from the server's news cache via `findCachedNews` or from a fill row — clients never send titles or urls), routes `GET /api/feed`, `POST /api/feed/posts`, `POST /api/feed/vote`, `GET|POST /api/feed/comments` (280 chars, 3 s cooldown), `tests/feed.test.mjs`. Targets: `{ postId } | { newsId } | { fillId, fillMode }`.
+
+Not done: A2, A4 (fleet `wf_8ae4565a-f83` running), S2 feed UI (VoteColumn, StorySheet comments, use-feed), A5, M1, P1–P3, LinkWalletSheet.
 
 ## 0. Rulings on the review issues
 
