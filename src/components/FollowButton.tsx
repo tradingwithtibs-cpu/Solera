@@ -2,31 +2,28 @@
 
 import { useFollowedInvestors } from "@/hooks/use-followed-investors";
 
-export function FollowButton({ investorId, size = "sm" }: { investorId: string; size?: "sm" | "md" }) {
+/**
+ * FOLLOW (action gradient) / FOLLOWING (outlined, muted) — partner
+ * `.follow` / `.follow.on` on the design-system button variants. Local
+ * state per browser via useFollowedInvestors.
+ */
+export function FollowButton({ investorId, name, size = "sm" }: { investorId: string; name?: string; size?: "sm" | "md" }) {
   const { isFollowing, toggle } = useFollowedInvestors();
   const following = isFollowing(investorId);
+  const who = name ?? investorId;
 
   return (
     <button
       type="button"
       aria-pressed={following}
-      aria-label={`${following ? "Unfollow" : "Follow"} ${investorId
-        .split("-")
-        .map((w) => w[0].toUpperCase() + w.slice(1))
-        .join(" ")}`}
+      aria-label={`${following ? "Unfollow" : "Follow"} ${who}`}
       onClick={(e) => {
         // Cards wrap this in a <Link> — don't trigger navigation.
         e.preventDefault();
         e.stopPropagation();
         toggle(investorId);
       }}
-      className={`shrink-0 rounded-full font-semibold transition ${
-        size === "md" ? "px-4 py-1.5 text-sm" : "px-3 py-1 text-xs"
-      } ${
-        following
-          ? "bg-neutral-100 text-neutral-500 active:bg-neutral-200"
-          : "bg-gradient-brand text-white active:opacity-90"
-      }`}
+      className={`shrink-0 ${following ? "btn-secondary text-muted" : "btn-primary"} ${size === "sm" ? "btn-small" : ""}`}
     >
       {following ? "Following" : "Follow"}
     </button>
