@@ -12,9 +12,10 @@ import type { FeedFill, FeedItem } from "./feed";
 /** A row's handle on the posts store: what to send, and where the post lives once it exists. */
 export type FeedTarget = { key: string; target: PostTarget; local: false } | { key: string; target: null; local: true };
 
+export const LOCAL_FILL_COMMENTS_LOCKED = "Practice fills in this browser can't be commented on";
 export const LOCAL_FILL_LOCKED = "Practice fills in this browser can't be voted on";
-export const VOTE_LOCKED = "Voting opens with sign-in";
-export const COMMENTS_LOCKED = "Comments open with sign-in";
+export const VOTE_LOCKED = "Sign in to vote";
+export const COMMENTS_LOCKED = "Sign in to comment";
 
 export function newsKey(url: string): string {
   return `news:${url}`;

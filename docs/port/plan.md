@@ -40,7 +40,10 @@ Deviations recorded by the page tasks: `src/hooks/use-visit.ts` is R1's (SincePa
 
 - **S3 (rest)** email accounts claim and edit a profile with their session (`ProfileSheet` email path, `ProfileButton` keyed by owner) and link a wallet from the account sheet (`submitWalletLink` → `POST /api/profile { link }`, the `wallet-link` iOS continuation in `DeepLinkResumer`). `useTriggerSync` (`src/hooks/use-trigger-sync.ts`) mirrors Jupiter order states while a JWT is cached; plan lists call it after merge.
 
-Not done: A2, A4 (fleet `wf_8ae4565a-f83` running), S2 feed UI (fleet `wf_c489c171-0c6` running), A5 wiring on rows/cards + the fill hand-off, M1, P1–P3.
+- **S2** feed votes and comments UI (fleet `wf_c489c171-0c6`, merged `8b2db70`, review fixes applied): `feed-store.ts` (posts keyed by news url / fill id, optimistic votes, comments cache, quiet on 501/502), `feed-posts.ts` (pure helpers), `use-feed.ts`, real `VoteColumn`, `CommentList` + composer in `StorySheet`, counts on rows, Hot ranked over real scores, `/news` rows read the store. S2 now owns `src/components/discover/{VoteColumn,CommentList,StorySheet,FeedPanel,FeedRow,NewsPanel,NewsRow}.tsx`, `{feed,feed-posts,feed-store}.ts`, `discover.css`, `src/hooks/use-feed.ts`, `tests/feed-ui.test.mjs`. Known limit: the store reads one page of 100 newest posts, so an older post's score can read 0 until a cursor follow-up lands.
+- **A2, A4** Plans panel + inbox + ticket prefill, and the Agent tab (fleet `wf_8ae4565a-f83`, merged `108b4d6` / `c92ced1`, wired in `ec6475c`).
+
+Not done: review fixes for A2/A4 as they land, A5 fill hand-off, dedupe of the two PlanEditorSheet/toast copies (agent/ vs plans/), M1, P1–P3.
 
 ## 0. Rulings on the review issues
 
@@ -107,7 +110,7 @@ Two tasks that run in parallel never touch the same file. Shared files are owned
 | Plans backend | `src/lib/plans.ts`, `src/lib/plan-parser.ts`, `src/lib/plan-evaluator.ts`, `src/app/api/plans/**`, `tests/plans.test.mjs`, `tests/plan-parser.test.mjs`, `tests/evaluator.test.mjs` | A1 |
 | Plans UI | `src/components/plans/**`, `src/hooks/use-plans.ts`, `src/components/inbox/**`, `src/hooks/use-inbox.ts` | A2 |
 | Agent backend | `src/lib/agent/**`, `src/app/api/agent/route.ts`, `tests/agent.test.mjs` | A3 |
-| Agent UI | `src/app/agent/page.tsx`, `src/components/agent/**` | A4 |
+| Agent UI | `src/app/agent/page.tsx`, `src/components/agent/**`, `src/hooks/use-agent-chat.ts`, `tests/agent-ui.test.mjs` | A4 |
 | Jupiter Trigger | `src/lib/jupiter-trigger.ts`, `src/lib/jupiter-trigger-map.ts`, `src/components/plans/ArmPlanSheet.tsx`, `src/components/plans/CancelPlanSheet.tsx`, `tests/trigger-map.test.mjs`, `tests/jupiter-trigger.test.mjs` | A5 |
 | Feed backend | `src/app/api/feed/**`, `src/lib/feed.ts`, `src/lib/news-server.ts`, `tests/feed.test.mjs` | S1 |
 | Feed UI | `src/components/discover/VoteColumn.tsx`, `src/components/discover/CommentList.tsx`, `src/components/discover/StorySheet.tsx`, `src/hooks/use-feed.ts` | S2 |

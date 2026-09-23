@@ -73,7 +73,7 @@ export function AgentMessage({ turn, isLast, inFlight, error, onRetry, onCard }:
   return (
     <div className="agent-turn assistant">
       <p className="agent-meta">
-        <span className="eyebrow">{eyebrowFor(turn.toolTrace)}</span>
+        <span className="eyebrow">{eyebrowFor(turn.toolTrace, turn.cards)}</span>
         {turn.model === "mock" && <span className="chip">offline parser</span>}
       </p>
       {turn.text && <div className="agent-bubble assistant">{turn.text}</div>}

@@ -55,10 +55,12 @@ const TOOL_LABELS: Record<string, string> = {
 };
 
 /** `from live prices · your plans` from the tools that ran, in first-seen order; `composed` when none did. */
-export function eyebrowFor(trace: ReadonlyArray<{ name: string }> | undefined): string {
+export function eyebrowFor(trace: ReadonlyArray<{ name: string }> | undefined, cards?: ReadonlyArray<{ kind: string; source?: string }>): string {
+  const news = cards?.find((c) => c.kind === "news") as { source?: string } | undefined;
+  const newsLabel = news?.source === "finnhub" ? "Finnhub" : news?.source === "google-news" ? "Google News" : "news";
   const labels: string[] = [];
   for (const t of trace ?? []) {
-    const label = TOOL_LABELS[t.name];
+    const label = t.name === "get_news" ? newsLabel : TOOL_LABELS[t.name];
     if (label && !labels.includes(label)) labels.push(label);
   }
   return labels.length ? `from ${labels.join(" · ")}` : "composed";

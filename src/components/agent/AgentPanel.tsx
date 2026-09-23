@@ -10,7 +10,6 @@ import { useEffectivePrice } from "@/hooks/use-effective-price";
 import { AgentMessage } from "./AgentMessage";
 import { AgentComposer } from "./AgentComposer";
 import { PromptChips } from "./PromptChips";
-import { Toasts } from "./Toasts";
 import { AGENT_FOOT, EMPTY_LINE, MESSAGE_MAX, starterChips, subtitleFor } from "./helpers";
 
 /**
@@ -113,7 +112,6 @@ export function AgentPanel({ id = "agent" }: { id?: string }) {
         />
         <PromptChips primary={chips.primary} secondary={chips.secondary} disabled={inFlight} onPick={send} />
       </div>
-      <Toasts />
     </Panel>
   );
 }

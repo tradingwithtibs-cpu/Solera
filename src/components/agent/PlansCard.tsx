@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useSession } from "@/hooks/use-session";
 import { plansClient } from "@/lib/plans-client";
+import { notifyPlansChanged } from "@/components/trigger/trigger-sheet-store";
 import { isActive, type PlanStatus } from "@/lib/plans";
 import type { AgentCard } from "@/lib/agent/types";
 import { toast } from "./toast";
@@ -46,6 +47,7 @@ export function PlansCard({ card }: { card: PlansCardData }) {
     setProblem(null);
     try {
       const plan = await plansClient.cancel(token, id);
+      notifyPlansChanged();
       setStatuses((s) => ({ ...s, [id]: plan.status }));
       toast("Plan cancelled.", "ok");
     } catch (err) {

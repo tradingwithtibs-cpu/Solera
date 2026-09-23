@@ -18,7 +18,7 @@ export interface MockOptions {
 
 const HELP = "I can set up price plans (“buy $100 of NVDAx if it drops to 170”), fetch prices and news, and list or cancel your plans.";
 const NEWS = /\bnews\b|\bheadlines?\b|\blatest on\b|\bwhat'?s (?:happening|going on|new) with\b|\bany updates? on\b/i;
-const PRICE = /\bprices?\b|\bquote\b|\btrading at\b|\bwhat'?s\b.*\bat\b|\bhow much is\b|\bworth\b|\bcost\b/i;
+const PRICE = /\bprices?\b|\bquote\b|\btrading at\b|\bwhat(?:'s| is|s)\b.*\bat\b|\bhow much is\b|\bworth\b|\bcost\b/i;
 const PLANS = /\b(?:my|list|show|open|active|past|see)\s+(?:my\s+)?plans?\b|^\s*plans?\s*\??\s*$/i;
 const CANCEL = /\bcancel\b|\bstop plan\b|\bremove plan\b/i;
 const EXPLAIN = /\bexplain\b|\bwhy did\b|\bwhat happened (?:to|with)\b|\bstatus of\b/i;
@@ -26,7 +26,7 @@ const SIZE_ONLY = /^\s*(?:\$\s?[\d,]+(?:\.\d+)?|[\d,]+(?:\.\d+)?\s*(?:dollars?|u
 const DIRECTION_ONLY = /^\s*(above|over|higher|up|below|under|lower|down)\s*\.?\s*$/i;
 const UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
 const ORDINALS: Record<string, number> = { first: 1, "1st": 1, second: 2, "2nd": 2, third: 3, "3rd": 3, fourth: 4, "4th": 4, fifth: 5, "5th": 5 };
-const STOP = new Set(["the", "and", "for", "with", "what", "whats", "show", "news", "latest", "price", "prices", "quote", "about", "any", "how", "much", "worth", "cost", "trading", "now", "today", "please", "tell", "give", "get", "check", "look", "find", "list", "plans", "plan", "cancel", "explain", "status", "buy", "sell", "shares", "share"]);
+const STOP = new Set(["the", "and", "for", "with", "what", "whats", "show", "news", "latest", "price", "prices", "quote", "about", "any", "how", "much", "worth", "cost", "trading", "now", "today", "please", "tell", "give", "get", "check", "look", "find", "list", "plans", "plan", "cancel", "explain", "status", "buy", "sell", "shares", "share", "on", "in", "of", "to", "at", "if", "is", "it", "me", "my", "up", "by", "or", "an", "as", "be", "do", "so", "a", "i", "we", "us", "are", "was", "has", "have", "can", "you", "your", "this", "that", "than", "from", "into", "over", "under", "above", "below", "when", "then", "than", "all", "half", "some", "more", "less", "does", "did", "will", "should", "could", "would", "there", "here", "who", "why", "where", "which", "one", "its", "not", "no", "yes", "ok", "hey", "hi"]);
 
 function text(t: string, pendingDraft: PendingDraft | null = null): Turn {
   return { content: [{ type: "text", text: t, citations: null }], stop_reason: "end_turn", pendingDraft };
@@ -107,9 +107,11 @@ export class MockModel implements AgentModel {
   }
 
   private tickersIn(sentence: string): TickerSymbol[] {
+    // Explicit x-suffixed symbols first (AAPLx beats a catalog token that happens to spell a common word), then everything else.
+    const words = sentence.replace(/[^A-Za-z0-9.\s]/g, " ").split(/\s+/).filter((w) => w.length >= 2 && !/^\d/.test(w) && !STOP.has(w.toLowerCase()));
+    const ordered = [...words.filter((w) => /^[A-Za-z0-9.]{1,12}x$/.test(w)), ...words.filter((w) => !/^[A-Za-z0-9.]{1,12}x$/.test(w) && w.length >= 3)];
     const out: TickerSymbol[] = [];
-    for (const w of sentence.replace(/[^A-Za-z0-9.\s]/g, " ").split(/\s+/)) {
-      if (w.length < 2 || /^\d/.test(w) || STOP.has(w.toLowerCase())) continue;
+    for (const w of ordered) {
       const t = this.opts.resolveTicker(w);
       if (t && !out.includes(t)) out.push(t);
     }

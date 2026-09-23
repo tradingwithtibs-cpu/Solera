@@ -17,7 +17,7 @@ import { VoteColumn } from "./VoteColumn";
 import { CommentList } from "./CommentList";
 import { agentQuestion, scopeHref, scopeSymbol } from "./NewsRow";
 import { actorName, fillSymbol, legLabel, type FeedFill, type FeedItem } from "./feed";
-import { COMMENTS_LOCKED, LOCAL_FILL_LOCKED, feedTargetOf } from "./feed-posts";
+import { COMMENTS_LOCKED, LOCAL_FILL_COMMENTS_LOCKED, feedTargetOf } from "./feed-posts";
 
 /**
  * The story behind a headline, or the thread behind a fill. Real fields
@@ -80,7 +80,7 @@ function Composer({ item, locked, signedIn, onPost }: { item: FeedItem; locked: 
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const placeholder = item.kind === "news" ? "Say something about this story…" : "Say something about this trade…";
-  const reason = locked ? LOCAL_FILL_LOCKED : !signedIn ? COMMENTS_LOCKED : null;
+  const reason = locked ? LOCAL_FILL_COMMENTS_LOCKED : !signedIn ? COMMENTS_LOCKED : null;
 
   if (reason) {
     return (

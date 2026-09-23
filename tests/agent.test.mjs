@@ -26,6 +26,7 @@ const resolveTicker = makeResolver([
   { symbol: "NVDAx", name: "Nvidia" },
   { symbol: "SPYx", name: "S&P 500" },
   { symbol: "METAx", name: "Meta" },
+  { symbol: "ONx", name: "ON Semiconductor" },
 ]);
 const OWNER = "S7vYFFWH6BjJyEsdrPQpqpYTqLTrPRK6KW3VwsJuRaS";
 const ID1 = "11111111-2222-4333-8444-555555555555";
@@ -116,6 +117,7 @@ test("prompt 2: news comes back as a card with headlines quoted verbatim", async
   assert.equal(r.cards[0].ticker, "TSLAx");
   assert.equal(r.cards[0].items.length, 2);
   assert.match(r.reply, /Latest on TSLAx \(Finnhub\):\n1\. Tesla opens a new plant — Reuters\n2\. Deliveries beat estimates — Bloomberg/);
+  assert.equal(r.reply.includes("ONx"), false, "the word \"on\" is never read as the ONx ticker");
   const byName = await chat("any news about tesla?");
   assert.equal(byName.cards[0].ticker, "TSLAx");
   const pre = await chat("latest news on OpenAI");
@@ -138,6 +140,8 @@ test("prompt 3: a sized sell plan proposes straight away; a missing direction is
 });
 
 test("prices, plans, cancel, explain, immediate orders, and the help line", async () => {
+  const p2 = await chat("what is NVDAx at right now");
+  assert.equal(p2.cards[0].kind, "prices");
   const p = await chat("what's NVDAx at?");
   assert.equal(p.cards[0].kind, "prices");
   assert.equal(p.cards[0].prices.NVDAx, 170);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { useSession } from "./use-session";
+import { getStoredSession, useSession } from "./use-session";
 import { useTradeMode } from "./use-trade-mode";
 import { useSelectedTicker } from "./use-selected-ticker";
 import type { AgentCard, AgentModelName, AgentRequest, AgentResponse, PendingDraft } from "@/lib/agent/types";
@@ -187,7 +187,9 @@ export function useAgentChat() {
       };
       try {
         const headers: Record<string, string> = { "Content-Type": "application/json" };
-        if (token) headers.Authorization = `Bearer ${token}`;
+        // Read at call time: a ?q= auto-send can fire before the session store has hydrated.
+        const bearer = getStoredSession()?.token ?? token;
+        if (bearer) headers.Authorization = `Bearer ${bearer}`;
         const res = await fetch("/api/agent", { method: "POST", headers, body: JSON.stringify(body), cache: "no-store" });
         if (!res.ok) {
           setError({ status: res.status, message: errorCopy(res.status) });

@@ -142,7 +142,7 @@
 }
 
 /* ---------- the prompt box (partner .plan-form) ---------- */
-.plan-form {
+.agent .plan-form {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 10px;
@@ -156,11 +156,11 @@
     border-color var(--t) var(--ease-soft),
     box-shadow var(--t) var(--ease-soft);
 }
-.plan-form:focus-within {
+.agent .plan-form:focus-within {
   border-color: var(--live);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--live) 13%, transparent);
 }
-.plan-form .lens-prompt {
+.agent .plan-form .lens-prompt {
   padding: 8px 0;
   font-family: var(--font-mono);
   font-size: 14px;
@@ -168,7 +168,7 @@
   font-weight: 700;
   color: var(--era-3);
 }
-.plan-form textarea {
+.agent .plan-form textarea {
   display: block;
   width: 100%;
   min-width: 0;
@@ -186,13 +186,13 @@
   overflow-y: auto;
   scrollbar-width: thin;
 }
-.plan-form textarea::placeholder {
+.agent .plan-form textarea::placeholder {
   color: var(--text-2);
 }
-.plan-form textarea:disabled {
+.agent .plan-form textarea:disabled {
   opacity: 0.6;
 }
-.plan-form .btn-live {
+.agent .plan-form .btn-live {
   align-self: end;
   min-height: 36px;
   padding: 0 16px;
@@ -204,13 +204,13 @@
 }
 
 /* ---------- starters (partner .lens-chip) ---------- */
-.lens-chips {
+.agent .lens-chips {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   flex: 0 0 auto;
 }
-.lens-chip {
+.agent .lens-chip {
   display: inline-flex;
   align-items: center;
   min-width: 0;
@@ -231,13 +231,13 @@
     color var(--t) var(--ease-soft),
     box-shadow var(--t) var(--ease-soft);
 }
-.lens-chip:hover:not(:disabled) {
+.agent .lens-chip:hover:not(:disabled) {
   border-color: var(--era-3);
   color: var(--text-1);
   transform: translateY(-1px);
   box-shadow: var(--glow-action-soft);
 }
-.lens-chip:disabled {
+.agent .lens-chip:disabled {
   opacity: 0.5;
 }
 
@@ -566,10 +566,6 @@
 }
 
 /* ---------- toasts: the frame is in globals.css (.toasts, .toast) ---------- */
-.toast.agent-toast {
-  border-width: 1px;
-  border-style: solid;
-}
 
 @media (prefers-reduced-motion: reduce) {
   .agent-spin,

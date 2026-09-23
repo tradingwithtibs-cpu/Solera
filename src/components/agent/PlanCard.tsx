@@ -8,7 +8,8 @@ import { useEffectivePrice } from "@/hooks/use-effective-price";
 import { useLivePriceFor } from "@/hooks/use-live-price-for";
 import { useConnectWallet } from "@/components/ConnectWalletProvider";
 import { openAuthSheet } from "@/components/auth/auth-sheet-store";
-import { openArmPlanSheet } from "@/components/trigger/trigger-sheet-store";
+import { notifyPlansChanged, openArmPlanSheet } from "@/components/trigger/trigger-sheet-store";
+import { PlanEditorSheet as PlansEditorSheet } from "@/components/plans/PlanEditorSheet";
 import { useNow } from "@/components/portfolio/use-now";
 import { plansClient } from "@/lib/plans-client";
 import { describe, validateCondition, type PlanCondition } from "@/lib/plans";
@@ -121,6 +122,7 @@ export function PlanCard({ card, state, onChange }: Props) {
         return;
       }
       const plan = await plansClient.arm(token, id);
+      notifyPlansChanged();
       onChange({ status: "armed", planId: plan.id, condition: plan.condition, summary: plan.summary, armUntil: plan.armUntil });
       if (plan.mode === "live") toast(notifyToast(plan.condition), "ok");
       else toast(armedToast(plan.summary), "ok");
@@ -136,6 +138,7 @@ export function PlanCard({ card, state, onChange }: Props) {
       setBusy(true);
       try {
         await plansClient.discard(token, planId);
+        notifyPlansChanged();
       } catch {
         // The draft is disposable either way; housekeeping removes leftovers.
       } finally {
@@ -262,7 +265,23 @@ export function PlanCard({ card, state, onChange }: Props) {
           )}
         </div>
       </div>
-      {editing && <PlanEditorSheet condition={condition} mode={card.mode} onSave={saveEdit} onClose={() => setEditing(false)} />}
+      {editing &&
+        (token ? (
+          <PlansEditorSheet
+            mode={card.mode}
+            initial={condition}
+            text={card.text}
+            replaceId={planId}
+            source="agent"
+            onSaved={(plan) => {
+              onChange({ planId: plan.id, condition: plan.condition, summary: plan.summary });
+              setEditing(false);
+            }}
+            onClose={() => setEditing(false)}
+          />
+        ) : (
+          <PlanEditorSheet condition={condition} mode={card.mode} onSave={saveEdit} onClose={() => setEditing(false)} />
+        ))}
     </section>
   );
 }
