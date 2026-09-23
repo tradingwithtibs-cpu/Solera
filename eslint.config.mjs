@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // The fleet's worktrees live under .claude; each is linted in its own checkout.
+    ".claude/**",
   ]),
 ]);
 

@@ -2,16 +2,9 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { sessionFromHeader, type Session } from "./session-server";
 import { getSupabaseService } from "./supabase";
+import { HttpError } from "./http-error";
 
-/** An error a route turns straight into a JSON response. */
-export class HttpError extends Error {
-  constructor(
-    public status: number,
-    message: string,
-  ) {
-    super(message);
-  }
-}
+export { HttpError };
 
 export function errorResponse(err: unknown): NextResponse {
   if (err instanceof HttpError) return NextResponse.json({ error: err.message }, { status: err.status });

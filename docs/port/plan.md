@@ -11,9 +11,9 @@ npm run typecheck && npm run lint && npm test && npm run build
 Where the docs disagree, **this file wins**, then `backend.md` for anything server-side, `design-system.md` for tokens and class names, `layout-engine.md` for placement, `agent-ux.md` for the Agent surface, `pages.md` for per-route content, `platform-notes.md` for toolchain facts.
 
 
-## Status (updated Sept 22, 19:00 CDT)
+## Status (updated Sept 22, 20:50 CDT)
 
-Done on branch `redesign`, gate green (49 tests):
+Done on branch `redesign`, gate green (63 tests):
 
 - **F1** dark theme, palette remap, ink-safe fills (`18f438b`).
 - **F3** shell: sidenav, tape, glass top bar, mode toggle, strip, ⌘K, six-tab bar; `usePreIpo` is one shared store; `/agent` placeholder route (`cc0a60d`).
@@ -21,10 +21,12 @@ Done on branch `redesign`, gate green (49 tests):
 - **F4** chart ranges 24H/1W/1M/6M with `useHistoryRange` and `RangeSwitch` (`7fec3b3`).
 - **F5** identity: `supabase/port.sql` (the whole migration), owners, two-claim sessions, `/api/session` bodies A and B, `/api/profile` by owner + wallet link, owner-authored rooms, `use-auth-user`, `supabase-browser` (`289c3b6`).
 - **F6** practice ledger on the server (`/api/practice*`), fills with a thesis through trades and both ledgers, `/api/fills` (on-chain verified) and `/api/tape`, position notes (`/api/notes`, `use-notes`); `usePortfolio()` is a façade over the local and server ledgers (`6f09a64`).
+- **A1** plans: `plans.ts`, `plan-parser.ts`, `plan-evaluator.ts`, `plans-server.ts`, `/api/plans` (GET, POST, `/:id` GET/PATCH/DELETE, `/preview`, `/health`, `/evaluate`) (`c72ff5e`).
+- **A3** agent backend: `src/lib/agent/` (types, verbatim system prompt, strict tool schemas + a hand validator, `execute` over injected deps, `MockModel`, `AnthropicModel` on `@anthropic-ai/sdk` 0.128 with the cached system prefix and `fallbacks: "default"`, the 6-iteration run loop), `POST /api/agent` (`maxDuration = 60`, `GET` reports the model), `news-server.ts` (the loaders behind `/api/news`, called in-process by `get_news`), `HttpError` moved to `src/lib/http-error.ts` (re-exported from `auth-server`). Contract additions the UI must use: `context.intent: "chat" | "plan_preview"`, `pendingDraft` on both request context and response (echo it back verbatim), plan cards carry `condition` and `text` and have `planId: null` when signed out (the card offers SIGN IN TO ARM and re-posts the condition after sign-in).
 
 Deviations from §4 the page tasks must know: `TopBar.tsx` keeps its name (it is the static back bar); the new top bar is `src/components/shell/Masthead.tsx`. `SegmentedControl.tsx` still exists (restyled via `.segmented-control`) and may be used or replaced per page. `BigChart` is owned by R2 (`src/components/ui/BigChart.tsx`); R1's hero uses `PriceChart` until then. `RoomPanel` (the room body as a component) is owned by R6 at `src/components/rooms/RoomPanel.tsx`; R2's room card imports it, and until R6 lands R2 may render `ChatRoomCard`. The `usePortfolio()` façade exposes `source: "local" | "server"`. Practice orders for signed-in users go through `/api/practice/fill` automatically inside `useExecuteTrade`.
 
-Not done: R1–R6, A1–A5, S1–S3, M1, P1–P3.
+Not done: R1–R6 (fleet running in `.claude/worktrees/wf_5c94439d-165-*`), A2, A4, A5, S1–S3, M1, P1–P3.
 
 ## 0. Rulings on the review issues
 
@@ -52,7 +54,7 @@ Every blocker and major in `review-issues.md` is settled here. Implementers appl
 20. **News in the feed** — the server is the only source of news fields. `POST /api/feed/vote` and `/api/feed/comments` accept `{ newsId | postId }`; for `newsId` the route looks the item up in the news cache and upserts the post row itself. Clients never send title/url/source.
 21. **Sessions and profiles on the client** — `StoredSession` gains `kind: 'wallet' | 'user'` and `owner`; `useSession()` returns the token when `kind === 'user'` and no wallet is connected, or `kind === 'wallet'` and the connected wallet matches. `use-profiles.ts` is keyed by `owner`; `/api/profile?owners=` (with `wallets=` kept as an alias); `toProfile()` emits `{ owner, kind, wallet, ... }`.
 22. **Practice import** — on first sign-in, if the device has `stocklana:portfolio` history, it is imported into the account silently (fills, cash, positions) and the local copy is left in place for signed-out use. No sheet.
-23. **Model** — `SOLERA_AGENT_MODEL_ID` defaults to `claude-sonnet-5`; Opus only by env. No key → `MockModel`.
+23. **Model** — `SOLERA_AGENT_MODEL_ID` defaults to `claude-opus-5` at low effort (the `claude-api` skill's rule: never downgrade a model for cost on the user's behalf; Sonnet 5 is one env var away). `SOLERA_AGENT_MODEL=mock` forces the offline parser. No key → `MockModel`.
 24. **Trending** — Thursday ships the "most held by top wallets" fallback only; `/api/trending` is after Thursday.
 25. **Scope tiers** — see §3. Anything marked "after" is not started before the floor is green on a preview URL.
 
