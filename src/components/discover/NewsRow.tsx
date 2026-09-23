@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import type { FeedNews } from "@/hooks/use-news";
+import type { FeedPost } from "@/lib/feed";
 import { formatRelativeTime } from "@/lib/format";
 import { COMPANIES, PRESTOCKS_SYMBOLS, type CompanyId } from "@/lib/pre-ipo";
-import { VoteColumn, COMMENTS_LOCKED } from "./VoteColumn";
+import { VoteColumn } from "./VoteColumn";
+import { commentLabel, feedTargetOf } from "./feed-posts";
 
 /** The chip text for a scope key: an xStock ticker as is, a company id as its PreStocks symbol. */
 export function scopeSymbol(key: string): string {
@@ -27,15 +29,16 @@ export function agentQuestion(item: FeedNews): string {
  * One headline: vote column, kind tag, source, age, the tickers it was
  * fetched for, "you hold this", the headline (opens the story sheet; ↗ is
  * the publisher's link), the thumbnail when the publisher allows it, and
- * the three actions. Everything shown is the item the route returned.
+ * the three actions. Everything shown is the item the route returned;
+ * `post` is its row in the posts store, absent until anyone has voted.
  */
-export function NewsRow({ item, held, onOpen }: { item: FeedNews; held: boolean; onOpen: (item: FeedNews) => void }) {
+export function NewsRow({ item, post, held, onOpen }: { item: FeedNews; post?: FeedPost; held: boolean; onOpen: (item: FeedNews) => void }) {
   const n = item.item;
   const kind = item.scope === "market" ? "MARKET" : item.scope === "company" ? "PRE-IPO" : scopeSymbol(item.tickers[0] ?? "");
   const first = item.tickers[0];
   return (
     <li className={`post news-post ${n.image ? "has-img" : "no-img"}`} data-sym={first ?? undefined}>
-      <VoteColumn />
+      <VoteColumn target={feedTargetOf(item)} post={post} />
       <div className="post-body">
         <p className="post-meta">
           <i className="post-tag">{kind}</i>
@@ -87,8 +90,8 @@ export function NewsRow({ item, held, onOpen }: { item: FeedNews; held: boolean;
           </button>
         )}
         <p className="post-actions">
-          <button type="button" className="tiny" onClick={() => onOpen(item)} title={COMMENTS_LOCKED}>
-            comment
+          <button type="button" className="tiny" onClick={() => onOpen(item)} title="Open the thread">
+            {commentLabel(post?.commentCount ?? 0)}
           </button>
           <Link className="tiny" href={`/agent?q=${encodeURIComponent(agentQuestion(item))}`}>
             ask agent

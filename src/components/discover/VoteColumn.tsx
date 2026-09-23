@@ -1,19 +1,45 @@
-export const VOTE_LOCKED = "Voting opens with sign-in";
-export const COMMENTS_LOCKED = "Comments open with sign-in";
+"use client";
+
+import type { FeedPost } from "@/lib/feed";
+import { useSession } from "@/hooks/use-session";
+import { openAuthSheet } from "@/components/auth/auth-sheet-store";
+import { voteOn } from "./feed-store";
+import { LOCAL_FILL_LOCKED, VOTE_LOCKED, type FeedTarget } from "./feed-posts";
+
+export { COMMENTS_LOCKED, LOCAL_FILL_LOCKED, VOTE_LOCKED } from "./feed-posts";
 
 /**
- * ▲ score ▼. Renders on every post; the buttons post nothing until votes
- * land with sign-in (plan.md task S2 replaces this file), so they are
- * disabled with the reason as their tooltip.
+ * ▲ score ▼ over the real post. Signed in, an arrow casts the vote (the
+ * same arrow again takes it back); signed out, the arrows open the auth
+ * sheet; a fill that lives only in this browser has no server row, so its
+ * arrows are off with the reason as their tooltip. The score is the
+ * store's, 0 until anyone has voted.
  */
-export function VoteColumn({ score = 0 }: { score?: number }) {
+export function VoteColumn({ target, post }: { target: FeedTarget; post?: FeedPost }) {
+  const { token, signedIn } = useSession();
+  const score = post?.score ?? 0;
+  const myVote = post?.myVote ?? 0;
+  const locked = target.local;
+  const reason = locked ? LOCAL_FILL_LOCKED : !signedIn ? VOTE_LOCKED : null;
+
+  const cast = (dir: 1 | -1) => {
+    if (locked) return;
+    if (!signedIn || !token) {
+      openAuthSheet("signup");
+      return;
+    }
+    void voteOn(target, myVote === dir ? 0 : dir, token);
+  };
+
   return (
-    <span className="vote" title={VOTE_LOCKED}>
-      <button type="button" disabled title={VOTE_LOCKED} aria-label="Worth reading">
+    <span className="vote" data-locked={locked ? "true" : undefined}>
+      <button type="button" data-vote="1" className={myVote === 1 ? "on" : undefined} disabled={locked} aria-pressed={myVote === 1} aria-label="Worth reading" title={reason ?? "Worth reading"} onClick={() => cast(1)}>
         ▲
       </button>
-      <b className={score > 0 ? "up" : score < 0 ? "down" : ""}>{score}</b>
-      <button type="button" disabled title={VOTE_LOCKED} aria-label="Not worth it">
+      <b className={score > 0 ? "up" : score < 0 ? "down" : undefined} title={reason ?? undefined} aria-label={`Score ${score}`}>
+        {score}
+      </b>
+      <button type="button" data-vote="-1" className={myVote === -1 ? "on" : undefined} disabled={locked} aria-pressed={myVote === -1} aria-label="Not worth it" title={reason ?? "Not worth it"} onClick={() => cast(-1)}>
         ▼
       </button>
     </span>

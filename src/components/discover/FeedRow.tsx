@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { Profile } from "@/lib/profiles";
+import type { FeedPost } from "@/lib/feed";
 import { formatCurrency, formatPercent, formatRelativeTime, formatShares } from "@/lib/format";
 import { getEffectiveHistory, getEffectivePrice, isLiveHistory, isLivePriced } from "@/lib/live-prices";
 import { avatarColorFor } from "@/lib/investors";
@@ -13,15 +14,17 @@ import { ChatIcon } from "@/components/icons";
 import { VoteColumn } from "./VoteColumn";
 import { Spark } from "./Spark";
 import { actorInitials, actorName, fillSymbol, legLabel, shortSignature, sinceFillPct, type FeedFill } from "./feed";
+import { commentLabel, feedTargetOf } from "./feed-posts";
 
 /**
  * One fill on the feed: who, what, at what price, when; practice or
  * on-chain; the note (or "no note"); the leg and the source; how the
  * ticker has moved since the fill printed; Copy (never on your own fills)
  * and the thread. Prices come from the live store, so a row only draws a
- * trail when real history exists.
+ * trail when real history exists. `post` is the fill's row in the posts
+ * store, absent until anyone has voted or commented.
  */
-export function FeedRow({ fill, profile, onOpen }: { fill: FeedFill; profile: Profile | null | undefined; onOpen: (fill: FeedFill) => void }) {
+export function FeedRow({ fill, post, profile, onOpen }: { fill: FeedFill; post?: FeedPost; profile: Profile | null | undefined; onOpen: (fill: FeedFill) => void }) {
   const { tokens } = usePreIpo();
   const symbol = fillSymbol(fill);
   const name = actorName(fill, profile);
@@ -42,7 +45,7 @@ export function FeedRow({ fill, profile, onOpen }: { fill: FeedFill; profile: Pr
 
   return (
     <li className={`post fill ${fill.side}`} data-sym={symbol}>
-      <VoteColumn />
+      <VoteColumn target={feedTargetOf(fill)} post={post} />
       {fill.wallet ? (
         <Link href={`/investor/${fill.wallet}`} className="avatar sm" style={{ "--tk": avatarColorFor(actorKey) } as React.CSSProperties} aria-label={`${name}'s wallet`}>
           {initials}
@@ -92,8 +95,9 @@ export function FeedRow({ fill, profile, onOpen }: { fill: FeedFill; profile: Pr
               Copy
             </Link>
           )}
-          <button type="button" className="tiny" onClick={() => onOpen(fill)} aria-label="Open the thread">
+          <button type="button" className="tiny" onClick={() => onOpen(fill)} title="Open the thread">
             <ChatIcon className="h-3 w-3" />
+            {commentLabel(post?.commentCount ?? 0)}
           </button>
         </span>
       </div>

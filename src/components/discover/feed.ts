@@ -14,6 +14,8 @@ import type { Profile } from "@/lib/profiles";
 export interface FeedFill {
   kind: "fill";
   id: string;
+  /** The fill row's own id (practice_fills / live_fills), which its post's `ref` matches; the ledger id for a local fill. */
+  fillId: string;
   at: number;
   mode: "practice" | "live";
   /** Owner string: wallet address or account id. */
@@ -52,6 +54,7 @@ export function fromPublicFill(f: PublicFill, mine: boolean): FeedFill {
   return {
     kind: "fill",
     id: `fill:${f.mode}:${f.id}`,
+    fillId: f.id,
     at: f.createdAt,
     mode: f.mode,
     owner: f.owner,
@@ -77,6 +80,7 @@ export function fromLocalTransaction(t: Transaction, mode: "practice" | "live", 
   return {
     kind: "fill",
     id: `local:${t.id}`,
+    fillId: t.id,
     at: t.timestamp,
     mode,
     owner,
@@ -134,15 +138,6 @@ export function sinceFillPct(f: FeedFill, price: number): number | null {
 /** Newest first. */
 export function byRecency(a: FeedItem, b: FeedItem): number {
   return b.at - a.at;
-}
-
-/**
- * "Hot" until votes exist (task S1): headlines and fills that carry a
- * note, by recency. The partner's score / (age + 2)^1.4 collapses to this
- * when every score is zero.
- */
-export function hotItems(news: FeedNews[], fills: FeedFill[]): FeedItem[] {
-  return [...news, ...fills.filter((f) => !!f.note)].sort(byRecency);
 }
 
 /** Fills within the last hour, grouped by symbol, busiest first. */

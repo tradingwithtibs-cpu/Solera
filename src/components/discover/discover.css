@@ -247,7 +247,7 @@
   color: var(--text-2);
 }
 
-/* vote column: renders, posts nothing until sign-in lands (task S2) */
+/* vote column: ▲ score ▼ over the real post; the arrow that is set glows */
 .vote {
   display: flex;
   flex-direction: column;
@@ -257,7 +257,8 @@
   padding-top: 2px;
 }
 .vote button {
-  padding: 3px 4px;
+  min-height: 20px;
+  padding: 3px 6px;
   font-size: 11px;
   line-height: 1;
   color: var(--text-3);
@@ -271,12 +272,37 @@
 }
 .vote button:disabled {
   cursor: not-allowed;
+  opacity: 0.55;
+}
+.vote button[data-vote="1"].on {
+  color: var(--gain);
+  text-shadow: var(--glow-gain);
+}
+.vote button[data-vote="-1"].on {
+  color: var(--loss);
+  text-shadow: var(--glow-loss);
 }
 .vote b {
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
   color: var(--text-2);
+}
+.vote b.up {
+  color: var(--gain);
+}
+.vote b.down {
+  color: var(--loss);
+}
+.feed-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.feed-error em.warn {
+  color: var(--warn);
 }
 
 /* fill rows */
@@ -719,6 +745,64 @@
 .story-comments .tr-empty {
   padding: 8px 0;
 }
+.story-comments .tr-empty.warn {
+  color: var(--warn);
+}
+.cmt-list {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  max-height: 240px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.cmt {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+.cmt:last-child {
+  border-bottom: 0;
+}
+.cmt .avatar {
+  margin-top: 1px;
+}
+.cmt-body {
+  min-width: 0;
+}
+.cmt-meta {
+  margin: 0;
+  font-size: 10px;
+  color: var(--text-2);
+}
+.cmt-meta b {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text-1);
+}
+.cmt-meta a:hover b {
+  color: var(--text-accent);
+}
+.cmt-text {
+  margin: 2px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-1);
+  overflow-wrap: anywhere;
+}
+.cmt-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 0;
+}
+.cmt-skeleton > div {
+  height: 34px;
+  border-radius: var(--radius-control);
+}
 .cmt-form {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -731,6 +815,12 @@
 }
 .cmt-form input {
   width: 100%;
+}
+.cmt-form input:disabled {
+  cursor: not-allowed;
+}
+.cmt-error {
+  margin-top: 6px;
 }
 @media (max-width: 719px) {
   .story-cols {

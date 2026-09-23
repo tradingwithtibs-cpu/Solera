@@ -10,10 +10,12 @@ import { useSession } from "@/hooks/use-session";
 import { useActivePortfolio } from "@/hooks/use-active-portfolio";
 import { useFollowedInvestors } from "@/hooks/use-followed-investors";
 import { useProfiles } from "@/hooks/use-profiles";
+import { useFeed } from "@/hooks/use-feed";
 import { getLivePrices, subscribeLivePrices } from "@/lib/live-prices";
 import { PRE_IPO_MINTS } from "@/lib/pre-ipo";
 import { useOwnerFills, useTape } from "./tape-store";
-import { FEED_TABS, byRecency, fromLocalTransaction, fromPublicFill, hotItems, type FeedFill, type FeedItem, type FeedTab } from "./feed";
+import { FEED_TABS, byRecency, fromLocalTransaction, fromPublicFill, type FeedFill, type FeedItem, type FeedTab } from "./feed";
+import { hotMerge } from "./feed-posts";
 import { NewsRow } from "./NewsRow";
 import { FeedRow } from "./FeedRow";
 import { StorySheet } from "./StorySheet";
@@ -23,8 +25,9 @@ const MAX_COMPANY_SCOPES = 3;
 
 /**
  * The Discover card: News · Hot · Everyone · Following · Mine over real
- * headlines and real fills. Nothing here is seeded; every empty state is
- * the honest one from the copy sheet.
+ * headlines and real fills, with their votes and comment counts from the
+ * posts store. Nothing here is seeded; every empty state is the honest
+ * one from the copy sheet.
  */
 export function FeedPanel({ id = "feed" }: { id?: string }) {
   const [tab, setTab] = useState<FeedTab>("hot");
@@ -33,6 +36,8 @@ export function FeedPanel({ id = "feed" }: { id?: string }) {
 
   // Re-render on price ticks so trails and since-fill figures stay live.
   useSyncExternalStore(subscribeLivePrices, getLivePrices, getLivePrices);
+  const feed = useFeed();
+  const { postFor, at: feedAt } = feed;
 
   const { connected, publicKey } = useWallet();
   const { openConnect } = useConnectWallet();
@@ -71,7 +76,8 @@ export function FeedPanel({ id = "feed" }: { id?: string }) {
       case "news":
         return news.items;
       case "hot":
-        return hotItems(news.items, fills);
+        // The partner's score / (age + 2)^1.4 over real votes; the store's load time is the clock.
+        return hotMerge<FeedItem>([...news.items, ...fills], (item) => postFor(item)?.score ?? 0, feedAt);
       case "all":
         return [...fills, ...news.items].sort(byRecency);
       case "following":
@@ -79,7 +85,7 @@ export function FeedPanel({ id = "feed" }: { id?: string }) {
       case "mine":
         return mine;
     }
-  }, [tab, news.items, fills, mine, isFollowing]);
+  }, [tab, news.items, fills, mine, isFollowing, postFor, feedAt]);
 
   // Names for every actor on screen, one batched request.
   const owners = useMemo(() => [...new Set(rows.filter((r): r is FeedFill => r.kind === "fill").map((f) => f.owner))], [rows]);
@@ -134,8 +140,22 @@ export function FeedPanel({ id = "feed" }: { id?: string }) {
             <em>{tape.error}</em>
           </p>
         )}
+        {feed.error && (
+          <p className="local-note eyebrow feed-error" role="status">
+            <em className="warn">{feed.error}</em>
+            <button type="button" className="tiny" onClick={feed.clearError} aria-label="Dismiss">
+              ✕
+            </button>
+          </p>
+        )}
         <ul className="posts">
-          {rows.map((r) => (r.kind === "news" ? <NewsRow key={r.id} item={r} held={r.tickers.some((t) => heldSet.has(t))} onOpen={setOpen} /> : <FeedRow key={r.id} fill={r} profile={profileFor(r.owner)} onOpen={setOpen} />))}
+          {rows.map((r) =>
+            r.kind === "news" ? (
+              <NewsRow key={r.id} item={r} post={postFor(r)} held={r.tickers.some((t) => heldSet.has(t))} onOpen={setOpen} />
+            ) : (
+              <FeedRow key={r.id} fill={r} post={postFor(r)} profile={profileFor(r.owner)} onOpen={setOpen} />
+            ),
+          )}
         </ul>
       </>
     );
