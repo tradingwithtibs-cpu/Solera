@@ -58,6 +58,10 @@ export interface Plan {
   holdUntil: number | null;
   triggerOrderId: string | null;
   triggerState: string | null;
+  /** The deposit that opened the Jupiter order, verified on-chain when it was stored. */
+  triggerDepositSig?: string | null;
+  /** When the browser last mirrored Jupiter's order state. */
+  triggerCheckedAt?: number | null;
   readyAt: number | null;
   filled: { price: number; shares: number; at: number; fillId?: string } | null;
   log: PlanLogEntry[];

@@ -22,7 +22,7 @@ export function realDeps(): ToolDeps {
     news: (q) => loadNews(q.ticker ? { ticker: q.ticker } : q.company ? { company: q.company } : {}),
     catalog: () => getCatalog(),
     isTradable: async (ticker) => (await mintForTicker(ticker)) !== null,
-    createPlan: (input) => createPlan(input),
+    createPlan: (input) => createPlan(input).then((r) => r.plan),
     listPlans: (owner) => listPlans(owner),
     getPlan: (id, owner) => getPlan(id, owner),
     cancelPlan: (plan) => transitionPlan(plan, "cancelled"),

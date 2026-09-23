@@ -1,11 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { Connection } from "@solana/web3.js";
 import { errorResponse, HttpError, requireOwner, walletForSession } from "@/lib/auth-server";
 import { getSupabaseAnon, getSupabaseService } from "@/lib/supabase";
 import { normalizeThesis, rowToPublicFill, validateThesis, TICKER_PATTERN, type ThesisFields } from "@/lib/fills";
 import { isOwner } from "@/lib/owner";
-
-const SOLANA_RPC = process.env.SOLANA_RPC_URL ?? "https://api.mainnet-beta.solana.com";
+import { verifyFeePayer } from "@/lib/solana-verify";
 
 interface LiveFillBody extends ThesisFields {
   /** Pre-IPO legs: the gap and the issuer mark at buy time, so the scorecard has its baseline. */
@@ -28,19 +26,6 @@ const PRACTICE_COLUMNS = "id, owner, ticker, mint, side, quantity, price_per_sha
 type AnyRow = Record<string, unknown>;
 
 /** Confirms a landed Jupiter swap: it exists, succeeded, and the fee payer is this wallet. */
-async function verifyOnChain(signature: string, wallet: string): Promise<boolean | null> {
-  try {
-    const connection = new Connection(SOLANA_RPC, "confirmed");
-    const tx = await connection.getTransaction(signature, { maxSupportedTransactionVersion: 0, commitment: "confirmed" });
-    if (!tx) return null; // not visible yet
-    if (tx.meta?.err) return false;
-    const payer = tx.transaction.message.staticAccountKeys[0]?.toBase58();
-    return payer === wallet;
-  } catch {
-    return null;
-  }
-}
-
 /** GET /api/fills?owner=<owner>&limit=50 → one owner's public fills (both modes). */
 export async function GET(request: NextRequest) {
   const supabase = getSupabaseAnon();
@@ -94,7 +79,7 @@ export async function POST(request: NextRequest) {
     for (const n of [body.gapAtBuy, body.refAtBuy]) {
       if (n !== undefined && !(typeof n === "number" && Number.isFinite(n))) throw new HttpError(400, "Invalid leg baseline.");
     }
-    const verified = await verifyOnChain(body.signature, wallet);
+    const verified = await verifyFeePayer(body.signature, wallet);
     if (verified === false) throw new HttpError(400, "That transaction failed or was sent by another wallet.");
 
     const row = {
