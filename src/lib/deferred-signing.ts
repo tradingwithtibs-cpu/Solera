@@ -1,3 +1,4 @@
+import type { PriceOrderBody } from "./jupiter-trigger-map";
 import type { SettlementCurrency } from "./tokens";
 import type { ProfileInput } from "./profiles";
 import type { TickerSymbol, TradeSide } from "./types";
@@ -41,7 +42,13 @@ export type Continuation =
         | { kind: "pre-ipo"; symbol: string; name: string };
     }
   | { kind: "profile"; wallet: string; profile: ProfileInput; issuedAt: number }
-  | { kind: "session"; wallet: string; issuedAt: number };
+  | { kind: "session"; wallet: string; issuedAt: number }
+  /** Jupiter Trigger: the sign-in challenge (hop 1 of an arm or a cancel). */
+  | { kind: "trigger-auth"; planId: string; wallet: string; challenge: string; issuedAt: number; purpose: "arm" | "cancel" }
+  /** Jupiter Trigger: the deposit that opens the order (hop 2). The JWT rides along for at most PENDING_MAX_AGE_MS; it cannot withdraw funds. */
+  | { kind: "trigger-deposit"; planId: string; wallet: string; token: string; tokenExp: number; requestId: string; order: PriceOrderBody; vault: string; expiresAt: number; depositText: string }
+  /** Jupiter Trigger: the withdrawal that finishes a cancel. */
+  | { kind: "trigger-withdraw"; planId: string; wallet: string; orderId: string; cancelRequestId: string; token: string; tokenExp: number; depositText: string };
 
 export interface PendingRequest {
   id: string;

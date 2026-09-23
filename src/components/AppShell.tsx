@@ -6,6 +6,7 @@ import { Strip } from "./shell/Strip";
 import { Foot } from "./shell/Foot";
 import { Palette } from "./shell/Palette";
 import { HolderHighlight } from "./people/HolderHighlight";
+import { TriggerSheets } from "./trigger/TriggerSheets";
 
 /**
  * The frame every route renders in: sidenav on desktop, then the content
@@ -31,6 +32,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <BottomNav />
       <Palette />
       <HolderHighlight />
+      <TriggerSheets />
     </div>
   );
 }

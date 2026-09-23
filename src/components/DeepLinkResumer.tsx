@@ -16,7 +16,9 @@ import { fromBase58 } from "@/lib/phantom-deeplink";
 import { fillToTradeResult, finishDeferredSwap, settlementDollars } from "@/lib/trade";
 import { recordLiveTrade } from "@/hooks/use-live-portfolio";
 import { setProfile } from "@/hooks/use-profiles";
-import { completeSignIn } from "@/hooks/use-session";
+import { completeSignIn, getStoredSession } from "@/hooks/use-session";
+import { finishTriggerAuth, finishTriggerDeposit, finishTriggerWithdraw } from "@/lib/trigger-arm";
+import { openArmPlanSheet, openCancelPlanSheet, notifyPlansChanged } from "./trigger/trigger-sheet-store";
 import { submitProfileClaim } from "./ProfileSheet";
 import { solscanTxUrl } from "@/lib/jupiter";
 import { fromBaseUnits } from "@/lib/tokens";
@@ -117,13 +119,16 @@ export function DeepLinkResumer() {
 }
 
 function busyLabel(p: PendingRequest): string {
+  if (p.continuation?.kind === "trigger-auth") return "Signing in with Jupiter…";
+  if (p.continuation?.kind === "trigger-deposit") return "Sending your deposit to Jupiter…";
+  if (p.continuation?.kind === "trigger-withdraw") return "Returning your funds from Jupiter…";
   if (p.request === "signTransaction") return "Sending your order to Jupiter…";
   if (p.continuation?.kind === "profile") return "Saving your profile…";
   if (p.continuation?.kind === "session") return "Signing you in…";
   return "Finishing up with Phantom…";
 }
 
-async function resolve(pending: PendingRequest, result: DeepLinkResult): Promise<Outcome> {
+async function resolve(pending: PendingRequest, result: DeepLinkResult): Promise<Outcome | null> {
   if (result.error) {
     const cancelled = /reject|cancel|denied|declin/i.test(result.error);
     return {
@@ -145,6 +150,27 @@ async function resolve(pending: PendingRequest, result: DeepLinkResult): Promise
   if (!result.payload) throw new Error("Phantom's reply was empty.");
   const bytes = fromBase58(result.payload);
 
+  if (pending.request === "signTransaction" && c?.kind === "trigger-deposit") {
+    const session = getStoredSession();
+    if (!session) return { tone: "error", title: "Signed, but not recorded", body: "Your Solera session ended while Phantom was open. The order may exist on Jupiter; open Plans and tap Refresh." };
+    const armed = await finishTriggerDeposit(c, bytes, session.token);
+    if (armed.recorded) notifyPlansChanged();
+    return {
+      tone: armed.recorded ? "success" : "info",
+      title: "Armed with Jupiter",
+      body: armed.recorded
+        ? `${armed.plan?.summary ?? "Your plan"}. ${c.depositText} is in your Jupiter vault until it fills, expires, or you cancel.`
+        : `The order is live on Jupiter, but Solera couldn't confirm the deposit yet. It will show up in Plans within a minute; if not, tap Refresh there.`,
+      link: { href: solscanTxUrl(armed.txSignature), label: "View on Solscan" },
+    };
+  }
+  if (pending.request === "signTransaction" && c?.kind === "trigger-withdraw") {
+    const session = getStoredSession();
+    if (!session) return { tone: "error", title: "Signed, but not recorded", body: "Your Solera session ended while Phantom was open. Open Plans and tap Refresh." };
+    const done = await finishTriggerWithdraw(c, bytes, session.token);
+    if (done.plan) notifyPlansChanged();
+    return { tone: "success", title: "Funds returned", body: `${c.depositText} is back in your wallet.`, link: { href: solscanTxUrl(done.txSignature), label: "View on Solscan" } };
+  }
   if (pending.request === "signTransaction") {
     if (!c || c.kind !== "swap") {
       return { tone: "info", title: "Signed, but not sent", body: "Solera lost track of which order this was for, so nothing was submitted and nothing was spent. Please try again." };
@@ -201,6 +227,16 @@ async function resolve(pending: PendingRequest, result: DeepLinkResult): Promise
   if (c?.kind === "session") {
     await completeSignIn(c.wallet, c.issuedAt, signatureBase64);
     return { tone: "success", title: "Signed in", body: "You can post in rooms from this wallet for the next 30 days." };
+  }
+  if (c?.kind === "trigger-auth") {
+    try {
+      const { jwt, exp } = await finishTriggerAuth(c.wallet, bytes);
+      if (c.purpose === "cancel") openCancelPlanSheet(c.planId, { jwt, exp });
+      else openArmPlanSheet(c.planId, { jwt, exp });
+      return null; // the sheet takes over at step 2
+    } catch {
+      return { tone: "info", title: "Jupiter sign-in expired", body: "That Jupiter sign-in expired. Open Plans and tap Arm it again — nothing was moved." };
+    }
   }
   return { tone: "info", title: "Signed", body: "Phantom signed the message, but Solera had nothing waiting for it." };
 }

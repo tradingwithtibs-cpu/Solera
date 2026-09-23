@@ -153,6 +153,27 @@ export function createTriggerClient(opts: { fetch?: FetchLike; base?: string; no
     jwts.delete(wallet);
   }
 
+  /** A token that crossed a page load (the iOS deposit hop) or came from another tab. */
+  function remember(wallet: string, token: string, exp: number) {
+    jwts.set(wallet, { token, exp });
+  }
+
+  function tokenExpiry(wallet: string): number | null {
+    return jwts.get(wallet)?.exp ?? null;
+  }
+
+  /** Verifies a signature the wallet produced elsewhere (a deeplink round trip) and caches the token. */
+  async function verifySignature(wallet: string, signature: Uint8Array): Promise<{ token: string; exp: number }> {
+    const res = await call<{ authMode: string; token: string }>("/auth/verify", {
+      method: "POST",
+      body: JSON.stringify({ type: "message", walletPubkey: wallet, signature: bs58.encode(signature) }),
+    });
+    if (!res.token) throw new TriggerError(401, "Jupiter didn't return a token.");
+    const exp = now() + JWT_TTL_MS;
+    jwts.set(wallet, { token: res.token, exp });
+    return { token: res.token, exp };
+  }
+
   /** Runs `fn` with the wallet's token; on a 401 the token is dropped and the call is retried once with a fresh one. */
   async function withAuth<T>(wallet: TriggerWallet, fn: (token: string) => Promise<T>): Promise<T> {
     const token = await authenticate(wallet);
@@ -213,7 +234,7 @@ export function createTriggerClient(opts: { fetch?: FetchLike; base?: string; no
     return call<{ id: string }>(`/orders/price/${encodeURIComponent(orderId)}`, { method: "PATCH", token, body: JSON.stringify({ expiresAt }) });
   }
 
-  return { getChallenge, authenticate, cachedToken, forget, withAuth, ensureVault, craftDeposit, createPriceOrder, listOrders, initiateCancel, confirmCancel, extendOrder };
+  return { getChallenge, authenticate, verifySignature, cachedToken, remember, tokenExpiry, forget, withAuth, ensureVault, craftDeposit, createPriceOrder, listOrders, initiateCancel, confirmCancel, extendOrder };
 }
 
 export type TriggerClient = ReturnType<typeof createTriggerClient>;
