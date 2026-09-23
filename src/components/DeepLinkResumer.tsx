@@ -19,7 +19,7 @@ import { setProfile } from "@/hooks/use-profiles";
 import { completeSignIn, getStoredSession } from "@/hooks/use-session";
 import { finishTriggerAuth, finishTriggerDeposit, finishTriggerWithdraw } from "@/lib/trigger-arm";
 import { openArmPlanSheet, openCancelPlanSheet, notifyPlansChanged } from "./trigger/trigger-sheet-store";
-import { submitProfileClaim } from "./ProfileSheet";
+import { submitProfileClaim, submitWalletLink } from "./ProfileSheet";
 import { solscanTxUrl } from "@/lib/jupiter";
 import { fromBaseUnits } from "@/lib/tokens";
 import { formatCurrency, formatShares } from "@/lib/format";
@@ -124,6 +124,7 @@ function busyLabel(p: PendingRequest): string {
   if (p.continuation?.kind === "trigger-withdraw") return "Returning your funds from Jupiter…";
   if (p.request === "signTransaction") return "Sending your order to Jupiter…";
   if (p.continuation?.kind === "profile") return "Saving your profile…";
+  if (p.continuation?.kind === "wallet-link") return "Linking your wallet…";
   if (p.continuation?.kind === "session") return "Signing you in…";
   return "Finishing up with Phantom…";
 }
@@ -227,6 +228,13 @@ async function resolve(pending: PendingRequest, result: DeepLinkResult): Promise
   if (c?.kind === "session") {
     await completeSignIn(c.wallet, c.issuedAt, signatureBase64);
     return { tone: "success", title: "Signed in", body: "You can post in rooms from this wallet for the next 30 days." };
+  }
+  if (c?.kind === "wallet-link") {
+    const session = getStoredSession();
+    if (!session || session.kind !== "user") return { tone: "error", title: "Signed, but not linked", body: "Log in to your email account again, then link the wallet from the account sheet." };
+    const saved = await submitWalletLink(session.token, c.wallet, c.issuedAt, signatureBase64);
+    setProfile(saved);
+    return { tone: "success", title: "Wallet linked", body: `${c.wallet.slice(0, 4)}…${c.wallet.slice(-4)} now belongs to your account. Live trades and plans use it.` };
   }
   if (c?.kind === "trigger-auth") {
     try {

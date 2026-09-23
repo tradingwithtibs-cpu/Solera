@@ -11,6 +11,10 @@ import { fillFor } from "@/lib/palette";
 import { formatCurrency } from "@/lib/format";
 import { MY_CASH_BALANCE } from "@/lib/mock-data";
 import { useConnectWallet } from "../ConnectWalletProvider";
+import { buildWalletLinkMessage } from "@/lib/profiles";
+import { isDeferredSigner, stageContinuation } from "@/lib/deferred-signing";
+import { setProfile } from "@/hooks/use-profiles";
+import { submitWalletLink } from "../ProfileSheet";
 import { ProfileButton } from "../ProfileButton";
 import { ChainIcon } from "../icons";
 import { Sheet, SheetHead } from "./Sheet";
@@ -34,7 +38,31 @@ export function AuthSheet({ mode, onClose }: { mode: AuthSheetMode; onClose: () 
   const session = useSession();
   const [walletFlow, setWalletFlow] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [linkError, setLinkError] = useState<string | null>(null);
+  const [linking, setLinking] = useState(false);
   const recovering = useRecoveryPending();
+  const { signMessage } = useWallet();
+  const linkedWallet = profile?.wallet ?? null;
+  const canLink = !!authUser && !!address && session.kind === "user" && !!session.token && linkedWallet !== address;
+
+  async function linkWallet() {
+    if (!authUser || !address || !session.token || !signMessage || linking) return;
+    setLinking(true);
+    setLinkError(null);
+    try {
+      const issuedAt = Date.now();
+      const message = buildWalletLinkMessage(authUser.id, address, issuedAt);
+      if (isDeferredSigner(wallet?.adapter)) stageContinuation({ kind: "wallet-link", wallet: address, userId: authUser.id, issuedAt });
+      const sig = await signMessage(new TextEncoder().encode(message));
+      const saved = await submitWalletLink(session.token, address, issuedAt, Buffer.from(sig).toString("base64"));
+      setProfile(saved);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Something went wrong";
+      setLinkError(/user rejected|rejected the request/i.test(message) ? "You cancelled the signature. Nothing was linked." : message);
+    } finally {
+      setLinking(false);
+    }
+  }
 
   const walletName = wallet?.adapter.name ?? "a wallet";
   const metaName = typeof authUser?.user_metadata?.display_name === "string" ? (authUser.user_metadata.display_name as string) : undefined;
@@ -128,6 +156,27 @@ export function AuthSheet({ mode, onClose }: { mode: AuthSheetMode; onClose: () 
         {address && session.signedIn && (
           <p className="mb-3">
             <span className="chip live">Signed in · 30 days</span>
+          </p>
+        )}
+        {canLink && (
+          <div className="mb-3 rounded-[var(--radius-control)] border border-line bg-inset p-3">
+            <p className="text-xs text-fg">
+              Link <span className="font-mono">{shortAddress(address!)}</span> to this account so live trades and plans belong to it. One signature; it can&apos;t move funds.
+            </p>
+            {!profile && <p className="mt-1 text-[11px] text-muted">Claim a profile first (below), then link.</p>}
+            <button type="button" className="btn-live mt-2 w-full" onClick={linkWallet} disabled={linking || !profile || !signMessage} aria-busy={linking}>
+              {linking ? "Waiting for your wallet…" : "Link this wallet"}
+            </button>
+            {linkError && (
+              <p role="alert" className="field-error">
+                {linkError}
+              </p>
+            )}
+          </div>
+        )}
+        {authUser && linkedWallet && (
+          <p className="mb-3">
+            <span className="chip live">wallet linked · {shortAddress(linkedWallet)}</span>
           </p>
         )}
         {authUser && recovering && <NewPasswordForm />}

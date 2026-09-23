@@ -43,6 +43,8 @@ export type Continuation =
     }
   | { kind: "profile"; wallet: string; profile: ProfileInput; issuedAt: number }
   | { kind: "session"; wallet: string; issuedAt: number }
+  /** An email account linking a wallet: the link message signed by that wallet. */
+  | { kind: "wallet-link"; wallet: string; userId: string; issuedAt: number }
   /** Jupiter Trigger: the sign-in challenge (hop 1 of an arm or a cancel). */
   | { kind: "trigger-auth"; planId: string; wallet: string; challenge: string; issuedAt: number; purpose: "arm" | "cancel" }
   /** Jupiter Trigger: the deposit that opens the order (hop 2). The JWT rides along for at most PENDING_MAX_AGE_MS; it cannot withdraw funds. */

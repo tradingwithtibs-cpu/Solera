@@ -38,7 +38,9 @@ Deviations recorded by the page tasks: `src/hooks/use-visit.ts` is R1's (SincePa
 
 - **A5 (flows)** `src/lib/trigger-arm.ts` (the six arm steps and the two cancel steps, React-free; deferred wallets stage `trigger-auth` / `trigger-deposit` / `trigger-withdraw` continuations), `src/components/trigger/{ArmPlanSheet,CancelPlanSheet,TriggerSheets,trigger-sheet-store}` (open with `openArmPlanSheet(planId)` / `openCancelPlanSheet(planId)` from any card or row; `notifyPlansChanged()` bumps a version and fires `solera:plans-changed` for plan lists), `DeepLinkResumer` finishes the three iOS hops, `TriggerSheets` mounted in `AppShell`. Not exercised live (no funded wallet in the browser pane); the flow up to craft is keyless and verified in `tests/jupiter-trigger.test.mjs` shapes. Still open: the browser sync of `triggerState` and the fill hand-off (§9.7/§3.5), EXTEND, and wiring ARM IT / CANCEL & WITHDRAW on A2's rows and A4's cards to the store once they merge.
 
-Not done: A2, A4 (fleet `wf_8ae4565a-f83` running), S2 feed UI (fleet `wf_c489c171-0c6` running), A5 sync + wiring, M1, P1–P3, LinkWalletSheet.
+- **S3 (rest)** email accounts claim and edit a profile with their session (`ProfileSheet` email path, `ProfileButton` keyed by owner) and link a wallet from the account sheet (`submitWalletLink` → `POST /api/profile { link }`, the `wallet-link` iOS continuation in `DeepLinkResumer`). `useTriggerSync` (`src/hooks/use-trigger-sync.ts`) mirrors Jupiter order states while a JWT is cached; plan lists call it after merge.
+
+Not done: A2, A4 (fleet `wf_8ae4565a-f83` running), S2 feed UI (fleet `wf_c489c171-0c6` running), A5 wiring on rows/cards + the fill hand-off, M1, P1–P3.
 
 ## 0. Rulings on the review issues
 

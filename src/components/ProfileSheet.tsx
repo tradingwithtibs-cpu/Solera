@@ -2,11 +2,36 @@
 
 import { useId, useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { useSession } from "@/hooks/use-session";
 import { BIO_MAX, NAME_MAX, buildProfileClaimMessage, validateProfileInput, type Profile, type ProfileInput } from "@/lib/profiles";
 import { setProfile } from "@/hooks/use-profiles";
 import { isDeferredSigner, stageContinuation } from "@/lib/deferred-signing";
 import { Sheet, SheetHead } from "./auth/Sheet";
 import { CheckCircleIcon } from "./icons";
+
+/** An email account's profile: the session is the proof, nothing is signed. */
+export async function submitProfileForUser(token: string, profile: ProfileInput): Promise<Profile> {
+  const res = await fetch("/api/profile", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ profile }),
+  });
+  const data = (await res.json()) as { profile?: Profile; error?: string };
+  if (!res.ok || !data.profile) throw new Error(data.error ?? "Couldn't save your profile.");
+  return data.profile;
+}
+
+/** An email account links the wallet it just connected: the wallet signs the link message, the session proves the account. */
+export async function submitWalletLink(token: string, wallet: string, issuedAt: number, signatureBase64: string): Promise<Profile> {
+  const res = await fetch("/api/profile", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ link: { wallet, issuedAt, signature: signatureBase64 } }),
+  });
+  const data = (await res.json()) as { profile?: Profile; error?: string };
+  if (!res.ok || !data.profile) throw new Error(data.error ?? "Couldn't link the wallet.");
+  return data.profile;
+}
 
 /** POSTs a signed claim; shared with the deeplink resumer, which has the signature but not this sheet. */
 export async function submitProfileClaim(wallet: string, profile: ProfileInput, issuedAt: number, signatureBase64: string): Promise<Profile> {
@@ -28,6 +53,8 @@ export async function submitProfileClaim(wallet: string, profile: ProfileInput, 
 export function ProfileSheet({ existing, onClose }: { existing: Profile | null; onClose: () => void }) {
   const id = useId();
   const { publicKey, signMessage, wallet: connected } = useWallet();
+  const session = useSession();
+  const emailAccount = !publicKey && session.kind === "user" && !!session.token;
   const [form, setForm] = useState<ProfileInput>({
     handle: existing?.handle ?? "",
     name: existing?.name ?? "",
@@ -40,12 +67,25 @@ export function ProfileSheet({ existing, onClose }: { existing: Profile | null; 
   const problem = validateProfileInput(form);
 
   async function save() {
-    if (!publicKey || !signMessage) {
-      setError("Your wallet can't sign messages. Try Phantom or Solflare.");
-      return;
-    }
     if (problem) {
       setError(problem);
+      return;
+    }
+    if (emailAccount) {
+      setError(null);
+      setStatus("saving");
+      try {
+        const saved = await submitProfileForUser(session.token!, form);
+        setProfile(saved);
+        setStatus("done");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Something went wrong");
+        setStatus("idle");
+      }
+      return;
+    }
+    if (!publicKey || !signMessage) {
+      setError("Your wallet can't sign messages. Try Phantom or Solflare.");
       return;
     }
     setError(null);
@@ -77,7 +117,7 @@ export function ProfileSheet({ existing, onClose }: { existing: Profile | null; 
           <CheckCircleIcon className="mx-auto h-10 w-10 text-gain" />
           <h3 id={id}>Profile saved</h3>
           <p className="sheet-text">
-            You&apos;re <b>@{form.handle.trim().toLowerCase()}</b> on Solera. Your name now shows wherever this wallet appears.
+            You&apos;re <b>@{form.handle.trim().toLowerCase()}</b> on Solera. Your name now shows wherever {emailAccount ? "you post" : "this wallet appears"}.
           </p>
           <button type="button" onClick={onClose} className="btn-primary w-full">
             Done
@@ -85,10 +125,11 @@ export function ProfileSheet({ existing, onClose }: { existing: Profile | null; 
         </div>
       ) : (
         <>
-          <SheetHead eyebrow="Wallet" title={existing ? "Edit your profile" : "Claim your profile"} id={id} onClose={pending ? undefined : onClose} />
+          <SheetHead eyebrow={emailAccount ? "Email account" : "Wallet"} title={existing ? "Edit your profile" : "Claim your profile"} id={id} onClose={pending ? undefined : onClose} />
           <p className="sheet-text">
-            Identity on Solera is your wallet. Saving asks it to sign a short message, which proves the wallet is yours. No email, no
-            password, nothing to leak.
+            {emailAccount
+              ? "A handle and a name people see on the tape and in rooms. Link a wallet later to trade live."
+              : "Identity on Solera is your wallet. Saving asks it to sign a short message, which proves the wallet is yours. No email, no password, nothing to leak."}
           </p>
           <fieldset disabled={pending} className="m-0 min-w-0 space-y-3 border-0 p-0">
             <label className="field-label">
@@ -154,13 +195,13 @@ export function ProfileSheet({ existing, onClose }: { existing: Profile | null; 
           )}
           <div className="sheet-actions mt-4">
             <button type="button" onClick={save} disabled={pending} aria-busy={pending} className="btn-primary flex-1">
-              {status === "signing" ? "Waiting for your wallet…" : status === "saving" ? "Saving…" : "Sign & save"}
+              {status === "signing" ? "Waiting for your wallet…" : status === "saving" ? "Saving…" : emailAccount ? "Save" : "Sign & save"}
             </button>
             <button type="button" onClick={onClose} disabled={pending} className="btn-ghost">
               Not now
             </button>
           </div>
-          <p className="sheet-foot">The signature proves the wallet is yours. No transaction, no fee.</p>
+          <p className="sheet-foot">{emailAccount ? "Your account is the proof; nothing is signed." : "The signature proves the wallet is yours. No transaction, no fee."}</p>
         </>
       )}
     </Sheet>
