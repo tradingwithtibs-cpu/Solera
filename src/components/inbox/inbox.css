@@ -1,0 +1,137 @@
+/*
+ * The inbox bell in the top bar and the inbox sheet (agent-ux §3.3 step 2).
+ * Chrome (buttons, chips, sheet) from globals.css; ib- prefixed here.
+ */
+.ib-bell {
+  position: relative;
+  color: var(--text-2);
+}
+.ib-bell:hover,
+.ib-bell[aria-expanded="true"] {
+  color: var(--text-1);
+}
+.ib-bell svg {
+  width: 18px;
+  height: 18px;
+}
+.ib-badge {
+  position: absolute;
+  top: 4px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--warn);
+  color: var(--ink-page);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.ib-sub {
+  margin: 0 0 10px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+.ib-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  max-height: min(60vh, 520px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  overscroll-behavior: contain;
+}
+.ib-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 10px;
+  align-items: start;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+.ib-row:last-child {
+  border-bottom: 0;
+}
+.ib-row.unread .ib-title {
+  color: var(--text-0);
+}
+.ib-main {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.ib-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+.ib-meta time {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-2);
+}
+.ib-title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text-1);
+  overflow-wrap: anywhere;
+}
+.ib-body {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-2);
+  overflow-wrap: anywhere;
+}
+.ib-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--warn);
+  flex: 0 0 auto;
+}
+.ib-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+.ib-empty {
+  margin: 0;
+  padding: 24px 4px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-2);
+  text-align: center;
+}
+.chip.ib-ready {
+  color: var(--warn);
+  border-color: var(--warn);
+  background: var(--warn-tint);
+}
+.chip.ib-filled {
+  color: var(--gain);
+  border-color: transparent;
+  background: var(--gain-tint);
+}
+.chip.ib-failed {
+  color: var(--loss);
+  border-color: transparent;
+  background: var(--loss-tint);
+}

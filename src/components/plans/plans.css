@@ -1,0 +1,463 @@
+/*
+ * The Plans card body and the plan editor sheet (docs/port/agent-ux.md §2).
+ * Chrome (panel, chips, buttons, fields, sheet, toasts) comes from
+ * globals.css; this file lays out the composer, the rows and the editor.
+ * Every class is pl- prefixed, plus the two partner classes globals.css
+ * does not define: .plan-form and .lens-chip (design-system §4.5).
+ */
+
+/* ---- panel foot as prose, with the health line under it ---------------- */
+.pl-panel > .panel-foot {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  line-height: 1.5;
+  padding-bottom: 10px;
+}
+.pl-health {
+  display: block;
+  margin-top: 4px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.pl {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* ---- the prompt box: › glyph, mono input, the action inside ------------ */
+.plan-form {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid var(--line);
+  background: var(--ink-inset);
+  border-radius: var(--radius-control);
+  padding: 6px 6px 6px 12px;
+  transition:
+    border-color var(--t) var(--ease-soft),
+    box-shadow var(--t) var(--ease-soft);
+}
+.plan-form:focus-within {
+  border-color: var(--live);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--live) 13%, transparent);
+}
+.plan-form .pl-prompt {
+  color: var(--era-3);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 14px;
+}
+.plan-form input {
+  min-width: 0;
+  width: 100%;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  padding: 8px 0;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--text-1);
+}
+.plan-form input::placeholder {
+  color: var(--text-2);
+}
+.plan-form input:disabled {
+  color: var(--text-3);
+}
+.plan-form .btn-live {
+  min-height: 32px;
+  padding: 0 14px;
+}
+.pl-preview {
+  margin: 0;
+  min-height: 16px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--text-2);
+  overflow-wrap: anywhere;
+}
+.pl-preview .ok {
+  color: var(--gain);
+}
+.pl-preview .no {
+  color: var(--warn);
+}
+.pl-preview .dim {
+  color: var(--text-3);
+}
+
+/* ---- example chips ------------------------------------------------------ */
+.lens-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.lens-chip {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  color: var(--text-2);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--era-2) 7%, transparent), transparent);
+  text-align: left;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  transition:
+    border-color var(--t) var(--ease-soft),
+    color var(--t) var(--ease-soft),
+    transform var(--t) var(--ease),
+    box-shadow var(--t) var(--ease-soft);
+}
+.lens-chip:hover {
+  border-color: var(--era-3);
+  color: var(--text-1);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--era-2) 13%, transparent);
+}
+
+/* ---- signed out ---------------------------------------------------------- */
+.pl-signin {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding: 12px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-panel);
+}
+.pl-signin p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-1);
+}
+
+.pl-note {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--warn);
+}
+.pl-empty {
+  margin: 0;
+  padding: 14px 4px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-2);
+}
+.pl-error {
+  margin: 0;
+  font-size: 12px;
+  color: var(--loss);
+}
+.pl-earlier {
+  padding: 8px 0 0;
+}
+
+/* ---- rows ---------------------------------------------------------------- */
+.pl-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.pl-list.past {
+  opacity: 0.65;
+}
+.pl-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 10px;
+  align-items: start;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+.pl-row:last-child {
+  border-bottom: 0;
+}
+.pl-row.is-target {
+  background: var(--ink-highlight);
+  margin: 0 -8px;
+  padding-left: 8px;
+  padding-right: 8px;
+  border-radius: var(--radius-control);
+}
+.pl-main {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.pl-line1 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+.pl-line1 b {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-1);
+}
+.pl-main q {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-1);
+  quotes: "“" "”";
+  overflow-wrap: anywhere;
+}
+.pl-main small {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--text-2);
+  overflow-wrap: anywhere;
+}
+.pl-main small.pl-vault {
+  font-family: var(--font-display);
+  font-size: 11px;
+  color: var(--text-2);
+}
+.pl-main em {
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-2);
+  overflow-wrap: anywhere;
+}
+.pl-main em.fill {
+  color: var(--gain);
+}
+.pl-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+.pl-confirm {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--ink-raised);
+  font-size: 12px;
+  color: var(--text-1);
+}
+.pl-confirm p {
+  margin: 0;
+  flex: 1 1 200px;
+  line-height: 1.45;
+}
+.pl-confirm small {
+  display: block;
+  color: var(--text-2);
+}
+
+/* status chips: the word is always there; the tone only tints it */
+.chip.pl-status.pl-armed {
+  color: var(--live);
+  border-color: color-mix(in srgb, var(--live) 33%, transparent);
+  background: color-mix(in srgb, var(--live) 10%, transparent);
+  animation: plPulse 2.4s ease-in-out infinite;
+}
+.chip.pl-status.pl-holding {
+  color: var(--gain);
+  border-color: transparent;
+  background: var(--gain-tint);
+}
+.chip.pl-status.pl-ready {
+  color: var(--warn);
+  border-color: var(--warn);
+  background: var(--warn-tint);
+  animation: plPulse 2.4s ease-in-out infinite;
+}
+.chip.pl-status.pl-done {
+  color: var(--text-accent);
+  border-color: color-mix(in srgb, var(--text-accent) 33%, transparent);
+}
+.chip.pl-status.pl-failed {
+  color: var(--loss);
+  border-color: transparent;
+  background: var(--loss-tint);
+}
+.chip.pl-status.pl-muted {
+  color: var(--text-2);
+}
+.chip.pl-exec {
+  text-transform: none;
+  letter-spacing: 0.04em;
+}
+@keyframes plPulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chip.pl-status {
+    animation: none;
+  }
+  .lens-chip:hover {
+    transform: none;
+  }
+}
+
+/* ---- toasts (host from globals.css; entrance without a state flip) ----- */
+.pl-toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: rise 0.55s var(--ease);
+}
+.pl-toast > span {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.pl-toast a {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.pl-toast-x {
+  color: inherit;
+  opacity: 0.6;
+  font-size: 12px;
+  padding: 2px 4px;
+}
+.pl-toast-x:hover {
+  opacity: 1;
+}
+
+/* ---- the editor sheet ---------------------------------------------------- */
+.pl-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 4px;
+}
+.pl-editor .field input,
+.pl-editor .field textarea {
+  font-family: var(--font-mono);
+}
+.pl-editor .field input[type="date"] {
+  color-scheme: dark;
+}
+.pl-editor .field .pl-money {
+  padding-left: 10px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-2);
+}
+.pl-ed-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.pl-ed-row .seg {
+  align-self: end;
+}
+.pl-ed-row .seg > button {
+  flex: 1 1 auto;
+}
+.pl-ed-token {
+  position: relative;
+}
+.pl-ed-token .pl-tk-pick {
+  display: block;
+  margin-top: 4px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-2);
+}
+.pl-tk-list {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 176px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--ink-panel);
+}
+.pl-tk-list button {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: baseline;
+  width: 100%;
+  padding: 6px 10px;
+  text-align: left;
+  font-size: 11px;
+  color: var(--text-2);
+}
+.pl-tk-list button:hover,
+.pl-tk-list button:focus-visible {
+  background: var(--ink-hover);
+  color: var(--text-1);
+}
+.pl-tk-list b {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-1);
+}
+.pl-tk-list small {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pl-tk-list span {
+  font-family: var(--font-mono);
+}
+.pl-ed-understood {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-2);
+  overflow-wrap: anywhere;
+}
+.pl-ed-understood .ok {
+  color: var(--gain);
+}
+.pl-ed-understood .no {
+  color: var(--warn);
+}
+
+@media (max-width: 767px) {
+  .plan-form {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .plan-form .btn-live {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+  .pl-ed-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
