@@ -1,0 +1,620 @@
+/*
+ * Portfolio and activity: what goes inside the Balance, Since, Positions
+ * and Recent fills cards. Chrome (panel, chips, buttons, fields, toasts)
+ * comes from globals.css; this file only lays out the bodies. Every class
+ * is pf- prefixed so no other page's stylesheet can collide with it.
+ */
+
+/* ---- hero -------------------------------------------------------------- */
+.pf-hero-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+.pf-link {
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: var(--text-accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.pf-link:hover {
+  color: var(--text-1);
+}
+.pf-hello {
+  margin: 4px 0 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+.pf-balance {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  margin: 10px 0 0;
+}
+.pf-balance > span:first-child {
+  font-family: var(--font-mono);
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-0);
+  text-shadow: 0 0 22px color-mix(in srgb, var(--era-2) 40%, transparent);
+}
+.pf-wk {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-2);
+}
+.pf-wk em {
+  font-style: normal;
+  font-weight: 600;
+}
+.pf-wk.up em {
+  color: var(--gain);
+}
+.pf-wk.down em {
+  color: var(--loss);
+}
+.pf-kpis {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+.pf-kpis > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--ink-page) 80%, transparent);
+  transition:
+    border-color var(--t) var(--ease-soft),
+    transform var(--t) var(--ease);
+}
+.pf-kpis > div:hover {
+  border-color: var(--line-strong);
+  transform: translateY(-1px);
+}
+.pf-kpis small {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+.pf-kpis b {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pf-kpis em {
+  font-style: normal;
+  font-size: 10px;
+  color: var(--text-2);
+}
+.pf-pinned {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.pf-pin-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--ink-page) 80%, transparent);
+  font-size: 11px;
+  color: var(--text-1);
+  transition:
+    border-color var(--t) var(--ease-soft),
+    transform var(--t) var(--ease);
+}
+.pf-pin-chip:hover {
+  border-color: var(--era-3);
+  transform: translateY(-1px);
+}
+.pf-pin-chip i {
+  font-style: normal;
+  font-size: 10px;
+}
+.pf-pin-chip b,
+.pf-pin-chip em {
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+.pf-pin-chip span {
+  font-family: var(--font-mono);
+  color: var(--text-2);
+}
+/* The balance chart: the line on the paper, the series' high/low and the last value on the right, the range's ticks underneath. */
+.pf-chart-wrap {
+  margin-top: 16px;
+}
+.pf-chart {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 60px;
+  grid-template-rows: minmax(0, 1fr);
+  gap: 8px;
+  height: 150px;
+}
+.pf-chart-plot {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  color: var(--text-0);
+}
+/* Absolute, so the SVG's own 320:96 aspect never sizes the row (the partner does the same with its canvas). */
+.pf-chart-plot svg {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.pf-chart-plot svg.up,
+.pf-chart-plot svg.down {
+  color: var(--text-0);
+}
+.pf-chart-ref {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px dotted color-mix(in srgb, var(--text-0) 60%, transparent);
+  pointer-events: none;
+}
+.pf-chart-y {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-2);
+  text-align: right;
+}
+.pf-chart-y > b {
+  position: absolute;
+  right: 0;
+  transform: translateY(-50%);
+  padding: 2px 6px;
+  background: var(--ink-tooltip);
+  color: var(--ink-page);
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+.pf-chart-x {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  width: calc(100% - 68px);
+  margin-top: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-2);
+  text-align: center;
+}
+.pf-chart-x > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pf-chart-x > span:first-child {
+  text-align: left;
+}
+.pf-chart-x > span:last-child {
+  text-align: right;
+}
+.pf-chart-msg {
+  display: grid;
+  place-items: center;
+  height: 150px;
+  margin: 0;
+  padding: 0 16px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-control);
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--text-2);
+}
+
+/* ---- since you last looked ------------------------------------------- */
+.pf-since {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.pf-since li + li {
+  border-top: 1px solid var(--line-soft);
+}
+.pf-since li > a,
+.pf-since li > button,
+.pf-since li > div {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  gap: 12px;
+  align-items: baseline;
+  width: 100%;
+  padding: 9px 4px;
+  text-align: left;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-2);
+  transition:
+    background-color var(--t) var(--ease-soft),
+    color var(--t) var(--ease-soft),
+    transform var(--t) var(--ease);
+}
+.pf-since li > a:hover,
+.pf-since li > button:hover {
+  background: var(--ink-hover);
+  color: var(--text-1);
+  transform: translateX(2px);
+}
+.pf-since small {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-accent);
+}
+.pf-since span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.pf-since b {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text-1);
+}
+.pf-since b.up {
+  color: var(--gain);
+}
+.pf-since b.down {
+  color: var(--loss);
+}
+.pf-since-empty {
+  padding: 12px 4px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text-2);
+}
+
+/* ---- positions --------------------------------------------------------- */
+.pf-pos-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.pf-pos {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  overflow: hidden;
+  background: var(--ink-panel);
+  transition:
+    border-color var(--t) var(--ease-soft),
+    opacity var(--t) var(--ease-soft),
+    box-shadow var(--t) var(--ease-soft);
+}
+.pf-pos:hover {
+  border-color: var(--line-strong);
+}
+.pf-pos.pinned {
+  border-color: var(--color-violet-200);
+}
+.pf-pos.dragging {
+  opacity: 0.4;
+}
+.pf-pos.over {
+  box-shadow: 0 -2px 0 0 var(--era-3);
+}
+.pf-pos-head {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) 72px auto auto;
+  gap: 12px;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 12px;
+}
+.pf-pos-head:hover {
+  background: var(--ink-hover);
+}
+.pf-grip {
+  color: var(--text-3);
+  cursor: grab;
+  font-size: 12px;
+  letter-spacing: -2px;
+  padding: 6px 2px;
+  user-select: none;
+  touch-action: none;
+}
+.pf-grip:active {
+  cursor: grabbing;
+}
+.pf-pos:hover .pf-grip {
+  color: var(--text-2);
+}
+.pf-pos-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.pf-pos-main b {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-1);
+}
+.pf-pos-main b a {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pf-pos-main b a:hover {
+  color: var(--text-accent);
+}
+.pf-pos-main b small {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-2);
+}
+.pf-pos-main > small {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pf-pos-num {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.pf-pos-num b {
+  font-size: 14px;
+  font-weight: 600;
+}
+.pf-pos-num small {
+  font-size: 11px;
+  color: var(--text-2);
+}
+.pf-pin {
+  font-size: 12px;
+  line-height: 1;
+  padding: 6px 4px;
+  opacity: 0.25;
+  filter: grayscale(1);
+  transition:
+    opacity var(--t) var(--ease-soft),
+    filter var(--t) var(--ease-soft),
+    transform var(--t) var(--ease);
+}
+.pf-pin:hover {
+  opacity: 1;
+  filter: none;
+  transform: scale(1.15);
+}
+.pf-pin.on {
+  opacity: 1;
+  filter: none;
+}
+.pf-scorecard {
+  margin: 0 12px;
+  padding: 8px 10px;
+  border-left: 2px solid var(--era-2);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--era-2) 10%, transparent), transparent);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+.pf-scorecard p {
+  margin: 0;
+}
+.pf-scorecard b {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text-1);
+}
+.pf-scorecard .pf-wrong {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--line-strong);
+}
+.pf-scorecard .pf-wrong.hit,
+.pf-scorecard .pf-wrong.hit b {
+  color: var(--warn);
+}
+.pf-tiny {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 7px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  color: var(--text-2);
+  transition:
+    border-color var(--t) var(--ease-soft),
+    color var(--t) var(--ease-soft);
+}
+.pf-tiny:hover {
+  border-color: var(--warn);
+  color: var(--warn);
+}
+.pf-note {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 10px 12px 12px;
+  background: var(--ink-inset);
+}
+.pf-note-row {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.pf-note-row.two {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: 12px;
+}
+.pf-note-row.two > label {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.pf-note textarea,
+.pf-note input {
+  width: 100%;
+  min-width: 0;
+  margin-top: 3px;
+  padding: 4px 6px;
+  border: 1px dashed transparent;
+  border-radius: var(--radius-control);
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--text-1);
+  resize: none;
+  transition:
+    border-color var(--t) var(--ease-soft),
+    background-color var(--t) var(--ease-soft),
+    box-shadow var(--t) var(--ease-soft);
+}
+.pf-note textarea:hover,
+.pf-note input:hover {
+  border-color: var(--line);
+}
+.pf-note textarea:focus,
+.pf-note input:focus {
+  outline: none;
+  border-color: var(--era-3);
+  background: var(--ink-panel);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--era-3) 20%, transparent);
+}
+.pf-note textarea::placeholder,
+.pf-note input::placeholder {
+  color: var(--text-3);
+}
+.pf-pos-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 8px 12px 10px;
+  background: var(--ink-inset);
+}
+
+/* ---- fills --------------------------------------------------------------- */
+.pf-fills {
+  display: flex;
+  flex-direction: column;
+}
+.pf-empty-line {
+  margin: 0;
+  padding: 8px 0;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.pf-skeleton {
+  display: grid;
+  gap: 10px;
+}
+
+/* ---- tablets ----------------------------------------------------------------
+ * Below 1101px the engine drops every card to grid-area auto but keeps the
+ * 24px row unit, so each card's body collapses to nothing. Scoped here until
+ * panels.css sets grid-auto-rows: auto at that breakpoint itself.
+ */
+@media (max-width: 1100px) {
+  .panel-grid[data-page="portfolio"] {
+    grid-auto-rows: auto;
+  }
+}
+
+/* ---- phones ---------------------------------------------------------------- */
+@media (max-width: 767px) {
+  .pf-hero-head {
+    flex-wrap: wrap;
+  }
+  .pf-balance > span:first-child {
+    font-size: 30px;
+  }
+  .pf-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .pf-kpis > div:last-child {
+    grid-column: span 2;
+  }
+  .pf-chart,
+  .pf-chart-msg {
+    height: 200px;
+  }
+  .pf-since li > a,
+  .pf-since li > button,
+  .pf-since li > div {
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+  .pf-since li > a:hover,
+  .pf-since li > button:hover {
+    transform: none;
+  }
+  .pf-pos-head {
+    grid-template-columns: auto auto minmax(0, 1fr) auto auto;
+  }
+  .pf-pos-head .spark {
+    display: none;
+  }
+  .pf-note-row.two {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pf-kpis > div,
+  .pf-pin-chip,
+  .pf-pos,
+  .pf-pin,
+  .pf-since li > a,
+  .pf-since li > button {
+    transition: none;
+  }
+}
