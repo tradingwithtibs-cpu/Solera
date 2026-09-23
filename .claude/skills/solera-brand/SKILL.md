@@ -7,87 +7,96 @@ description: Solera's visual identity and voice, taken from the code. Use when d
 
 Solera is a social investing app for tokenized stocks on Solana. One line: "Stocks on Solana, with the people who hold them." Practice mode is the front door; real trades happen from the user's own wallet. Solera issues nothing and custodies nothing.
 
-Everything below is read from `src/app/globals.css`, `src/app/layout.tsx`, and the components. If the code and this file disagree, the code wins and this file needs updating.
+Everything below is read from `src/app/globals.css`, `src/app/layout.tsx` and the components on the `redesign` branch (Sept 23, 2026). If the code and this file disagree, the code wins and this file needs updating. The full design spec is `docs/port/design-system.md`; this file is the short version.
 
-## Direction change, Sept 22 2026
+## The idea
 
-The team adopted a new mark (`public/brand/solera-mark.png`): three Solana-style bars in a magenta-to-mint gradient over the word "era" in chrome glass, on a black tile. The mark reads as the whole name. Tokens sampled from it live in `globals.css` as `--era-1` … `--era-5` (`#d139fc`, `#482efa`, `#0191fd`, `#01eaf4`, `#05fbcf`), with `--era-tile` `#000000` and `--era-ink` `#0b0d16`; use `.bg-gradient-era` and `.text-gradient-era`. The desktop redesign being ported from the partner's build is dark (deep ink, not gray-black) and uses this gradient as Solera's own accent, with liquid-glass surfaces (translucent panels, soft inner highlights, chrome edges) echoing the "era" lettering. Until the port lands, the light theme below is what ships; the "never use the Solana gradient as Solera's accent" rule is retired.
+A trading terminal that reads like a well-set page: deep ink surfaces, one gradient, mono figures, prose in Outfit. Every screen is a grid of cards ("panels") the person can drag, resize and swap. Dark only. There is no light theme and none is planned.
 
 ## Color
 
+Tokens are CSS variables on `:root`; components never use raw hex. Tailwind's `neutral-*`, `violet-*`, `emerald-*`, `rose-*`, `amber-*` and `sky-*` palettes are remapped in `@theme` to these values, so old utility classes render on-brand.
+
 | Token | Value | Use |
 |---|---|---|
-| `--background` | `#f2effc` | Page. Soft lavender, never white. |
-| `--foreground` | `#211b3d` | Body text. Deep indigo, never pure black. |
-| `--surface` | `#ffffff` | Cards. |
-| `--line` | `#e3def7` | Hairlines and card borders. |
-| `--brand-from` | `#4c6fff` | Start of the brand gradient (blue). |
-| `--brand-to` | `#9b5cf7` | End of the brand gradient (violet). |
-| `--accent` | `#5b4fd6` | Solid ink where a gradient would hurt legibility: nav labels, focus rings, small text. |
-| muted text | `#756e93` | Eyebrows, captions, secondary copy. |
-| active nav / secondary button text | `#4c3fa0` | On `#ece7fb` tint. |
-| `--solana-from` / `--solana-to` | `#9945ff` / `#14f195` | Only where Solana itself is named (on-chain badge, "built on Solana"). Never as Solera's own accent. |
-| gain / loss | emerald (`#22c55e` dot, emerald-700 text on emerald-50) / red | Never used decoratively. |
+| `--ink-page` | `#0b0d16` | The page. Deep ink, never gray-black. |
+| `--ink-panel` | `#10131f` | Cards. |
+| `--ink-head` | `#121627` | Card heads. |
+| `--ink-raised` / `--ink-inset` | `#151a29` / `#0b0d16` | Chips, fields, inputs. |
+| `--ink-hover` / `--ink-selected` | `#161b2c` / `#191a33` | Row states. |
+| `--line` / `--line-soft` / `--line-strong` | `#232a40` / `#171c2e` / `#3a4266` | Hairlines. `--line-accent` is `--era-3`. |
+| `--text-1` / `--text-2` / `--text-3` | `#e3e5f5` / `#8a8fb3` / `#5c6288` | Body, secondary, faint. `--text-0` is pure white for text on gradients. |
+| `--text-accent` / `--text-link` | `#c9a8ff` / `#9fb3ff` | Accent text and links. |
+| `--gain` / `--loss` | `#3ddc84` / `#ff5c7a` | Price moves only. Never decorative. `--gain-tint` / `--loss-tint` are 13% washes. |
+| `--warn` | `#ffb020` | Practice mode, "ready to sign", inbox badge. Never `--loss` for attention. |
+| `--live` | `#01eaf4` | Live mode, armed plans, the live dot. |
+| `--era-1` … `--era-5` | `#d139fc` `#482efa` `#0191fd` `#01eaf4` `#05fbcf` | The mark's gradient, sampled from `public/brand/solera-mark.png`. |
+| `--color-tk-1` … `--color-tk-8` | eight ink-safe fills | Ticker badges and avatars via `fillFor()` in `src/lib/palette.ts`. |
 
-The brand gradient runs `linear-gradient(135deg, var(--brand-from), var(--brand-to))`. It appears on primary buttons, the brand mark, active states, the balance card, and one blurred decorative wash in the hero. It is never a full-page background.
+Three gradient bands, each with a fixed text colour that passes contrast:
 
-Dark mode does not exist yet. When it is added, the page should be a deep indigo, not gray-black, and the lavender-violet relationship should hold.
+- `--grad-action` (`#9334fb → #482efa`, white text): primary buttons, the active nav item, the practice segment.
+- `--grad-live` (`--era-3 → --era-4 → --era-5`, ink text): ARM IT, SEND, live-mode actions, the mode toggle's live segment.
+- `--grad-sell` (`#c93553 → #7a3ff0`, white text): sell buttons.
+- `--grad-era` (all five stops) is reserved for the mark, the tab-bar indicator and the era hairline on glass boxes.
+- `--grad-solana` (`#9945ff → #14f195`) appears only where Solana itself is named, as a border or icon, never under text.
+
+Glass (`.glass`, `.glass-era`) is chrome only: the top bar, the tab bar, sheets and the palette. Cards are opaque ink. Glows (`--glow-mark`, `--glow-action`, `--glow-live`) are soft and rare.
 
 ## Type
 
-- Display and UI: Outfit, weights 500, 600, 700, via `--font-display`. Rounder and warmer than a plain grotesk.
-- Every price, balance, percentage, and wallet address: IBM Plex Mono, weights 500, 600, via `--font-figures` (`font-mono`).
-- Page headings: 28 to 38px, weight 600, letter-spacing -0.045em, line-height 1.14.
-- Eyebrows (`.eyebrow`): 10px, weight 600, uppercase, letter-spacing 0.12em, muted color. Every page opens with one: "STOCKS ON SOLANA", "YOUR LONG VIEW", "PRIVATE COMPANIES, PUBLIC PRICES".
-- Body: 13 to 16px, line-height 1.5 to 1.65.
-
-## The violet period
-
-Every headline ends with a period colored `text-violet-500`: "Own a little of what's next<span>.</span>", "Your portfolio.", "Markets.", "Pre-IPO." It is the closest thing Solera has to a mark today. Any logo should either use this dot or deliberately echo it. Do not add exclamation marks; the period is the personality.
+- Display and UI: Outfit 500/600/700 via `--font-display`. Sentence case.
+- Every price, balance, percentage, address, clock and eyebrow: IBM Plex Mono 500/600 via `--font-mono`.
+- Card heads: `// TITLE` in mono 600 11px, `.12em` tracking, uppercase, with the `//` in `--era-3`; the subtitle beside it in `--text-2`.
+- Eyebrows (`.eyebrow`): mono 10px 600, uppercase, `.12em`, `--text-2`. Rows label their fields this way (WHY, HORIZON, WRONG IF, WATCHES, DOES).
+- Body: 12 to 13px, line-height 1.5 to 1.65. Headlines in the feed are Outfit 600 13 to 14px.
+- Figures are tabular. Gains carry a leading `+`, losses a real minus sign `−`.
 
 ## Shapes
 
-- Buttons are pills (`border-radius: 999px`), 40px min height, 12px text, weight 600. Primary is the gradient with white text. Secondary is white with `#4c3fa0` text and a `#ded6f7` border.
-- Cards: white, 1px `--line` border, radius 20 to 24px, padding 20 to 22px. Flat by default. `.card-elevated` adds one soft colorless shadow and is reserved for the balance card and tappable feed cards.
-- Segmented controls sit in a `#ece7fb` pill track with a white active segment.
-- Nav items: 12px radius, active tint `#ece7fb`.
-- Focus ring: 3px `#6d5eea`, offset 3px. Never remove it.
-- Ticker avatars are colored circles with 2 to 4 letter marks.
+- Panel radius `--radius-panel` 8px; control radius `--radius-control` 6px; chips and the me-pill are pills; the mark tile is `--radius-mark` 22%.
+- Buttons: `.btn-primary` (action gradient, white), `.btn-secondary` (ink, hairline), `.btn-live` (live gradient, ink text), `.btn-ghost`, `.btn-small` (mono 10px uppercase), `.btn-icon`. `.btn.armed` shows a ring on click.
+- Chips (`.chip`): mono 600 10px uppercase; `.live`, `.practice`, `.warn`, `.gain`, `.loss`. Status is always a word, never colour alone.
+- Fields (`.field`): ink-inset boxes with a hairline; the prompt box (`.plan-form`) shows a `›` glyph in `--era-3`.
+- Segments (`.seg`, `.range`, `.mode`) are hairline tracks with a gradient "on" segment.
+- Sheets (`.sheet`, `.sheet-box`): centred glass box above 720px, bottom sheet on phones, era hairline on top, scrim behind. Every sheet portals to `body`.
+- Cards sit on a 12-column grid with an 8px gap and a 32px row unit; on phones each tab shows its own stack.
 
 ## Motion
 
-- Transitions 160ms ease on color and border.
-- The "pumping" badge pulses at about 0.6Hz. Nothing may blink faster than 3 times per second (WCAG 2.3.1), and nothing should read as alarm on a financial decision.
-- Every animation is disabled under `prefers-reduced-motion: reduce`.
-- Confetti (`src/lib/celebrate.ts`) fires on a filled trade. Use it for real moments only.
+- `--ease-solera` `cubic-bezier(0.22, 1, 0.36, 1)`; `--t` 0.38s, `--t-fast` 0.12s.
+- The tape crawls; the live dot pulses at 0.6Hz; armed chips pulse at 0.4Hz. Nothing blinks faster than 3 times a second and nothing reads as alarm on a financial decision.
+- Sheets fade and rise; cards pop in with a short stagger.
+- Everything is off under `prefers-reduced-motion: reduce`; the status word carries the meaning.
+- Confetti (`src/lib/celebrate.ts`) fires on a filled trade and on a filled plan. Real moments only.
 
 ## Voice
 
-Warm, plain, a friend explaining. Sentence case everywhere. Contractions are fine.
+Plain, short, a friend who reads the tape. Sentence case everywhere except mono eyebrows and card heads. No exclamation marks in system copy. Contractions are fine.
 
-- Hero: "Own a little of what's next."
-- Portfolio: "A clear picture of your practice investments."
-- Markets: "Familiar companies. A new way to explore them."
-- Pre-IPO: "Tokenized exposure to companies that haven't listed yet."
-
-Say "practice" not "paper" or "demo". Say "wallet" not "account". Say "own a slice" rather than "buy" when the moment is emotional, "Buy" when it is a control.
+- Say "practice" not "paper" or "demo". Say "wallet" not "account" for wallets; an email sign-up is an "email account".
+- Say "plan" for a standing order and "arm" for switching one on. A plan is "proposed" until the person taps ARM IT.
+- Prices are "at or above / at or below", never "hits" or "crosses". Plans are "checked about once a minute" in practice; only Jupiter's keepers are "24/7".
+- The agent "reads", "proposes" and "never signs". Never "recommends".
+- Empty states say what will fill them: "No live plans. Write one above — Solera reads it, shows you the rule it understood, and only arms it when you say so."
+- Nothing invented: no sample people, headlines, trades or numbers. If a source is down, say so in one sentence.
 
 ## Disclosures
 
-These are part of the brand, not a footer. On every trade surface, in one calm sentence each: who issued the token, that it carries price exposure rather than shareholder rights, and that it is not offered to US persons. They may be restyled and made friendlier. They are never removed, collapsed by default, or hidden behind a tap.
+Part of the brand, not a footer. On every trade surface, in one calm sentence each: who issued the token, that it carries price exposure rather than shareholder rights, and that it is not offered to US persons. Plan and agent surfaces add "Plans are armed only after you confirm; nothing is signed without your wallet." and, for Jupiter orders, "Funds are held by Jupiter until fill or cancel." They may be restyled. They are never removed, collapsed by default, or hidden behind a tap.
 
 ## Logo and icon rules
 
-- The mark must read at 16px (favicon) and 120px (share image) with no detail lost.
-- Color: the brand gradient blue to violet, or solid `--accent` in one-color contexts. A mint dot (`#9fe1cb` family) is acceptable as the single secondary accent, echoing gains.
-- Provide a dark variant for any colored mark, per the svg-design skill.
-- Wordmark: "Solera" in Outfit 600, tight tracking, ending in the violet period.
-- The app icon (`src/app/icon.tsx`), share image (`src/app/opengraph-image.tsx`), sidebar `.brand-symbol`, and `src/components/Logo.tsx` must all be generated from the same mark and the same gradient. As of September 2026 the icon and share image still use an older purple-to-teal gradient and an older tagline; they are out of date, not a second brand.
+- The mark is `public/brand/solera-mark.png` (three Solana-style bars in the era gradient over "era" in chrome glass, on a black tile). `solera-mark-256.png` is what the DOM loads; the 528 KB source never goes in a page.
+- It must read at 16px (favicon) and 120px (share image). Keep the black tile; never place it on a light surface.
+- Wordmark: "Solera" in Outfit 600, tight tracking. The old violet period is gone.
+- The app icon (`src/app/icon.tsx`), share image (`src/app/opengraph-image.tsx`), sidebar mark and `src/components/Logo.tsx` come from the same asset and gradient.
 
 ## Never
 
-- No white page background. No gray-black dark mode.
-- No Solana gradient as Solera's accent.
-- No exclamation marks in system copy.
-- No blinking, no red pulses on trade actions.
+- No light surfaces, no white page, no gray-black. Ink only.
+- No raw hex in components; tokens or `color-mix()` on tokens.
+- No Solana gradient under text or as Solera's accent.
+- No exclamation marks, no blinking, no red pulses on trade actions.
 - No bar-chart-going-up or shield clichés in the mark.
+- No sample data standing in for a source that is down.
