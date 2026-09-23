@@ -24,11 +24,11 @@ export function HeldBy({ ticker }: { ticker: TickerSymbol }) {
       </p>
     );
   }
+  if (source !== "chain") return <p className="asset-note">Holder data is unavailable right now. Wallets are read live from public Solana data.</p>;
   if (holders.length === 0) return <p className="asset-note">No wallets to show for {ticker} yet.</p>;
 
   return (
     <div>
-      {source === "sample" && <p className="asset-note">Sample investors holding {ticker}</p>}
       {holders.map(({ investor, holding }) => (
         <Link key={investor.id} href={`/investor/${investor.id}`} className="held-row">
           <Avatar initials={investor.initials} colorClass={investor.avatarColor} size="sm" />

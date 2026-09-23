@@ -1645,6 +1645,39 @@ code,
   font-weight: 500;
   color: var(--text-2);
 }
+/* The top bar's account controls: text buttons and the wallet pill from 768px, one avatar button on phones. */
+.auth-desktop {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.wallet-slot {
+  display: inline-flex;
+}
+.auth-phone {
+  display: none;
+}
+.me-avatar {
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--ink-raised);
+  color: var(--text-1);
+  line-height: 0;
+}
+.me-avatar .avatar {
+  width: 30px;
+  height: 30px;
+}
+@media (max-width: 767px) {
+  .auth-desktop,
+  .top .wallet-slot {
+    display: none;
+  }
+  .auth-phone {
+    display: inline-flex;
+  }
+}
 @media (max-width: 767px) {
   .masthead {
     display: none;

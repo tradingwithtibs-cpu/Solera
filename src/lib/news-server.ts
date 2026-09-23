@@ -84,7 +84,8 @@ function fromFinnhub(articles: FinnhubArticle[]): NewsItem[] {
       source: a.source,
       url: a.url,
       publishedAt: a.datetime * 1000,
-      image: a.image || undefined,
+      // Finnhub substitutes the publisher's logo (a dark square) when a story has no picture; that is not a thumbnail.
+      image: a.image && !/\/logo\//i.test(a.image) ? a.image : undefined,
       summary: a.summary || undefined,
     }));
 }

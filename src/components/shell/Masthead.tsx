@@ -25,11 +25,18 @@ function AuthGroup() {
   if (!owner) {
     return (
       <>
-        <button type="button" className="btn-secondary btn-small max-md:hidden" onClick={() => openAuthSheet("login")}>
-          Log in
-        </button>
-        <button type="button" className="btn-primary btn-small" onClick={() => openAuthSheet("signup")}>
-          Sign up
+        <span className="auth-desktop">
+          <button type="button" className="btn-secondary btn-small" onClick={() => openAuthSheet("login")}>
+            Log in
+          </button>
+          <button type="button" className="btn-primary btn-small" onClick={() => openAuthSheet("signup")}>
+            Sign up
+          </button>
+        </span>
+        <button type="button" className="auth-phone me-avatar" onClick={() => openAuthSheet("signup")} aria-label="Log in or sign up">
+          <span className="avatar sm" aria-hidden="true">
+            ?
+          </span>
         </button>
       </>
     );
@@ -42,14 +49,22 @@ function AuthGroup() {
     .map((w) => w[0]?.toUpperCase() ?? "")
     .join("")
     .slice(0, 2);
+  const avatar = (
+    <span className="avatar sm" style={{ background: fillFor(avatarColorFor(owner), initials) }} aria-hidden="true">
+      {initials}
+    </span>
+  );
   return (
-    <button type="button" className="me-pill" onClick={() => openAuthSheet("account")} aria-label="Your account">
-      <span className="avatar sm" style={{ background: fillFor(avatarColorFor(owner), initials) }} aria-hidden="true">
-        {initials}
-      </span>
-      <span className="truncate">{name}</span>
-      {address && profile?.name && <small className="max-md:hidden">{shortAddress(address)}</small>}
-    </button>
+    <>
+      <button type="button" className="me-pill auth-desktop" onClick={() => openAuthSheet("account")} aria-label="Your account">
+        {avatar}
+        <span className="truncate">{name}</span>
+        {address && profile?.name && <small>{shortAddress(address)}</small>}
+      </button>
+      <button type="button" className="auth-phone me-avatar" onClick={() => openAuthSheet("account")} aria-label={`Your account, ${name}`}>
+        {avatar}
+      </button>
+    </>
   );
 }
 
@@ -108,7 +123,9 @@ export function Masthead() {
         <span className="clock" aria-hidden="true">
           {clock}
         </span>
-        <MyWalletBadge />
+        <span className="wallet-slot">
+          <MyWalletBadge />
+        </span>
         <AuthGroup />
       </div>
     </header>
