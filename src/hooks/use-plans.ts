@@ -90,6 +90,11 @@ function onFocus() {
   void refreshPlans();
 }
 
+/** The Jupiter sheets (arm, cancel, withdraw) announce a change this way once it landed. */
+function onPlansChanged() {
+  void refreshPlans();
+}
+
 function start() {
   void refreshHealth();
   healthTimer = setInterval(refreshHealth, HEALTH_MS);
@@ -100,6 +105,7 @@ function start() {
     evalTimer = setInterval(evaluateSelf, EVALUATE_MS);
   }
   window.addEventListener("focus", onFocus);
+  window.addEventListener("solera:plans-changed", onPlansChanged);
 }
 
 function stop() {
@@ -108,6 +114,7 @@ function stop() {
   if (evalTimer) clearInterval(evalTimer);
   listTimer = healthTimer = evalTimer = null;
   window.removeEventListener("focus", onFocus);
+  window.removeEventListener("solera:plans-changed", onPlansChanged);
 }
 
 function attach(token: string | null): () => void {
@@ -154,6 +161,13 @@ export function usePlans() {
     },
     [need],
   );
+  /** The same POST keeping the server's live preview, so a live sentence knows whether Jupiter holds it or Solera notifies (backend §9.3). */
+  const createWithPreview = useCallback(
+    async (text: string, condition: PlanCondition, mode: PlanMode, source: "ui" | "agent" = "ui") => {
+      return plansClient.createWithPreview(need(), { text, condition, mode, source });
+    },
+    [need],
+  );
   const arm = useCallback(
     async (id: string): Promise<Plan> => {
       const plan = await plansClient.arm(need(), id);
@@ -186,6 +200,7 @@ export function usePlans() {
     token,
     refresh: refreshPlans,
     create,
+    createWithPreview,
     arm,
     cancel,
     discard,

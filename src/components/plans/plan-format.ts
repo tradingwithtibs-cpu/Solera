@@ -186,9 +186,63 @@ export interface PlanHealth {
   serverWatch: boolean;
 }
 
-export function healthLine(health: PlanHealth | null, now: number): string {
-  if (health?.serverWatch && health.lastEvaluatedAt) return `server watch: on · last check ${relTime(health.lastEvaluatedAt, now)} ago`;
+export function healthLine(health: PlanHealth | null, now: number | null): string {
+  if (health?.serverWatch && health.lastEvaluatedAt) return now ? `server watch: on · last check ${relTime(health.lastEvaluatedAt, now)} ago` : "server watch: on";
   return "server watch: off · checking while this tab is open";
+}
+
+/** "9U76…vMQd" — the same shape as the wallet pill's. */
+export function shortWallet(address: string): string {
+  return address.length > 10 ? `${address.slice(0, 4)}…${address.slice(-4)}` : address;
+}
+
+/** "abc123…wxyz" for a Jupiter order id. */
+export function shortId(id: string): string {
+  return id.length > 12 ? `${id.slice(0, 6)}…${id.slice(-4)}` : id;
+}
+
+/**
+ * The one action a Jupiter row offers (agent-ux §2.3, §3.4): CANCEL &
+ * WITHDRAW while the order watches, FINISH WITHDRAWAL after an
+ * interrupted cancel, WITHDRAW for an expired order whose deposit still
+ * sits in the vault. Null once the funds have left the vault.
+ */
+export function triggerAction(plan: Pick<Plan, "status" | "triggerState">): { label: string; title: string; kind: "cancel" | "finish" | "withdraw" } | null {
+  switch (plan.triggerState) {
+    case "expired":
+      return { kind: "withdraw", label: "Withdraw · sign in wallet", title: "The order expired unfilled; the deposit stays in Jupiter's vault until you withdraw it." };
+    case "pending_withdraw":
+      return { kind: "finish", label: "Finish withdrawal", title: "The cancel went through; the return still needs your signature." };
+    case "filled":
+    case "cancelled":
+    case "failed":
+      return null;
+    default:
+      return ACTIVE_STATUSES.includes(plan.status) ? { kind: "cancel", label: "Cancel & withdraw", title: "Stops the order right away; the deposit comes back with one signature." } : null;
+  }
+}
+
+/** Line 4 of a Jupiter row: the mirrored order state, the id, the expiry, and how fresh the mirror is. */
+export function jupiterLine(plan: Pick<Plan, "triggerState" | "triggerOrderId" | "armUntil" | "triggerCheckedAt">, now: number | null): string {
+  const parts = [`Jupiter order · ${triggerStateLabel(plan.triggerState)}`];
+  if (plan.triggerOrderId) parts.push(`order ${shortId(plan.triggerOrderId)}`);
+  if (plan.armUntil) parts.push(`expires ${shortDate(plan.armUntil)}`);
+  if (plan.triggerCheckedAt && now) parts.push(`Jupiter status checked ${relTime(plan.triggerCheckedAt, now)} ago`);
+  return parts.join(" · ");
+}
+
+/** A holding OTOCO row: the child pair is live on Jupiter's side (agent-ux §2.3). */
+export function jupiterHoldingLine(plan: Pick<Plan, "condition">, price: number | undefined): string {
+  const exits = exitsLine(plan.condition.exits);
+  return [`holding${price !== undefined ? ` · now ${money(price)}` : ""}`, `Jupiter watching${exits ? ` ${exits}` : ""}`].join(" · ");
+}
+
+/** A live row belongs to the wallet that armed it (agent-ux §5 "Wallet disconnected"): who can act on it, in one line, or null when the connected wallet is that one. */
+export function walletNotice(plan: Pick<Plan, "wallet">, address: string | null): string | null {
+  if (!plan.wallet) return null;
+  if (!address) return `Connect ${shortWallet(plan.wallet)} to refresh Jupiter status.`;
+  if (address !== plan.wallet) return `armed from ${shortWallet(plan.wallet)}`;
+  return null;
 }
 
 /** When the toggle differs from a plan's mode, one line says the other mode's plans are still watched (agent-ux §5). */
