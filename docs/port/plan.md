@@ -45,7 +45,10 @@ Deviations recorded by the page tasks: `src/hooks/use-visit.ts` is R1's (SincePa
 
 - **A4 review fixes** (`58fc9cc`): the agent's toasts ride the plans toast store (one host), `agent.css` scoped under `.agent`, the agent's EDIT opens A2's `PlanEditorSheet` when signed in (the agent copy stays for the signed-out card), card actions call `notifyPlansChanged()`, the session token is read at send time (`?q=` auto-send), the bubble eyebrow says "from Finnhub" / "from Google News".
 
-Not done: the A2 follow-up commit from the harness's re-run (merge when it lands), A5 fill hand-off (Jupiter fills → /api/fills with the vault check), M1 phone QA pass, P1 (a11y/perf pass), P3 (code review, preview deploy, promotion).
+- **A2 follow-up** (`bf0aff2`, merged): the Plans card finishes the A5 wiring on its side — Jupiter rows offer CANCEL & WITHDRAW / FINISH WITHDRAWAL / WITHDRAW · SIGN IN WALLET through `CancelPlanSheet`, REFRESH · SIGN IN WITH WALLET when no token is cached, "armed from {other wallet}" read-only rows, the OTOCO holding line, "Jupiter status checked {rel} ago"; the composer in live mode opens `ArmPlanSheet` for plans Jupiter can hold; `usePlans` refetches on `solera:plans-changed`; `useTriggerSync` runs while a token is cached. Its review never ran (the harness re-ran the build and the workflow was stopped to free the machine) — P3's code review covers it.
+- Toolchain note: the local dev server now runs with `--webpack` (`.claude/launch.json`): Turbopack on this machine panics spawning its pooled node process under load ("No such file or directory") on the wallet-adapter CSS; production builds still use Turbopack and pass.
+
+Not done: A5 fill hand-off (Jupiter fills → /api/fills with the vault check), M1 phone QA pass, P1 (a11y/perf pass), P3 (code review, preview deploy, promotion).
 
 ## 0. Rulings on the review issues
 

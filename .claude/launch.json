@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "stocklana-dev",
-      "runtimeExecutable": "/Users/tibet/.local/node/bin/npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": ["-c", "export PATH=/Users/tibet/.local/node/bin:$PATH; exec npx next dev -p 3000 --webpack"],
       "port": 3000
     }
   ]
