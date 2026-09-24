@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { COMPANIES, formatCompactUsd, formatValuation, type CompanyComparison, type PreIpoToken } from "@/lib/pre-ipo";
+import { COMPANIES, formatCompactUsd, formatValuation, listedSentence, type CompanyComparison, type PreIpoToken } from "@/lib/pre-ipo";
 import { formatCurrency } from "@/lib/format";
 import { fillFor } from "@/lib/palette";
 import { PreIpoBuySheet } from "./PreIpoBuySheet";
@@ -59,6 +59,17 @@ export function IssuerPill({ issuer }: { issuer: PreIpoToken["issuer"] }) {
   return <span className={`pi-issuer ${issuer === "Tessera" ? "tessera" : "prestocks"}`}>{issuer}</span>;
 }
 
+/** "LISTED" beside a token whose company has gone public since the token was issued. */
+export function ListedPill({ company }: { company: PreIpoToken["company"] }) {
+  const listed = COMPANIES[company].listed;
+  if (!listed) return null;
+  return (
+    <span className="pi-issuer listed" title={listedSentence(COMPANIES[company]) ?? undefined}>
+      Listed · {listed.ticker}
+    </span>
+  );
+}
+
 /**
  * One row in the pre-IPO market list: badge, symbol + issuer, the company
  * and its mark, the live price with the 24h move, the gap chip and the
@@ -84,10 +95,12 @@ export function PreIpoRow({
         <CompanyBadge company={token.company} />
         <span className="row-main">
           <b>
-            {token.symbol} <IssuerPill issuer={token.issuer} />
+            {token.symbol} <IssuerPill issuer={token.issuer} /> <ListedPill company={token.company} />
           </b>
           <small>
-            {company.name} · {token.issuer} · mark {formatCurrency(token.markPrice)}
+            {company.name}
+            {company.listed ? ` (${company.listed.exchange}: ${company.listed.ticker})` : ""} · {token.issuer} · mark{" "}
+            {formatCurrency(token.markPrice)}
           </small>
         </span>
         <span className="row-num">
@@ -171,7 +184,8 @@ export function CompanyComparisonCard({
         <div className="min-w-0">
           <h4>{company.name}</h4>
           <p>
-            {company.sector} · sold by {tokens.length} issuers
+            {company.sector}
+            {company.listed ? ` · listed on ${company.listed.exchange} as ${company.listed.ticker}` : ""} · sold by {tokens.length} issuers
           </p>
         </div>
       </div>

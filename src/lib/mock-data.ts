@@ -11,7 +11,7 @@ import type { HoldingPosition, Investor, TickerInfo } from "./types";
 // the numbers came from.
 // ---------------------------------------------------------------------------
 
-/** The eight featured tickers: curated names, colors, Pyth feeds. Everything else comes from lib/catalog.ts. */
+/** The nine featured tickers: curated names, colors, Pyth feeds. Everything else comes from lib/catalog.ts. */
 export const TICKERS: Record<string, TickerInfo> = {
   TSLAx: {
     symbol: "TSLAx",
@@ -68,6 +68,13 @@ export const TICKERS: Record<string, TickerInfo> = {
     price: 287.65,
     color: "var(--color-tk-3)",
     history: [240, 245, 238, 250, 255, 248, 258, 263, 256, 265, 268, 262, 270, 266, 272, 278, 270, 275, 280, 287.65],
+  },
+  SPCXx: {
+    symbol: "SPCXx",
+    name: "SpaceX",
+    price: 148.25,
+    color: "var(--color-tk-8)",
+    history: [160, 158, 155, 157, 152, 150, 153, 149, 147, 151, 148, 146, 150, 152, 149, 147, 145, 148, 150, 148.25],
   },
 };
 

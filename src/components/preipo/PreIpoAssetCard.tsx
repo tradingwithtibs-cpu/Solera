@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { COMPANIES, formatCompactUsd, formatValuation, type CompanyComparison, type PreIpoToken } from "@/lib/pre-ipo";
+import { COMPANIES, formatCompactUsd, formatValuation, listedSentence, type CompanyComparison, type PreIpoToken } from "@/lib/pre-ipo";
 import { formatCurrency } from "@/lib/format";
 import { shortAddress } from "@/lib/investors";
 import { NewsList } from "@/components/NewsList";
@@ -56,6 +56,18 @@ export function PreIpoAssetCard({
           </small>
         </div>
       </div>
+
+      {company.listed && (
+        <div className="pi-callout warn pi-listed" role="note">
+          <span className="eyebrow">Listed company</span>
+          {listedSentence(company)}{" "}
+          {company.listed.xstock ? (
+            <Link href={`/asset/${company.listed.xstock}`}>
+              The listed share trades on Solana as {company.listed.xstock} →
+            </Link>
+          ) : null}
+        </div>
+      )}
 
       <div className="pi-asset-grid">
         <div className="min-w-0">

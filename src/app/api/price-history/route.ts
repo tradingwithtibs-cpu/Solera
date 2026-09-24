@@ -33,6 +33,7 @@ const COINGECKO_IDS: Record<TickerSymbol, string> = {
   GOOGLx: "alphabet-xstock",
   METAx: "meta-xstock",
   COINx: "coinbase-xstock",
+  SPCXx: "spacex-xstocks", // CoinGecko's id really is plural; checked 2026-09-24
 };
 
 export interface PriceHistoryResponse {

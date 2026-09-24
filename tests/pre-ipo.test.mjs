@@ -59,3 +59,32 @@ test("compact dollar formatting for liquidity", () => {
   assert.equal(formatCompactUsd(1_250_000), "$1.3M");
   assert.equal(formatCompactUsd(42), "$42");
 });
+
+test("a company that has listed keeps its tokens but says so", () => {
+  const { COMPANIES, listedSince, listedSentence } = load("../src/lib/pre-ipo.ts");
+  const spacex = COMPANIES.spacex;
+  assert.equal(spacex.listed.ticker, "SPCX");
+  assert.equal(spacex.listed.exchange, "Nasdaq");
+  assert.equal(spacex.listed.xstock, "SPCXx");
+  assert.equal(listedSince(spacex.listed), "June 12, 2026");
+  const sentence = listedSentence(spacex);
+  assert.ok(sentence.startsWith("SpaceX has traded on Nasdaq as SPCX since June 12, 2026."), sentence);
+  assert.ok(sentence.includes("do not turn into shares"), sentence);
+  // Everyone else is still private.
+  for (const id of Object.keys(COMPANIES)) if (id !== "spacex") assert.equal(COMPANIES[id].listed, undefined, id);
+  assert.equal(listedSentence(COMPANIES.openai), null);
+});
+
+test("the listed share's xStock is a featured ticker with a Pyth pair", () => {
+  const { XSTOCK_TOKENS } = load("../src/lib/tokens.ts");
+  const { PYTH_FEEDS } = load("../src/lib/pyth-feeds.ts");
+  const { TICKERS } = load("../src/lib/mock-data.ts");
+  assert.equal(XSTOCK_TOKENS.SPCXx.decimals, 8);
+  assert.equal(PYTH_FEEDS.SPCXx.equitySymbol, "SPCX");
+  assert.equal(TICKERS.SPCXx.name, "SpaceX");
+  // Every featured ticker has all three registrations.
+  for (const t of Object.keys(XSTOCK_TOKENS)) {
+    assert.ok(PYTH_FEEDS[t], `${t} has no Pyth pair`);
+    assert.ok(TICKERS[t], `${t} has no curated entry`);
+  }
+});

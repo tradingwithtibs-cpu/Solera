@@ -89,6 +89,20 @@
   border-color: color-mix(in srgb, var(--live) 33%, transparent);
   background: color-mix(in srgb, var(--live) 7%, transparent);
 }
+/* The company has gone public since the token was issued. */
+.pi-issuer.listed {
+  color: var(--warn);
+  border-color: color-mix(in srgb, var(--warn) 33%, transparent);
+  background: color-mix(in srgb, var(--warn) 8%, transparent);
+}
+.pi-listed {
+  margin-bottom: 12px;
+}
+.pi-listed a {
+  color: var(--text-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 .pi-gap.warn {
   color: var(--warn);
   border-color: color-mix(in srgb, var(--warn) 33%, transparent);

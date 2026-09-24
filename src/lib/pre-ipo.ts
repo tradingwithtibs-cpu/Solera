@@ -28,6 +28,23 @@ export type CompanyId =
   | "polymarket"
   | "figureai";
 
+/**
+ * A pre-IPO company that has since gone public. The issuers keep their
+ * tokens trading after the listing (the SPV holds shares under lock-up
+ * until the issuer converts or redeems), so the token stays on this tab,
+ * labelled, with a pointer to the listed share's own xStock when one
+ * trades on Solana.
+ */
+export interface ListedShare {
+  /** Exchange ticker, e.g. "SPCX". */
+  ticker: string;
+  exchange: string;
+  /** Listing date, ISO yyyy-mm-dd. */
+  since: string;
+  /** The listed share's xStock on Solana, when Backed has issued one. */
+  xstock?: string;
+}
+
 export interface Company {
   id: CompanyId;
   name: string;
@@ -36,18 +53,41 @@ export interface Company {
   /** Tailwind background class for the badge, matching TickerInfo.color. */
   color: string;
   sector: string;
+  /** Set once the company lists; absent while it is private. */
+  listed?: ListedShare;
 }
 
 export const COMPANIES: Record<CompanyId, Company> = {
   openai: { id: "openai", name: "OpenAI", short: "OAI", color: "var(--color-tk-8)", sector: "Artificial intelligence" },
   anthropic: { id: "anthropic", name: "Anthropic", short: "ANT", color: "var(--color-tk-7)", sector: "Artificial intelligence" },
-  spacex: { id: "spacex", name: "SpaceX", short: "SPX", color: "var(--color-tk-8)", sector: "Aerospace" },
+  spacex: {
+    id: "spacex",
+    name: "SpaceX",
+    short: "SPX",
+    color: "var(--color-tk-8)",
+    sector: "Aerospace",
+    // Priced at $135, opened on Nasdaq June 12, 2026. PreStocks and Tessera still publish their SpaceX tokens.
+    listed: { ticker: "SPCX", exchange: "Nasdaq", since: "2026-06-12", xstock: "SPCXx" },
+  },
   kalshi: { id: "kalshi", name: "Kalshi", short: "KAL", color: "var(--color-tk-4)", sector: "Prediction markets" },
   anduril: { id: "anduril", name: "Anduril", short: "AND", color: "var(--color-tk-8)", sector: "Defense" },
   neuralink: { id: "neuralink", name: "Neuralink", short: "NRL", color: "var(--color-tk-5)", sector: "Neurotech" },
   polymarket: { id: "polymarket", name: "Polymarket", short: "POLY", color: "var(--color-tk-2)", sector: "Prediction markets" },
   figureai: { id: "figureai", name: "Figure AI", short: "FIG", color: "var(--color-tk-3)", sector: "Robotics" },
 };
+
+/** "June 12, 2026" for a listed company's listing date, in UTC so the day never shifts. */
+export function listedSince(listed: ListedShare): string {
+  const [y, m, d] = listed.since.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
+}
+
+/** One sentence for a token whose company has listed: what happened, and what the token still is. */
+export function listedSentence(company: Company): string | null {
+  if (!company.listed) return null;
+  const { ticker, exchange } = company.listed;
+  return `${company.name} has traded on ${exchange} as ${ticker} since ${listedSince(company.listed)}. Its pre-IPO tokens keep trading against each issuer's mark and do not turn into shares on their own.`;
+}
 
 /** Issuer symbol → company. Anything not listed here is ignored by the route. */
 export const PRESTOCKS_SYMBOLS: Record<string, CompanyId> = {

@@ -1,10 +1,11 @@
 import type { TickerSymbol } from "./types";
 
 /**
- * The real Solana mainnet tokens behind every ticker in the app. All eight
+ * The real Solana mainnet tokens behind every ticker in the app. All nine
  * xStocks are Token-2022 mints issued by Backed Finance with 8 decimals
- * (verified on-chain 2026-09-17). USDC is the settlement currency for live
- * trades: every buy spends USDC, every sell receives it.
+ * (eight verified on-chain 2026-09-17; SPCXx via Jupiter's verified token
+ * list 2026-09-24). USDC is the settlement currency for live trades: every
+ * buy spends USDC, every sell receives it.
  */
 export interface TokenInfo {
   mint: string;
@@ -26,7 +27,7 @@ export const SETTLEMENT: Record<SettlementCurrency, TokenInfo> = { SOL, USDC };
 /** SOL kept back on a max-size buy so the wallet can still pay network fees afterwards. */
 export const SOL_FEE_RESERVE = 0.01;
 
-/** Mints for the eight featured tickers; the rest are resolved through lib/catalog.ts. */
+/** Mints for the nine featured tickers; the rest are resolved through lib/catalog.ts. */
 export const XSTOCK_TOKENS: Record<string, TokenInfo> = {
   AAPLx: { mint: "XsbEhLAtcf6HdfpFZ5xEMdqW8nfAvcsP5bdudRLJzJp", decimals: 8 },
   TSLAx: { mint: "XsDoVfqeBukxuZHWhdvWHBhgEHjGNst4MLodqsJHzoB", decimals: 8 },
@@ -36,6 +37,8 @@ export const XSTOCK_TOKENS: Record<string, TokenInfo> = {
   GOOGLx: { mint: "XsCPL9dNWBMvFtTmwcCA5v3xWPSMEBCszbQdiLLq6aN", decimals: 8 },
   METAx: { mint: "Xsa62P5mvPszXL1krVUnU5ar38bBSVcWAB6fmPCo5Zu", decimals: 8 },
   COINx: { mint: "Xs7ZdzSHLU9ftNJsii5fCeJhoRWSC32SQGzGQtePxNu", decimals: 8 },
+  // SpaceX listed on Nasdaq as SPCX on 2026-06-12; Backed issued its xStock after. Featured so the pre-IPO tab can point at the listed share.
+  SPCXx: { mint: "Xs3oZwbHvqis4NYcf4YKWmEia2eC84wSiVrcYcTqpH8", decimals: 8 },
 };
 
 const MINT_TO_TICKER = new Map<string, string>(

@@ -1,4 +1,4 @@
-import { COMPANIES, PRESTOCKS_SYMBOLS, TESSERA_CODES, type CompanyId } from "../pre-ipo";
+import { COMPANIES, PRESTOCKS_SYMBOLS, TESSERA_CODES, type Company, type CompanyId } from "../pre-ipo";
 import { HttpError } from "../http-error";
 import { ACTIVE_STATUSES, describe, validateCondition, type PlanAction, type PlanCondition, type PlanExit, type PlanStatus } from "../plans";
 import { NOTE_MAX } from "../fills";
@@ -32,13 +32,20 @@ export function normalizeTicker(raw: string): string {
   return `${base.toUpperCase()}x`;
 }
 
-function preIpoName(raw: string): string | null {
+/** The pre-IPO company a symbol or name refers to, or null for anything else (including a listed share's own xStock). */
+function preIpoCompany(raw: string): Company | null {
   const s = raw.trim();
   const upper = s.toUpperCase().replace(/X$/, "");
-  if (upper in PRESTOCKS_SYMBOLS) return COMPANIES[PRESTOCKS_SYMBOLS[upper]].name;
-  if (s in TESSERA_CODES) return COMPANIES[TESSERA_CODES[s]].name;
-  const byName = Object.values(COMPANIES).find((c) => c.name.toLowerCase() === s.toLowerCase() || c.id === s.toLowerCase());
-  return byName ? byName.name : null;
+  if (upper in PRESTOCKS_SYMBOLS) return COMPANIES[PRESTOCKS_SYMBOLS[upper]];
+  if (s in TESSERA_CODES) return COMPANIES[TESSERA_CODES[s]];
+  return Object.values(COMPANIES).find((c) => c.name.toLowerCase() === s.toLowerCase() || c.id === s.toLowerCase()) ?? null;
+}
+
+/** "SpaceX listed as SPCX on 2026-06-12; its share trades as SPCXx." or "" while the company is private. */
+function listedHint(company: Company): string {
+  const l = company.listed;
+  if (!l) return "";
+  return ` ${company.name} listed on ${l.exchange} as ${l.ticker} on ${l.since}${l.xstock ? `; the listed share is ticker ${l.xstock}` : ""}.`;
 }
 
 interface ToolCondition {
@@ -97,7 +104,8 @@ export async function execute(name: string, rawInput: unknown, ctx: ToolContext,
       case "get_news": {
         const { ticker, company } = rawInput as { ticker: string | null; company: CompanyId | null };
         if (!!ticker === !!company) return fail("Pass exactly one of ticker or company.");
-        if (ticker && preIpoName(ticker)) return fail(`${preIpoName(ticker)} is a private company; call get_news with company instead.`);
+        const preCompany = ticker ? preIpoCompany(ticker) : null;
+        if (preCompany) return fail(`${preCompany.name} is a pre-IPO token company; call get_news with company instead.${listedHint(preCompany)}`);
         const q = ticker ? { ticker: normalizeTicker(ticker) } : { company: company as CompanyId };
         const res = await deps.news(q);
         const items = res.items.slice(0, NEWS_LIMIT);
@@ -160,8 +168,8 @@ export async function execute(name: string, rawInput: unknown, ctx: ToolContext,
       }
       case "place_practice_order": {
         const input = rawInput as { ticker: string; side: "buy" | "sell"; amountUsd: number | null; shares: number | null; note: string | null };
-        const pre = preIpoName(input.ticker);
-        if (pre) return fail(`Pre-IPO tokens (${pre}) are bought for real, from your wallet. Switch to live and open the Pre-IPO card.`);
+        const preOrder = preIpoCompany(input.ticker);
+        if (preOrder) return fail(`Pre-IPO tokens (${preOrder.name}) are bought for real, from your wallet. Switch to live and open the Pre-IPO card.${listedHint(preOrder)}`);
         if ((input.amountUsd === null) === (input.shares === null)) return fail("Give exactly one size: a dollar amount or a number of shares.");
         if (input.side === "sell" && input.amountUsd !== null) return fail("Sell a number of shares, not a dollar amount.");
         const ticker = normalizeTicker(input.ticker);

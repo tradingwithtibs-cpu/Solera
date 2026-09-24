@@ -85,6 +85,14 @@ export const PYTH_FEEDS: Record<string, PythFeedPair> = {
     equitySymbol: "COIN",
     equityShard: null,
   },
+  SPCXx: {
+    xstock: "e8e2234a06b288fedde43ae9450cb288886ecb3259ad2f41d0067f02244a0101",
+    equity: "8a593d6edde7a3095213c88116d8840d01e93c2ddeb800bc891772eb8b93bb94",
+    equitySymbol: "SPCX",
+    // Checked 2026-09-24: shard 0 held a print more than a day old and shard 1 had no account,
+    // so nobody is pushing SPCX on-chain yet. Hermes (PYTH_API_KEY) still serves it.
+    equityShard: null,
+  },
 };
 
 /**

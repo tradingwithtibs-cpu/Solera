@@ -97,7 +97,7 @@ export const TOOLS: Anthropic.Beta.BetaTool[] = [
     properties: { tickers: { type: "array", minItems: 1, maxItems: 20, items: { type: "string", minLength: 1, maxLength: 13 }, description: "Symbols like AAPLx." } },
     required: ["tickers"],
   }),
-  strictTool("get_news", "Recent headlines for one xStock's company (ticker) or one private pre-IPO company (company). Pass exactly one; the other is null. Quote headlines verbatim with their source.", {
+  strictTool("get_news", "Recent headlines for one xStock's company (ticker) or one pre-IPO token company (company; some have listed since, and the error names the listed share). Pass exactly one; the other is null. Quote headlines verbatim with their source.", {
     type: "object",
     additionalProperties: false,
     properties: {
