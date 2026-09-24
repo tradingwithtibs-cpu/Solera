@@ -91,7 +91,7 @@ const strictTool = (name: string, description: string, input_schema: JsonSchema)
 };
 
 export const TOOLS: Anthropic.Beta.BetaTool[] = [
-  strictTool("get_prices", "Live USD prices for one or more xStocks from Jupiter. Use before quoting any price.", {
+  strictTool("get_prices", "Live USD prices for one or more xStocks from Jupiter, plus, for the featured tickers, the listed share's reference price from Pyth and the token's gap to it in percent. Use before quoting any price, and use the reference when asked how a token compares to the real stock.", {
     type: "object",
     additionalProperties: false,
     properties: { tickers: { type: "array", minItems: 1, maxItems: 20, items: { type: "string", minLength: 1, maxLength: 13 }, description: "Symbols like AAPLx." } },

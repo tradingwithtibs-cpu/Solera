@@ -107,7 +107,12 @@ export interface ToolContext {
 
 /** Everything a tool touches outside itself, so tests run the loop against fakes. */
 export interface ToolDeps {
-  prices: (tickers: string[]) => Promise<{ prices: Record<string, number>; fetchedAt: number }>;
+  prices: (tickers: string[]) => Promise<{
+    prices: Record<string, number>;
+    fetchedAt: number;
+    /** The listed share's Pyth reference, for the featured tickers that have one. */
+    underlying?: Record<string, { price: number; publishTime: number; stale: boolean }>;
+  }>;
   news: (q: { ticker?: string; company?: CompanyId }) => Promise<NewsResponse>;
   catalog: () => Promise<CatalogToken[]>;
   isTradable: (ticker: string) => Promise<boolean>;

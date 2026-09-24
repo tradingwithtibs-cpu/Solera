@@ -3,6 +3,7 @@ import { TICKERS } from "../mock-data";
 import { loadNews } from "../news-server";
 import { makeResolver } from "../plan-parser";
 import { createPlan, getPlan, listPlans, transitionPlan } from "../plans-server";
+import { loadLivePrices } from "../live-prices-server";
 import { jupiterPricesForMints, mintForTicker } from "../prices-server";
 import { XSTOCK_TOKENS } from "../tokens";
 import type { TickerSymbol } from "../types";
@@ -17,7 +18,14 @@ export function realDeps(): ToolDeps {
       const byMint = await jupiterPricesForMints(known.map((p) => p[1]));
       const prices: Record<string, number> = {};
       for (const [ticker, mint] of known) if (byMint[mint]) prices[ticker] = byMint[mint];
-      return { prices, fetchedAt: Date.now() };
+      // The Pyth reference for whichever of these are featured tickers; a feed outage just leaves it out.
+      const underlying: NonNullable<Awaited<ReturnType<ToolDeps["prices"]>>["underlying"]> = {};
+      const live = await loadLivePrices().catch(() => null);
+      for (const ticker of tickers) {
+        const q = live?.underlying[ticker as TickerSymbol];
+        if (q) underlying[ticker] = q;
+      }
+      return { prices, fetchedAt: Date.now(), underlying };
     },
     news: (q) => loadNews(q.ticker ? { ticker: q.ticker } : q.company ? { company: q.company } : {}),
     catalog: () => getCatalog(),

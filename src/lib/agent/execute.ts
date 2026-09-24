@@ -4,6 +4,7 @@ import { ACTIVE_STATUSES, describe, validateCondition, type PlanAction, type Pla
 import { NOTE_MAX } from "../fills";
 import { validateAgainst } from "./schema";
 import { toolSchema } from "./tools";
+import { premiumPct } from "../pyth-feeds";
 import type { AgentCard, ToolContext, ToolDeps, ToolOutcome } from "./types";
 
 /**
@@ -75,9 +76,22 @@ export async function execute(name: string, rawInput: unknown, ctx: ToolContext,
       case "get_prices": {
         const { tickers } = rawInput as { tickers: string[] };
         const wanted = [...new Set(tickers.map(normalizeTicker))];
-        const { prices, fetchedAt } = await deps.prices(wanted);
+        const { prices, fetchedAt, underlying } = await deps.prices(wanted);
         const missing = wanted.filter((t) => !(prices[t] > 0));
-        const result = { prices, fetchedAt: new Date(fetchedAt).toISOString(), source: "Jupiter", missing };
+        // The listed share's reference price and the token's gap to it, where the app has a Pyth feed.
+        const reference: Record<string, { sharePrice: number; asOf: string; marketOpen: boolean; gapPct: number | null }> = {};
+        for (const [ticker, q] of Object.entries(underlying ?? {})) {
+          const gap = premiumPct(prices[ticker], q.price);
+          reference[ticker] = { sharePrice: q.price, asOf: new Date(q.publishTime * 1000).toISOString(), marketOpen: !q.stale, gapPct: gap === undefined ? null : Math.round(gap * 100) / 100 };
+        }
+        const result = {
+          prices,
+          fetchedAt: new Date(fetchedAt).toISOString(),
+          source: "Jupiter",
+          reference,
+          referenceNote: "reference = the listed share on its exchange, from Pyth; gapPct = token price vs that share, positive when the token trades above it; marketOpen false means the share price is the last session's close",
+          missing,
+        };
         return Object.keys(prices).length ? ok(result, { kind: "prices", prices, fetchedAt }) : fail(`No live price for ${missing.join(", ")} right now.`);
       }
       case "get_news": {
