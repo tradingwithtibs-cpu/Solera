@@ -255,3 +255,16 @@ test("the API copy of a tool schema carries no length or range keywords, the val
   for (const t of TOOLS) assert.deepEqual(walk(t.input_schema), [], `${t.name} sends unsupported keywords`);
   assert.ok(walk(toolSchema("get_prices")).includes("maxItems"));
 });
+
+test("a nullable enum reaches the API as anyOf (enum, null), never as a union type with an enum", () => {
+  const { TOOLS } = load("../src/lib/agent/tools.ts");
+  const news = TOOLS.find((t) => t.name === "get_news").input_schema.properties.company;
+  assert.equal(news.type, undefined);
+  assert.deepEqual(news.anyOf[1], { type: "null" });
+  assert.equal(news.anyOf[0].type, "string");
+  assert.ok(news.anyOf[0].enum.includes("openai") && !news.anyOf[0].enum.includes(null));
+  const status = TOOLS.find((t) => t.name === "list_plans").input_schema.properties.status;
+  assert.deepEqual(status.anyOf[0].enum, ["active", "past"]);
+  // A nullable primitive without an enum keeps its union type.
+  assert.deepEqual(TOOLS.find((t) => t.name === "get_news").input_schema.properties.ticker.type, ["string", "null"]);
+});

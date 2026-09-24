@@ -67,8 +67,17 @@ const API_UNSUPPORTED = new Set(["minItems", "maxItems", "minLength", "maxLength
 function forApi(schema: unknown): unknown {
   if (Array.isArray(schema)) return schema.map(forApi);
   if (schema && typeof schema === "object") {
+    const src = schema as Record<string, unknown>;
     const out: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(schema as Record<string, unknown>)) if (!API_UNSUPPORTED.has(k)) out[k] = forApi(v);
+    for (const [k, v] of Object.entries(src)) if (!API_UNSUPPORTED.has(k)) out[k] = forApi(v);
+    // A nullable enum: the API refuses `type: ["string", "null"]` alongside `enum` ("Enum value … does not match declared
+    // type"), so it becomes anyOf: the enum on its base type, or null.
+    if (Array.isArray(src.enum) && Array.isArray(src.type) && src.type.includes("null")) {
+      const base = (src.type as string[]).filter((t) => t !== "null");
+      const { enum: values, type: _type, ...rest } = out;
+      void _type;
+      return { ...rest, anyOf: [{ type: base.length === 1 ? base[0] : base, enum: (values as unknown[]).filter((v) => v !== null) }, { type: "null" }] };
+    }
     return out;
   }
   return schema;
