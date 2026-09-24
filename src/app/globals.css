@@ -2375,6 +2375,40 @@ code,
   background: #05060cb8 !important;
 }
 
+/* A wallet connect that runs long: the hint sits above the picker, bottom centre. */
+.connect-hint {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  z-index: 1100;
+  transform: translateX(-50%);
+  width: min(440px, calc(100vw - 32px));
+  padding: 12px 14px;
+  background: var(--ink-panel);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-sheet);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-1);
+}
+.connect-hint p {
+  margin: 0;
+}
+.connect-hint b {
+  color: var(--text-0);
+}
+.connect-hint-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+@media (max-width: 767px) {
+  .connect-hint {
+    bottom: 72px;
+  }
+}
+
 /* ---------- 17. Motion preferences and forced colours ---------- */
 @media (prefers-reduced-motion: reduce) {
   *,

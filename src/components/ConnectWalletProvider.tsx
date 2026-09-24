@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useId, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useId, useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { hasInjectedWallet, isAndroid, isMobileBrowser, phantomBrowseUrl, solflareBrowseUrl } from "@/lib/mobile-wallet";
@@ -29,8 +29,27 @@ export function useConnectWallet() {
 export function ConnectWalletProvider({ children }: { children: React.ReactNode }) {
   const id = useId();
   const { setVisible } = useWalletModal();
-  const { select, connect, wallet } = useWallet();
+  const { select, connect, wallet, connecting } = useWallet();
   const [showMobilePrompt, setShowMobilePrompt] = useState(false);
+  // A connect that runs long is a wallet waiting for the person, not a fault here: on a Mac in full screen the
+  // extension's approval window often opens behind Chrome. After a few seconds, say where to look and offer a reset.
+  const [stuck, setStuck] = useState(false);
+  useEffect(() => {
+    if (!connecting) return;
+    const id = setTimeout(() => setStuck(true), 6_000);
+    return () => {
+      clearTimeout(id);
+      queueMicrotask(() => setStuck(false));
+    };
+  }, [connecting]);
+  const startOver = () => {
+    try {
+      window.localStorage.removeItem("walletName");
+    } catch {
+      // Storage unavailable: the reload alone still clears the pending attempt.
+    }
+    window.location.reload();
+  };
 
   const openConnect = useCallback(() => {
     if (isMobileBrowser() && !hasInjectedWallet() && !isAndroid()) {
@@ -56,6 +75,22 @@ export function ConnectWalletProvider({ children }: { children: React.ReactNode 
   return (
     <ConnectWalletContext.Provider value={{ openConnect }}>
       {children}
+      {connecting && stuck && (
+        <div className="connect-hint" role="status">
+          <p>
+            <b>{wallet?.adapter.name ?? "Your wallet"} is waiting for you.</b> Click its icon in the browser toolbar to see the request. In full screen its
+            window can open behind the browser.
+          </p>
+          <div className="connect-hint-actions">
+            <button type="button" className="btn-secondary btn-small" onClick={startOver}>
+              Start over
+            </button>
+            <button type="button" className="btn-ghost btn-small" onClick={() => setStuck(false)}>
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
       {showMobilePrompt && (
         <Sheet labelledBy={id} onClose={close}>
           <SheetHead eyebrow="Wallet" title="Connect your wallet" id={id} onClose={close} />
