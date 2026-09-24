@@ -248,3 +248,10 @@ test("model selection: the key picks Claude, SOLERA_AGENT_MODEL forces either, n
   assert.equal(selectModelName({ ANTHROPIC_API_KEY: "k", SOLERA_AGENT_MODEL: "mock" }), "mock");
   assert.equal(selectModelName({ SOLERA_AGENT_MODEL: "anthropic" }), "anthropic");
 });
+
+test("the API copy of a tool schema carries no length or range keywords, the validator's copy still does", () => {
+  const { TOOLS, toolSchema } = load("../src/lib/agent/tools.ts");
+  const walk = (node, found = []) => { if (Array.isArray(node)) node.forEach((n) => walk(n, found)); else if (node && typeof node === "object") for (const [k, v] of Object.entries(node)) { if (["minItems", "maxItems", "minLength", "maxLength", "minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum"].includes(k)) found.push(k); walk(v, found); } return found; };
+  for (const t of TOOLS) assert.deepEqual(walk(t.input_schema), [], `${t.name} sends unsupported keywords`);
+  assert.ok(walk(toolSchema("get_prices")).includes("maxItems"));
+});

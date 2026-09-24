@@ -57,12 +57,29 @@ export const CONDITION_SCHEMA: JsonSchema = {
   required: ["ticker", "trigger", "action", "exits", "wrongIf", "note", "armDays"],
 };
 
-const strictTool = (name: string, description: string, input_schema: JsonSchema): Anthropic.Beta.BetaTool => ({
-  name,
-  description,
-  strict: true,
-  input_schema: input_schema as Anthropic.Beta.BetaTool.InputSchema,
-});
+/**
+ * Strict tools accept a subset of JSON Schema: no length or range keywords
+ * (the API answers 400 "property 'maxItems' is not supported"). The full
+ * schema stays here for the hand validator; the API gets a copy without them.
+ */
+const API_UNSUPPORTED = new Set(["minItems", "maxItems", "minLength", "maxLength", "minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum", "pattern", "format"]);
+
+function forApi(schema: unknown): unknown {
+  if (Array.isArray(schema)) return schema.map(forApi);
+  if (schema && typeof schema === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(schema as Record<string, unknown>)) if (!API_UNSUPPORTED.has(k)) out[k] = forApi(v);
+    return out;
+  }
+  return schema;
+}
+
+const FULL_SCHEMAS = new Map<string, JsonSchema>();
+
+const strictTool = (name: string, description: string, input_schema: JsonSchema): Anthropic.Beta.BetaTool => {
+  FULL_SCHEMAS.set(name, input_schema);
+  return { name, description, strict: true, input_schema: forApi(input_schema) as Anthropic.Beta.BetaTool.InputSchema };
+};
 
 export const TOOLS: Anthropic.Beta.BetaTool[] = [
   strictTool("get_prices", "Live USD prices for one or more xStocks from Jupiter. Use before quoting any price.", {
@@ -130,6 +147,7 @@ export const TOOLS: Anthropic.Beta.BetaTool[] = [
 
 export const TOOL_NAMES = TOOLS.map((t) => t.name);
 
+/** The full schema (with the length and range rules) the validator checks tool inputs against. */
 export function toolSchema(name: string): JsonSchema | undefined {
-  return TOOLS.find((t) => t.name === name)?.input_schema as JsonSchema | undefined;
+  return FULL_SCHEMAS.get(name);
 }
