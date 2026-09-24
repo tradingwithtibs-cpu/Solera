@@ -1,10 +1,10 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useAuthUser, useRecoveryPending } from "@/hooks/use-auth-user";
 import { useProfile } from "@/hooks/use-profiles";
-import { useSession } from "@/hooks/use-session";
+import { completeEmailSignIn, useSession } from "@/hooks/use-session";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { avatarColorFor, shortAddress } from "@/lib/investors";
 import { fillFor } from "@/lib/palette";
@@ -27,22 +27,47 @@ import { setAuthSheetMode, type AuthSheetMode } from "./auth-sheet-store";
  * flow and then offers the profile claim. The email form runs on Supabase
  * Auth and trades its token for Solera's own 30-day session.
  */
+/**
+ * A returning email user has a Supabase session but may have lost Solera's own
+ * 30-day token (cleared storage, expiry, an older build). Without it the link
+ * box and every write silently stay away, so mint it again from the Supabase
+ * access token, once, when nobody is signed in.
+ */
+function useEnsureEmailSession(authUser: ReturnType<typeof useAuthUser>, signedIn: boolean) {
+  const tried = useRef(false);
+  useEffect(() => {
+    if (!authUser || signedIn || tried.current) return;
+    tried.current = true;
+    getSupabaseBrowser()
+      ?.auth.getSession()
+      .then(({ data }) => (data.session?.access_token ? completeEmailSignIn(data.session.access_token) : null))
+      .catch(() => {
+        // The next sign-in or refresh tries again; nothing to show here.
+      });
+  }, [authUser, signedIn]);
+}
+
 export function AuthSheet({ mode, onClose }: { mode: AuthSheetMode; onClose: () => void }) {
   const id = useId();
   const { publicKey, connected, connecting, wallet, disconnect } = useWallet();
   const address = connected ? (publicKey?.toBase58() ?? null) : null;
   const authUser = useAuthUser();
-  const owner = address ?? authUser?.id ?? null;
-  const profile = useProfile(owner);
+  // The account's own profile decides what the sheet shows: an email account keeps its profile when a wallet that
+  // is not linked yet connects (looking that wallet up alone finds nothing and used to block the link).
+  const accountProfile = useProfile(authUser?.id ?? null);
+  const walletProfile = useProfile(address);
+  const owner = authUser?.id ?? address ?? null;
+  const profile = authUser ? (accountProfile ?? walletProfile) : walletProfile;
   const { openConnect } = useConnectWallet();
   const session = useSession();
+  useEnsureEmailSession(authUser, session.signedIn);
   const [walletFlow, setWalletFlow] = useState(false);
   const [busy, setBusy] = useState(false);
   const [linkError, setLinkError] = useState<string | null>(null);
   const [linking, setLinking] = useState(false);
   const recovering = useRecoveryPending();
   const { signMessage } = useWallet();
-  const linkedWallet = profile?.wallet ?? null;
+  const linkedWallet = accountProfile?.wallet ?? null;
   const canLink = !!authUser && !!address && session.kind === "user" && !!session.token && linkedWallet !== address;
 
   async function linkWallet() {
@@ -163,8 +188,9 @@ export function AuthSheet({ mode, onClose }: { mode: AuthSheetMode; onClose: () 
             <p className="text-xs text-fg">
               Link <span className="font-mono">{shortAddress(address!)}</span> to this account so live trades and plans belong to it. One signature; it can&apos;t move funds.
             </p>
-            {!profile && <p className="mt-1 text-[11px] text-muted">Claim a profile first (below), then link.</p>}
-            <button type="button" className="btn-live mt-2 w-full" onClick={linkWallet} disabled={linking || !profile || !signMessage} aria-busy={linking}>
+            {!accountProfile && <p className="mt-1 text-[11px] text-muted">Claim a profile first (below), then link.</p>}
+            {!signMessage && <p className="mt-1 text-[11px] text-muted">Waiting for the wallet to finish connecting…</p>}
+            <button type="button" className="btn-live mt-2 w-full" onClick={linkWallet} disabled={linking || !accountProfile || !signMessage} aria-busy={linking}>
               {linking ? "Waiting for your wallet…" : "Link this wallet"}
             </button>
             {linkError && (

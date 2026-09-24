@@ -39,7 +39,15 @@ export function SidebarAccount() {
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold">{name}</p>
           <p className="text-xs text-neutral-500">Email account · practice</p>
-          <button type="button" onClick={openConnect} className="text-xs text-accent-text">
+          <button
+            type="button"
+            onClick={() => {
+              // The picker opens over the account sheet; once the wallet connects the sheet is already showing the link step.
+              openAuthSheet("account");
+              openConnect();
+            }}
+            className="text-xs text-accent-text"
+          >
             Link a wallet →
           </button>
         </div>
