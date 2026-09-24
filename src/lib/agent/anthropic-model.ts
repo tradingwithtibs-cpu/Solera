@@ -45,8 +45,14 @@ export class AnthropicModel implements AgentModel {
 
 /** The SDK's typed errors → the statuses the Agent tab knows how to word. Null for anything else. */
 export function mapAnthropicError(err: unknown): HttpError | null {
+  if (err instanceof Anthropic.APIError) {
+    // The operator's view: the server log carries what the API actually said; the client gets a calm sentence.
+    console.error(`[agent] Anthropic ${err.name} status=${err.status ?? "?"}: ${err.message}`);
+  }
   if (err instanceof Anthropic.AuthenticationError || err instanceof Anthropic.PermissionDeniedError) return new HttpError(501, "Agent isn't configured on this deployment yet.");
   if (err instanceof Anthropic.RateLimitError) return new HttpError(429, "The agent is busy right now. Try again in a moment.");
+  // A rejected request (bad parameter, unknown model) is a configuration problem worth reading verbatim.
+  if (err instanceof Anthropic.BadRequestError || err instanceof Anthropic.NotFoundError) return new HttpError(502, `The agent's request was rejected: ${err.message}`);
   if (err instanceof Anthropic.APIError) return new HttpError(502, "The agent isn't available right now.");
   return null;
 }
