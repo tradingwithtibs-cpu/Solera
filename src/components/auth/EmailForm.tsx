@@ -59,7 +59,12 @@ export function EmailForm({ tab, onSignedIn }: { tab: "login" | "signup"; onSign
     try {
       const cleanEmail = email.trim();
       if (tab === "signup") {
-        const { data, error: signUpError } = await supabase.auth.signUp({ email: cleanEmail, password, options: { data: { display_name: name.trim() } } });
+        // Confirmation links come back to this deployment, not the project's Site URL (Supabase falls back to that, and it defaults to localhost).
+        const { data, error: signUpError } = await supabase.auth.signUp({
+          email: cleanEmail,
+          password,
+          options: { data: { display_name: name.trim() }, emailRedirectTo: `${window.location.origin}/?auth=account` },
+        });
         if (signUpError) throw signUpError;
         if (!data.session) {
           setNotice("Check your inbox to confirm the email, then log in.");
