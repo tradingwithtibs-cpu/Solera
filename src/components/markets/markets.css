@@ -110,6 +110,12 @@
   .mk-rows .row-main b .chip {
     display: none;
   }
+  /* The company · issuer · mark line wraps rather than truncating: on the pre-IPO list the issuer is the point. */
+  .mk-rows .row-main small {
+    white-space: normal;
+    overflow: visible;
+    line-height: 1.35;
+  }
 }
 .mk-rows .liq {
   color: var(--text-2);

@@ -50,7 +50,7 @@ export function MarkPremiumBadge({ premiumPct, compact = false }: { premiumPct: 
 export function GapChip({ premiumPct }: { premiumPct: number }) {
   return (
     <span className={`gap pi-gap ${gapTone(premiumPct)}`} title="Token price vs the issuer's mark">
-      {signedPct(premiumPct)} vs mark
+      {signedPct(premiumPct)} <span className="gap-word">vs mark</span>
     </span>
   );
 }

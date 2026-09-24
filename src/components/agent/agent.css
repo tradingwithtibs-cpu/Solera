@@ -575,3 +575,9 @@
     animation: none;
   }
 }
+
+/* An empty composer is idle, not broken: the Send button stays readable while disabled. */
+.agent .plan-form .btn-live:disabled {
+  opacity: 0.6;
+  filter: none;
+}

@@ -568,15 +568,19 @@
     font-size: 30px;
   }
   .pf-kpis {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 8px;
   }
-  .pf-kpis > div:last-child {
+  .pf-kpis > div {
     grid-column: span 2;
+  }
+  .pf-kpis > div:nth-child(4),
+  .pf-kpis > div:nth-child(5) {
+    grid-column: span 3;
   }
   .pf-chart,
   .pf-chart-msg {
-    height: 200px;
+    height: 140px;
   }
   .pf-since li > a,
   .pf-since li > button,

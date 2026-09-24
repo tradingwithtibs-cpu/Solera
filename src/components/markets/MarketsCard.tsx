@@ -165,7 +165,9 @@ export function MarketsCard({ id, selected, onSelect, initialTab = "all", title 
       spark: null,
       liquidity: t.liquidityUsd,
       trailing: Number.isFinite(t.premiumPct) ? (
-        <span className={`gap ${t.premiumPct >= 0 ? "up" : "down"}`}>{pct(t.premiumPct)} vs mark</span>
+        <span className={`gap ${t.premiumPct >= 0 ? "up" : "down"}`}>
+          {pct(t.premiumPct)} <span className="gap-word">vs mark</span>
+        </span>
       ) : (
         <span className="liq off">— vs mark</span>
       ),
@@ -229,7 +231,7 @@ export function MarketsCard({ id, selected, onSelect, initialTab = "all", title 
             <input
               type="search"
               aria-label="Search markets"
-              placeholder="Search companies or tickers"
+              placeholder="Search markets"
               value={query}
               onChange={(e) => {
                 setQuery(e.target.value);
@@ -238,9 +240,9 @@ export function MarketsCard({ id, selected, onSelect, initialTab = "all", title 
             />
           </label>
           <select aria-label="Sort markets" className="mk-sort" value={sort} onChange={(e) => setSort(e.target.value as SortKey)}>
-            <option value="community">Community holdings</option>
+            <option value="community">Most held</option>
             <option value="change">24h change</option>
-            <option value="name">Company name</option>
+            <option value="name">Name</option>
             <option value="liquidity">Liquidity</option>
           </select>
         </div>

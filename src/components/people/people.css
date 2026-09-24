@@ -382,3 +382,15 @@
     justify-content: flex-start;
   }
 }
+
+/* Phones: the row's actions stay small so forty rows do not become forty cards. */
+@media (max-width: 767px) {
+  .person {
+    padding: 8px 0;
+  }
+  .person-actions :is(button, a) {
+    min-height: 26px;
+    padding: 3px 9px;
+    font-size: 10px;
+  }
+}

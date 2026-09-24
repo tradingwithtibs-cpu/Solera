@@ -455,6 +455,7 @@ code,
   display: flex;
   align-items: center;
   gap: 12px;
+  flex: 0 0 auto; /* a sized card never squeezes its head to make room for the body */
   height: var(--head-h);
   padding: 0 var(--pad);
   background: var(--ink-head);
@@ -482,6 +483,63 @@ code,
   min-width: 0;
   flex: 0 1 auto;
   justify-content: flex-end;
+}
+/* A segmented control in a head is one control inside the 32px row, never a second panel poking past it. */
+.panel-tools :is(.seg, .range, .mode, .segmented-control) {
+  padding: 2px;
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+.panel-tools :is(.seg, .range, .mode, .segmented-control) > button {
+  padding: 4px 9px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+}
+.panel-head h2 {
+  white-space: nowrap;
+}
+/* Anything else in a head fits the 32px row too: the back link, the watchlist star. */
+.panel-tools > * {
+  align-self: center;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+.panel-tools .btn-small {
+  min-height: 26px;
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+.panel-tools .star {
+  width: 28px;
+  height: 28px;
+  min-height: 0;
+}
+.keep-case {
+  text-transform: none;
+}
+/* Narrow card: the gap chip keeps the number and drops the words. */
+@container (max-width: 560px) {
+  .gap-word {
+    display: none;
+  }
+}
+/* Narrow card: the head may grow a row so wide tools drop under the title instead of crushing it; the subtitle goes (the live dot stays). */
+@container (max-width: 560px) {
+  .panel-head:has(> .panel-tools :is(.seg, .range, .mode, .segmented-control)) {
+    flex-wrap: wrap;
+    height: auto;
+    min-height: var(--head-h);
+    row-gap: 4px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+  .panel-head:has(> .panel-tools :is(.seg, .range, .mode, .segmented-control)) > .panel-tools {
+    flex: 1 1 auto;
+  }
+  .panel-head > .truncate:not(:has(> .live-dot:only-child)) {
+    display: none;
+  }
 }
 .panel-body {
   padding: var(--pad);
@@ -709,6 +767,19 @@ code,
 }
 .strip-track::-webkit-scrollbar {
   display: none;
+}
+/* Phones: the chips wrap into rows rather than scrolling off the edge mid-word. */
+@media (max-width: 767px) {
+  .strip-track {
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+  .strip::after {
+    display: none;
+  }
+  .strip-track > .chip-l {
+    max-width: 100%;
+  }
 }
 
 /* ---------- 8. Tape ---------- */

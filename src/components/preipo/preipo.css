@@ -97,11 +97,24 @@
   color: var(--gain);
   border-color: color-mix(in srgb, var(--gain) 27%, transparent);
 }
-@container (max-width: 420px) {
+/* Narrow card: two lines per token. Symbol and price on the first; the company, issuer and mark
+   (wrapping, never truncated: the issuer is the point of this list) with the gap chip on the second. */
+@container (max-width: 560px) {
   .pi-row-select {
-    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    row-gap: 4px;
   }
-  .pi-row-select .pi-badge,
+  .pi-row-select .row-main small {
+    white-space: normal;
+    overflow: visible;
+    line-height: 1.35;
+  }
+  .pi-row-select > .gap {
+    grid-column: 2 / -1;
+    justify-self: start;
+  }
+}
+@container (max-width: 420px) {
   .pi-row-select .pi-issuer {
     display: none;
   }
@@ -638,13 +651,24 @@
 }
 .pi-tile dl {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr);
   gap: 4px 8px;
   margin: 0;
   font-size: 11px;
 }
 .pi-tile dt {
   color: var(--text-2);
+  white-space: nowrap;
+}
+/* Narrow card: the two issuer tiles stack instead of squeezing side by side. */
+@container (max-width: 560px) {
+  .pi-tiles {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .pi-company {
+    padding: 12px;
+    gap: 10px;
+  }
 }
 .pi-tile dd {
   margin: 0;

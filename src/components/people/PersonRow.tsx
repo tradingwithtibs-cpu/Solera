@@ -58,7 +58,8 @@ export function PersonRow({ rank, investor, holdings, claimed, view, window, sco
             </>
           )}
         </small>
-        <span className="bio">{investor.bio}</span>
+        {/* On-chain wallets carry a generated sentence ("A real Solana wallet holding…"); it says nothing per row. Claimed and sample bios still show. */}
+        {isWallet ? null : <span className="bio">{investor.bio}</span>}
       </Link>
       <span className="person-perf">
         {view === "score" ? (

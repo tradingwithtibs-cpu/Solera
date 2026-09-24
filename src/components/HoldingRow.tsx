@@ -40,26 +40,21 @@ export function HoldingRow({
         )}
         {holding.allocationPct > 50 && <span className="text-amber-800">⚠ Concentrated</span>}
         <OwnedPumpingBadge ticker={holding.ticker} />
+        {actions && (
+          <span className="ml-auto flex gap-2">
+            {actions.map((action) => (
+              <Link key={action.label} href={action.href} className="btn-secondary btn-small" aria-label={`${action.label} ${holding.ticker}`}>
+                {action.label}
+                {action.label === "Copy" ? " ↗" : ""}
+              </Link>
+            ))}
+          </span>
+        )}
       </div>
       {holding.thesis && (
         <p className="mt-3 border-l-2 border-violet-200 pl-3 text-sm leading-relaxed text-neutral-600">
           “{holding.thesis}”
         </p>
-      )}
-      {actions && (
-        <div className="mt-3 flex justify-end gap-2">
-          {actions.map((action) => (
-            <Link
-              key={action.label}
-              href={action.href}
-              className="btn-secondary"
-              aria-label={`${action.label} ${holding.ticker}`}
-            >
-              {action.label}
-              {action.label === "Copy" ? " holding ↗" : ""}
-            </Link>
-          ))}
-        </div>
       )}
     </div>
   );

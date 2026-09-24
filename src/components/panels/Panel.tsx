@@ -4,6 +4,16 @@ import { useEffect, useRef } from "react";
 import { GAP_PX, ROW_UNIT } from "@/lib/layout";
 import { usePanelSlot } from "./context";
 
+/** A tokenized-stock symbol ("TSLAx") or a Tessera symbol ("T-OpenAI"): shown as written inside the uppercased head. */
+const SYMBOL = /^#?([A-Z0-9.]{1,12}x|T-[A-Za-z]+)$/;
+
+/** The title with its symbols wrapped so `text-transform: uppercase` leaves their case alone. */
+function renderTitle(title: string): React.ReactNode {
+  const parts = title.split(/(\s+)/);
+  if (!parts.some((p) => SYMBOL.test(p))) return title;
+  return parts.map((p, i) => (SYMBOL.test(p) ? <span key={i} className="keep-case">{p}</span> : p));
+}
+
 interface Props {
   /** Registry id; required inside a PanelGrid, ignored in static mode. */
   id?: string;
@@ -105,7 +115,7 @@ export function Panel({ id, title, subtitle, tools, foot, static: isStatic = fal
             ⋮⋮
           </button>
         )}
-        <h2>{title}</h2>
+        <h2>{renderTitle(title)}</h2>
         {subtitle && <span className="muted truncate text-[11px]">{subtitle}</span>}
         {tools && <div className="panel-tools">{tools}</div>}
       </div>
