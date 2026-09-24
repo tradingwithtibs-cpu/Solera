@@ -314,6 +314,14 @@
   text-transform: none;
   letter-spacing: 0.04em;
 }
+/* A plan that ended without a fill: the mode chip says "inactive" and nothing on the row glows but the status. */
+.chip.pl-inactive,
+.chip.pl-exec.pl-muted,
+.chip.live.pl-muted,
+.chip.practice.pl-muted {
+  color: var(--text-2);
+  border-color: var(--line);
+}
 @keyframes plPulse {
   50% {
     opacity: 0.35;

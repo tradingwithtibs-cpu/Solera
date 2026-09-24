@@ -85,6 +85,21 @@ test("status labels, tones and hover text are the copy sheet's", () => {
   assert.equal(statusTitle(plan({ status: "cancelled" })), undefined);
 });
 
+test("the mode chip says inactive once a plan is cancelled, expired or failed", () => {
+  const { modeChip } = load("../src/components/plans/plan-format.ts");
+  assert.deepEqual(modeChip(plan({ mode: "live", status: "armed" })), { label: "live", className: "chip live", title: undefined });
+  assert.deepEqual(modeChip(plan({ mode: "practice", status: "ready" })), { label: "practice", className: "chip practice", title: undefined });
+  for (const status of ["cancelled", "expired", "failed"]) {
+    const chip = modeChip(plan({ mode: "live", status }));
+    assert.equal(chip.label, "inactive", status);
+    assert.equal(chip.className, "chip pl-inactive", status);
+    assert.equal(chip.title, "was a live plan; nothing is watching it now", status);
+  }
+  const done = modeChip(plan({ mode: "live", status: "done" }));
+  assert.equal(done.label, "live");
+  assert.equal(done.className, "chip live pl-muted");
+});
+
 test("sortPlans: live rows newest first, six finished rows, no proposed", () => {
   const rows = [
     plan({ id: "a", status: "armed", createdAt: T0 - 3_000 }),

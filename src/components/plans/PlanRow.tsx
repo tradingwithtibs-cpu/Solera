@@ -6,7 +6,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { openCancelPlanSheet } from "@/components/trigger/trigger-sheet-store";
 import { useEffectivePrice } from "@/hooks/use-effective-price";
 import { ACTIVE_STATUSES, type Plan } from "@/lib/plans";
-import { STATUS_LABEL, STATUS_TONE, jupiterHoldingLine, jupiterLine, lastLog, money, relTime, shortDate, statusTitle, triggerAction, walletNotice, watchLine } from "./plan-format";
+import { STATUS_LABEL, STATUS_TONE, jupiterHoldingLine, jupiterLine, lastLog, modeChip, money, relTime, shortDate, statusTitle, triggerAction, walletNotice, watchLine } from "./plan-format";
 
 interface Props {
   plan: Plan;
@@ -44,6 +44,7 @@ export function PlanRow({ plan, now, onCancel, onRefreshJupiter, highlighted = f
   const tone = STATUS_TONE[plan.status];
   const active = ACTIVE_STATUSES.includes(plan.status);
   const isTrigger = plan.execution === "trigger";
+  const mode = modeChip(plan);
   const clock = now ?? plan.updatedAt;
   const livePrice = priced && price > 0 ? price : undefined;
 
@@ -91,8 +92,10 @@ export function PlanRow({ plan, now, onCancel, onRefreshJupiter, highlighted = f
           <span className={`chip pl-status pl-${tone}`} title={statusTitle(plan)}>
             {STATUS_LABEL[plan.status]}
           </span>
-          <span className={`chip ${plan.mode}`}>{plan.mode}</span>
-          {plan.mode === "live" && <span className="chip pl-exec">{isTrigger ? "Jupiter order" : "notify + sign"}</span>}
+          <span className={mode.className} title={mode.title}>
+            {mode.label}
+          </span>
+          {plan.mode === "live" && <span className={`chip pl-exec ${active ? "" : "pl-muted"}`}>{isTrigger ? "Jupiter order" : "notify + sign"}</span>}
         </p>
         <q>{plan.text}</q>
         <small>{plan.summary}</small>

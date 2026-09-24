@@ -34,6 +34,23 @@ export const STATUS_TONE: Record<PlanStatus, StatusTone> = {
 
 const FINISHED: PlanStatus[] = ["done", "failed", "cancelled", "expired"];
 
+/** Ended without a fill: nothing is watching, and the mode chip must not read as a state. */
+const INACTIVE: PlanStatus[] = ["cancelled", "expired", "failed"];
+
+/**
+ * The mode chip beside the status: "live" / "practice" while a plan can
+ * still do something, "inactive" once it was cancelled, expired or failed
+ * (the mode moves into the hover text). A filled plan keeps its mode,
+ * muted, because "inactive" would be the wrong word for a plan that ran.
+ */
+export function modeChip(plan: Pick<Plan, "status" | "mode">): { label: string; className: string; title: string | undefined } {
+  if (INACTIVE.includes(plan.status)) {
+    return { label: "inactive", className: "chip pl-inactive", title: `was a ${plan.mode} plan; nothing is watching it now` };
+  }
+  if (plan.status === "done") return { label: plan.mode, className: `chip ${plan.mode} pl-muted`, title: `${plan.mode} plan, filled` };
+  return { label: plan.mode, className: `chip ${plan.mode}`, title: undefined };
+}
+
 export function money(n: number): string {
   return `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
