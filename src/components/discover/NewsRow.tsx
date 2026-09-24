@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useRef } from "react";
 import type { FeedNews } from "@/hooks/use-news";
+import { useThumb } from "@/hooks/use-thumb";
 import type { FeedPost } from "@/lib/feed";
 import { formatRelativeTime } from "@/lib/format";
 import { COMPANIES, PRESTOCKS_SYMBOLS, type CompanyId } from "@/lib/pre-ipo";
@@ -38,8 +40,11 @@ export function NewsRow({ item, post, held, onOpen }: { item: FeedNews; post?: F
   // The tag names the story's scope once: MARKET, PRE-IPO, or the first ticker (its case kept: the x is lowercase). Further tickers follow it.
   const kind = item.scope === "market" ? "MARKET" : item.scope === "company" ? "PRE-IPO" : scopeSymbol(first ?? "");
   const others = item.tickers.slice(1);
+  // The feed's own picture, else the article's (fetched as the row scrolls into view).
+  const ref = useRef<HTMLLIElement>(null);
+  const image = useThumb(item, ref);
   return (
-    <li className={`post news-post ${n.image ? "has-img" : "no-img"}`} data-sym={first ?? undefined}>
+    <li ref={ref} className={`post news-post ${image ? "has-img" : "no-img"}`} data-sym={first ?? undefined}>
       <VoteColumn target={feedTargetOf(item)} post={post} />
       <div className="post-body">
         <p className="post-meta">
@@ -74,11 +79,11 @@ export function NewsRow({ item, post, held, onOpen }: { item: FeedNews; post?: F
             ↗
           </a>
         </p>
-        {n.image && (
+        {image && (
           <button type="button" className="post-img" onClick={() => onOpen(item)} aria-label="Open story">
             {/* eslint-disable-next-line @next/next/no-img-element -- external, unoptimized thumbnails from many hosts */}
             <img
-              src={n.image}
+              src={image}
               alt=""
               loading="lazy"
               onError={(e) => {

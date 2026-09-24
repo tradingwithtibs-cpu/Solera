@@ -42,3 +42,12 @@ test("helpers", () => {
   assert.equal(finnhubSymbolFor("AAPLx"), "AAPL");
   assert.equal(finnhubSymbolFor("SPYx"), "SPY");
 });
+
+test("extractArticleImage reads og:image, then twitter:image, and refuses placeholders and relative urls", () => {
+  const { extractArticleImage } = load("../src/lib/news.ts");
+  assert.equal(extractArticleImage('<html><head><meta property="og:image" content="https://img.example.com/a.jpg?w=1&amp;h=2"/></head>'), "https://img.example.com/a.jpg?w=1&h=2");
+  assert.equal(extractArticleImage('<meta name="twitter:image:src" content="https://s.yimg.com/lo/api/x.jpg"><meta name="og:title" content="t">'), "https://s.yimg.com/lo/api/x.jpg");
+  assert.equal(extractArticleImage('<meta property="og:image" content="https://s.yimg.com/rz/stage/p/yahoo_finance_en-US_h_p_finance_2.png">'), null);
+  assert.equal(extractArticleImage('<meta property="og:image" content="/relative.png">'), null);
+  assert.equal(extractArticleImage("<html><body>no meta</body></html>"), null);
+});

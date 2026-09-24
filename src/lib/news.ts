@@ -79,3 +79,29 @@ export function parseGoogleNewsRss(xml: string): NewsItem[] {
   }
   return items;
 }
+
+/** Publisher placeholders that are not a story picture: Finnhub's /logo/ squares, Yahoo's banner, "default" marks. */
+export const PLACEHOLDER_IMAGE = /\/logo\/|yimg\.com\/rz\/stage|default_logo|\/default[-_.]/i;
+
+/**
+ * The article's own picture from its head: og:image first, then Twitter's.
+ * Works on a partial document (the first hundred KB is enough), decodes
+ * entities, and refuses relative URLs and known placeholders.
+ */
+export function extractArticleImage(html: string): string | null {
+  const head = html.slice(0, 400_000);
+  const metas = head.match(/<meta\b[^>]*>/gi) ?? [];
+  const wanted = ["og:image", "og:image:secure_url", "twitter:image", "twitter:image:src"];
+  const found = new Map<string, string>();
+  for (const tag of metas) {
+    const key = tag.match(/\b(?:property|name|itemprop)\s*=\s*["']([^"']+)["']/i)?.[1]?.toLowerCase();
+    const content = tag.match(/\bcontent\s*=\s*["']([^"']*)["']/i)?.[1];
+    if (!key || !content || !wanted.includes(key) || found.has(key)) continue;
+    found.set(key, decodeEntities(content).trim());
+  }
+  for (const key of wanted) {
+    const url = found.get(key);
+    if (url && /^https?:\/\//i.test(url) && !PLACEHOLDER_IMAGE.test(url)) return url;
+  }
+  return null;
+}

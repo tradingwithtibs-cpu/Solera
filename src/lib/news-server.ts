@@ -1,6 +1,6 @@
 import { COMPANIES, type CompanyId } from "./pre-ipo";
 import { HttpError } from "./http-error";
-import { dedupeNews, finnhubSymbolFor, newsQueryForCompany, parseGoogleNewsRss, type NewsItem } from "./news";
+import { PLACEHOLDER_IMAGE, dedupeNews, finnhubSymbolFor, newsQueryForCompany, parseGoogleNewsRss, type NewsItem } from "./news";
 import type { TickerSymbol } from "./types";
 
 /**
@@ -97,7 +97,7 @@ function stripSourceSuffix(headline: string, source: string): string {
 function withoutPlaceholderImages(items: NewsItem[]): NewsItem[] {
   const uses = new Map<string, number>();
   for (const i of items) if (i.image) uses.set(i.image, (uses.get(i.image) ?? 0) + 1);
-  return items.map((i) => (i.image && ((uses.get(i.image) ?? 0) >= 3 || /\/logo\/|yimg\.com\/rz\/stage|default_logo/i.test(i.image)) ? { ...i, image: undefined } : i));
+  return items.map((i) => (i.image && ((uses.get(i.image) ?? 0) >= 3 || PLACEHOLDER_IMAGE.test(i.image)) ? { ...i, image: undefined } : i));
 }
 
 function fromFinnhub(articles: FinnhubArticle[]): NewsItem[] {
