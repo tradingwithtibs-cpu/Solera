@@ -13,7 +13,7 @@ load.extensions[".ts"] = (module, filename) =>
   );
 const { validateCondition, describe, met, exitHit } = load("../src/lib/plans.ts");
 const { parsePlanSentence, makeResolver } = load("../src/lib/plan-parser.ts");
-const { evaluatePlans } = load("../src/lib/plan-evaluator.ts");
+const { evaluatePlans, watchIsStale, WATCH_STALE_MS } = load("../src/lib/plan-evaluator.ts");
 
 const resolve = makeResolver([
   { symbol: "AAPLx", name: "Apple" },
@@ -162,4 +162,13 @@ test("evaluator: exits, expiry, notify, failure and skipped prices", async () =>
   const trigger = fakeDeps([basePlan({ mode: "live", execution: "trigger", wallet: "S7vYFFWH6BjJyEsdrPQpqpYTqLTrPRK6KW3VwsJuRaS", triggerOrderId: "o1" })], { AAPLx: 400 });
   const rt = await evaluatePlans(trigger.deps, { pass: "minute" });
   assert.equal(rt.fired + rt.notified, 0, "Jupiter's keeper owns trigger plans");
+});
+
+test("watchIsStale: a request runs the shared pass only when the watcher is quiet and it hasn't just tried", () => {
+  const now = 1_000_000;
+  assert.equal(watchIsStale(null, null, now), true, "never stamped");
+  assert.equal(watchIsStale(now - WATCH_STALE_MS - 1, null, now), true, "stale stamp");
+  assert.equal(watchIsStale(now - 10_000, null, now), false, "fresh stamp");
+  assert.equal(watchIsStale(null, now - 10_000, now), false, "this process tried a moment ago");
+  assert.equal(watchIsStale(null, now - WATCH_STALE_MS, now), true, "the attempt window has passed");
 });

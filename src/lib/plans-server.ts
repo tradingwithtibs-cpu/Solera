@@ -5,7 +5,7 @@ import { fillPractice, loadPractice } from "./practice-server";
 import { jupiterPriceForMint, jupiterPricesForMints, mintForTicker } from "./prices-server";
 import { SOL } from "./tokens";
 import { toTriggerOrder, type TriggerMapping } from "./jupiter-trigger-map";
-import { evaluatePlans, type EvaluatorDeps, type EvaluatorResult } from "./plan-evaluator";
+import { evaluatePlans, watchIsStale, type EvaluatorDeps, type EvaluatorResult } from "./plan-evaluator";
 
 /** Storage for plans and the inbox, and the real dependencies for the evaluator. */
 interface PlanRow {
@@ -240,4 +240,29 @@ export function realEvaluatorDeps(budgetMs = 8_000): EvaluatorDeps {
 
 export async function runEvaluator(opts: { pass: EvaluatorResult["pass"]; scopeOwner?: string }): Promise<EvaluatorResult> {
   return evaluatePlans(realEvaluatorDeps(), opts);
+}
+
+let lastNudgeAt: number | null = null;
+
+/**
+ * The shared minute pass, run from an ordinary request (the health poll every
+ * open tab makes) when the scheduled watcher is quiet, so practice plans fill
+ * for everyone while anyone has Solera open, pg_cron or not. Two servers that
+ * both see a quiet watcher race for one claim: a compare-and-swap on the
+ * newest active plan's stamp. The loser returns null and does nothing.
+ */
+export async function nudgeEvaluator(lastEvaluatedAt: number | null): Promise<EvaluatorResult | null> {
+  const now = Date.now();
+  if (!watchIsStale(lastEvaluatedAt, lastNudgeAt, now)) return null;
+  lastNudgeAt = now;
+  const s = getSupabaseService();
+  if (!s) return null;
+  const { data: candidate } = await s.from("plans").select("id, evaluated_at").in("status", ACTIVE_STATUSES).order("evaluated_at", { ascending: false, nullsFirst: false }).limit(1).maybeSingle();
+  const row = candidate as { id: string; evaluated_at: string | null } | null;
+  if (!row) return null;
+  let claim = s.from("plans").update({ evaluated_at: new Date(now).toISOString() }).eq("id", row.id);
+  claim = row.evaluated_at ? claim.eq("evaluated_at", row.evaluated_at) : claim.is("evaluated_at", null);
+  const { data: claimed, error } = await claim.select("id");
+  if (error || !claimed?.length) return null;
+  return runEvaluator({ pass: "minute" });
 }

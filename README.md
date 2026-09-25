@@ -48,7 +48,7 @@ Prices, the catalog, trading, investors and news work with no configuration. Opt
 
 - `FINNHUB_API_KEY`: richer company news (falls back to Google News).
 - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`: profiles, rooms, the server-side practice ledger, fills, notes, plans, the inbox and the feed. Run `supabase/schema.sql`, `supabase/chat.sql` and `supabase/port.sql` once in the Supabase SQL editor. For email accounts, switch the Email provider on in the Supabase dashboard (confirmation off for the hackathon) and add the site URL to the redirect list.
-- `PLAN_EVALUATOR_SECRET`: the bearer that lets a scheduler call `POST /api/plans/evaluate` every minute. Vercel Hobby's cron runs once a day, so the minute cadence comes from Supabase `pg_cron` + `pg_net` (the block at the end of `supabase/port.sql`); an open tab also checks its owner's plans every 60 s.
+- `PLAN_EVALUATOR_SECRET`: the bearer that lets a scheduler call `POST /api/plans/evaluate` every minute. Vercel Hobby's cron runs once a day, so the minute cadence comes from Supabase `pg_cron` + `pg_net` (the block at the end of `supabase/port.sql`); an open tab also checks its owner's plans every 60 s, and while anyone has Solera open the health poll runs the shared pass whenever the scheduler has been quiet for 50 s, so practice plans fill without `pg_cron`.
 - `ANTHROPIC_API_KEY`: turns the agent from the offline parser into Claude. `SOLERA_AGENT_MODEL_ID` picks the model (default `claude-opus-5`); `SOLERA_AGENT_MODEL=mock` forces the parser for demos.
 - `SOLANA_RPC_URL`: a private RPC if the public one rate-limits.
 

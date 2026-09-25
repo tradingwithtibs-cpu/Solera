@@ -20,6 +20,19 @@ export interface EvaluatorDeps {
   budgetMs: number;
 }
 
+/** How quiet the watcher may go before a request runs the shared pass itself. */
+export const WATCH_STALE_MS = 50_000;
+
+/**
+ * Whether a request should run the shared minute pass: no plan has been
+ * stamped for WATCH_STALE_MS (pg_cron off or lagging) and this process has
+ * not tried within the same window. A null last stamp counts as stale.
+ */
+export function watchIsStale(lastEvaluatedAt: number | null, lastAttemptAt: number | null, now: number, staleMs = WATCH_STALE_MS): boolean {
+  if (lastAttemptAt !== null && now - lastAttemptAt < staleMs) return false;
+  return lastEvaluatedAt === null || now - lastEvaluatedAt >= staleMs;
+}
+
 export interface EvaluatorResult {
   pass: "minute" | "daily" | "self";
   scanned: number;
