@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useId, useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { WalletReadyState } from "@solana/wallet-adapter-base";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { hasInjectedWallet, isAndroid, isMobileBrowser, phantomBrowseUrl, solflareBrowseUrl } from "@/lib/mobile-wallet";
 import { PhantomDeepLinkWalletName } from "@/lib/phantom-deeplink-adapter";
@@ -29,7 +30,7 @@ export function useConnectWallet() {
 export function ConnectWalletProvider({ children }: { children: React.ReactNode }) {
   const id = useId();
   const { setVisible } = useWalletModal();
-  const { select, connect, wallet, connecting } = useWallet();
+  const { select, connect, wallet, connected, connecting } = useWallet();
   const [showMobilePrompt, setShowMobilePrompt] = useState(false);
   // A connect that runs long is a wallet waiting for the person, not a fault here: on a Mac in full screen the
   // extension's approval window often opens behind Chrome. After a few seconds, say where to look and offer a reset.
@@ -56,8 +57,19 @@ export function ConnectWalletProvider({ children }: { children: React.ReactNode 
       setShowMobilePrompt(true);
       return;
     }
+    // A wallet remembered from last time (the library keeps its name in localStorage) whose silent reconnect on
+    // page load failed: the extension was locked, or this site fell off its trusted list. Picking that same wallet
+    // in the picker is a no-op in wallet-adapter (`select()` ignores the current name), which reads as "nothing
+    // happens". Ask the remembered wallet directly instead; DISCONNECT forgets it, and the picker serves everyone else.
+    const remembered = wallet && !connected && !connecting && wallet.readyState === WalletReadyState.Installed && wallet.adapter.name !== PhantomDeepLinkWalletName;
+    if (remembered) {
+      connect().catch(() => {
+        // Declined or the extension is locked: the wallet showed its own reason; a long wait gets the hint below.
+      });
+      return;
+    }
     setVisible(true);
-  }, [setVisible]);
+  }, [setVisible, wallet, connected, connecting, connect]);
 
   const connectPhantom = useCallback(() => {
     // Selecting the adapter makes the provider call connect(); if it's
