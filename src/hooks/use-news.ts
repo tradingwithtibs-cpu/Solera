@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useSyncExternalStore } from "react";
-import type { NewsItem } from "@/lib/news";
+import { headlineKey, type NewsItem } from "@/lib/news";
 
 export type NewsScope = { kind: "general" } | { kind: "ticker"; ticker: string } | { kind: "company"; company: string };
 
@@ -101,8 +101,10 @@ function scopeKey(scope: NewsScope): string | null {
 }
 
 /**
- * Several scopes merged into one list, newest first, deduped by story id
- * (a story fetched for two held tickers appears once and names both).
+ * Several scopes merged into one list, newest first, deduped by story id,
+ * then by url and headline (a story fetched for two held tickers appears
+ * once and names both; a wire story republished under a new id, or the
+ * same ChartMill piece filed for three tickers, appears once).
  * `isLoaded` waits for every scope; `error` is set only when nothing came
  * back at all.
  */
@@ -116,6 +118,7 @@ export function useNewsScopes(scopes: NewsScope[]): { items: FeedNews[]; isLoade
 
   return useMemo(() => {
     const byId = new Map<string, FeedNews>();
+    const byStory = new Map<string, FeedNews>();
     let loaded = 0;
     let failed = 0;
     let firstError: string | null = null;
@@ -131,12 +134,15 @@ export function useNewsScopes(scopes: NewsScope[]): { items: FeedNews[]; isLoade
       const kind = scopeKind(scope);
       const k = scopeKey(scope);
       for (const item of entry.items) {
-        const existing = byId.get(item.id);
+        const storyKeys = [item.url, headlineKey(item.headline)].filter(Boolean);
+        const existing = byId.get(item.id) ?? storyKeys.map((s) => byStory.get(s)).find(Boolean);
         if (existing) {
           if (k && !existing.tickers.includes(k)) existing.tickers.push(k);
           continue;
         }
-        byId.set(item.id, { kind: "news", id: `news:${item.id}`, at: item.publishedAt, item, tickers: k ? [k] : [], scope: kind });
+        const row: FeedNews = { kind: "news", id: `news:${item.id}`, at: item.publishedAt, item, tickers: k ? [k] : [], scope: kind };
+        byId.set(item.id, row);
+        for (const s of storyKeys) byStory.set(s, row);
       }
     });
     const items = [...byId.values()].sort((a, b) => b.at - a.at);

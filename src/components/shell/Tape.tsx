@@ -19,9 +19,10 @@ function pct(n: number) {
 
 /**
  * The ticker tape: the eight featured xStocks at their live Solana price,
- * then the PreStocks tokens. Nothing renders a number until a real one
- * exists; before that a symbol shows "—". Duplicated once so the crawl
- * loops; hidden from assistive tech because Markets carries the same data.
+ * then the PreStocks tokens. A symbol joins the crawl once it has a real
+ * price; while none has one, the tape says so instead of showing dashes.
+ * Duplicated once so the crawl loops; hidden from assistive tech because
+ * Markets carries the same data.
  */
 export function Tape() {
   useSyncExternalStore(subscribeLivePrices, getLivePrices, getLivePrices);
@@ -35,8 +36,20 @@ export function Tape() {
   const preIpo: Item[] = tokens
     .filter((t) => String(t.issuer).toLowerCase() === "prestocks" && t.tokenPrice > 0)
     .map((t) => ({ symbol: t.symbol, price: t.tokenPrice, change: t.change24hPct }));
-  const items = [...featured, ...preIpo];
+  const items = [...featured, ...preIpo].filter((it): it is Item & { price: number } => it.price !== undefined);
   const loop = [...items, ...items];
+
+  if (items.length === 0) {
+    return (
+      <div className="tape" aria-hidden="true">
+        <div className="tape-track">
+          <span>
+            <i>reading live prices…</i>
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="tape" aria-hidden="true">
@@ -44,7 +57,7 @@ export function Tape() {
         {loop.map((it, i) => (
           <span key={`${it.symbol}-${i}`}>
             <b>{it.symbol}</b>
-            <i>{it.price !== undefined ? formatCurrency(it.price) : "—"}</i>
+            <i>{formatCurrency(it.price)}</i>
             {it.change !== undefined && <em className={it.change >= 0 ? "up" : "down"}>{pct(it.change)}</em>}
           </span>
         ))}

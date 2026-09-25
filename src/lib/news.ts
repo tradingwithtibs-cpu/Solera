@@ -30,16 +30,21 @@ export function newsQueryForCompany(company: CompanyId): string {
 }
 
 /** Collapse near-duplicate headlines (syndicated copies), keep the newest, cap the list. */
+/** The first eight words of a headline, lowercased: syndicated copies of one story share it. */
+export function headlineKey(headline: string): string {
+  return headline
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]/g, "")
+    .split(/\s+/)
+    .slice(0, 8)
+    .join(" ");
+}
+
 export function dedupeNews(items: NewsItem[], limit: number): NewsItem[] {
   const seen = new Set<string>();
   const out: NewsItem[] = [];
   for (const item of [...items].sort((a, b) => b.publishedAt - a.publishedAt)) {
-    const key = item.headline
-      .toLowerCase()
-      .replace(/[^a-z0-9 ]/g, "")
-      .split(/\s+/)
-      .slice(0, 8)
-      .join(" ");
+    const key = headlineKey(item.headline);
     if (!key || seen.has(key)) continue;
     seen.add(key);
     out.push(item);

@@ -313,6 +313,9 @@
 .vote b.down {
   color: var(--loss);
 }
+.vote b.none {
+  color: var(--text-3);
+}
 .feed-error {
   display: flex;
   align-items: center;

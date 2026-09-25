@@ -94,7 +94,7 @@ export function PositionsPanel({ id }: { id: string }) {
       {view.hasBasis && (
         <>
           {" · "}
-          <b className={view.performancePct >= 0 ? "up" : "down"}>NPL {formatPercent(view.performancePct)}</b>
+          <b className={view.performancePct >= 0 ? "up" : "down"}>P/L {formatPercent(view.performancePct)}</b>
         </>
       )}
       {" · "}

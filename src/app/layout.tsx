@@ -22,7 +22,7 @@ const figuresFont = IBM_Plex_Mono({
 });
 
 const SITE_URL = "https://trysolera.vercel.app";
-const DESCRIPTION = "Follow real investors, see their real holdings, copy with one tap.";
+const DESCRIPTION = "Stocks on Solana, with the people who hold them. Live xStock prices, real on-chain investors, swaps from your own wallet, and an agent that never signs.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

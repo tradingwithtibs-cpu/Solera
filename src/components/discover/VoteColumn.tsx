@@ -13,7 +13,7 @@ export { COMMENTS_LOCKED, LOCAL_FILL_LOCKED, VOTE_LOCKED } from "./feed-posts";
  * same arrow again takes it back); signed out, the arrows open the auth
  * sheet; a fill that lives only in this browser has no server row, so its
  * arrows are off with the reason as their tooltip. The score is the
- * store's, 0 until anyone has voted.
+ * store's; until anyone has voted the column shows a dot, not a zero.
  */
 export function VoteColumn({ target, post }: { target: FeedTarget; post?: FeedPost }) {
   const { token, signedIn } = useSession();
@@ -36,8 +36,8 @@ export function VoteColumn({ target, post }: { target: FeedTarget; post?: FeedPo
       <button type="button" data-vote="1" className={myVote === 1 ? "on" : undefined} disabled={locked} aria-pressed={myVote === 1} aria-label="Worth reading" title={reason ?? "Worth reading"} onClick={() => cast(1)}>
         ▲
       </button>
-      <b className={score > 0 ? "up" : score < 0 ? "down" : undefined} title={reason ?? undefined} aria-label={`Score ${score}`}>
-        {score}
+      <b className={score > 0 ? "up" : score < 0 ? "down" : "none"} title={reason ?? (score === 0 ? "No votes yet" : undefined)} aria-label={score === 0 ? "No votes yet" : `Score ${score}`}>
+        {score === 0 ? "·" : score}
       </b>
       <button type="button" data-vote="-1" className={myVote === -1 ? "on" : undefined} disabled={locked} aria-pressed={myVote === -1} aria-label="Not worth it" title={reason ?? "Not worth it"} onClick={() => cast(-1)}>
         ▼

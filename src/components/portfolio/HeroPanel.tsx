@@ -175,7 +175,7 @@ export function HeroPanel({ id }: { id: string }) {
               <b>{formatCurrency(view.invested)}</b>
             </div>
             <div>
-              <small title="Net profit / loss since buy">NPL</small>
+              <small title="Profit or loss since buy">P/L</small>
               <b className={view.hasBasis ? (view.performancePct >= 0 ? "up" : "down") : ""}>{view.hasBasis ? formatPercent(view.performancePct) : "—"}</b>
               {view.withoutBasis > 0 && <em>{view.withoutBasis} bought elsewhere excluded</em>}
             </div>

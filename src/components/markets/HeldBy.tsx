@@ -3,18 +3,19 @@
 import Link from "next/link";
 import { Avatar } from "@/components/Avatar";
 import { computeHoldings } from "@/lib/portfolio";
+import { formatCompactUsd } from "@/lib/pre-ipo";
 import { useInvestors } from "@/hooks/use-investors";
 import type { TickerSymbol } from "@/lib/types";
 
 const LIMIT = 6;
 
-/** The real wallets holding a ticker, largest allocation first, with their 7-day move. */
+/** The real wallets holding a ticker, largest position first, with their 7-day move. */
 export function HeldBy({ ticker }: { ticker: TickerSymbol }) {
   const { investors, source, isLoaded } = useInvestors();
   const holders = investors
     .map((investor) => ({ investor, holding: computeHoldings(investor.holdings).find((h) => h.ticker === ticker) }))
     .filter((e): e is { investor: (typeof investors)[number]; holding: NonNullable<typeof e.holding> } => !!e.holding)
-    .sort((a, b) => b.holding.allocationPct - a.holding.allocationPct)
+    .sort((a, b) => b.holding.value - a.holding.value)
     .slice(0, LIMIT);
 
   if (!isLoaded) {
@@ -34,7 +35,9 @@ export function HeldBy({ ticker }: { ticker: TickerSymbol }) {
           <Avatar initials={investor.initials} colorClass={investor.avatarColor} size="sm" />
           <span className="min-w-0">
             <b>{investor.name}</b>
-            <small>{holding.allocationPct.toFixed(0)}% of their portfolio</small>
+            <small>
+              {formatCompactUsd(holding.value)} held · {holding.allocationPct.toFixed(0)}% of their portfolio
+            </small>
           </span>
           <em className={investor.performancePct >= 0 ? "up" : "down"}>
             {investor.performancePct >= 0 ? "+" : "−"}
