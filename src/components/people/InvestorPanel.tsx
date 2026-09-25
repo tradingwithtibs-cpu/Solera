@@ -126,7 +126,7 @@ export function InvestorPanel({ id }: { id: string }) {
         <section className="investor-section" aria-labelledby="investor-fills">
           <div className="investor-section-head">
             <p className="eyebrow" id="investor-fills">
-              Fills on Solera
+              Trades
             </p>
           </div>
           <InvestorFills key={investor.id} owner={investor.id} onChain />

@@ -11,7 +11,7 @@ load.extensions[".ts"] = (module, filename) =>
     }).outputText,
     filename,
   );
-const { parseSwap, swapToFill, tokenDeltas, solDelta, knownStockMints } = load("../src/lib/activity.ts");
+const { parseSwap, swapToFill, tokenDeltas, solDelta, knownStockMints, mergeWalletHistory } = load("../src/lib/activity.ts");
 
 const WALLET = "9U76mo3WuP28s4kYJ9CMH1CiQh6Ph3r5Zg5awZM5vMQd";
 const OTHER = "6LY1JzAFVZsP2a2xKrtU6znQMQ5h4i7tocWdgrkZzkzF";
@@ -72,4 +72,13 @@ test("deltas and SOL movement are computed per wallet", () => {
   assert.equal(tokenDeltas(t, WALLET).get(TSLA), 1);
   assert.equal(solDelta(t, WALLET), -1 + 5000 / 1e9);
   assert.equal(solDelta(t, "nobody"), 0);
+});
+
+test("mergeWalletHistory: Solera fills first when they share a signature, everything newest first", () => {
+  const fill = (id, createdAt, signature, via = "ticket") => ({ id, createdAt, signature, via, mode: "live", owner: "w", wallet: "w", ticker: "TSLAx", mint: null, side: "buy", quantity: 1, pricePerShare: 1, totalValue: 1, note: null, wrongIf: null, leg: null });
+  const solera = [fill("s1", 200, "sigA"), fill("s2", 50, null)];
+  const chain = [fill("chain:sigA", 200, "sigA", "chain"), fill("chain:sigB", 300, "sigB", "chain"), fill("chain:sigC", 100, "sigC", "chain")];
+  assert.deepEqual(mergeWalletHistory(solera, chain).map((f) => f.id), ["chain:sigB", "s1", "chain:sigC", "s2"]);
+  assert.deepEqual(mergeWalletHistory([], chain).map((f) => f.id), ["chain:sigB", "chain:sigA", "chain:sigC"]);
+  assert.deepEqual(mergeWalletHistory(solera, []).map((f) => f.id), ["s1", "s2"]);
 });

@@ -132,3 +132,15 @@ export function swapToFill(swap: ParsedSwap, wallet: string, fallbackPrice: numb
     createdAt: swap.at,
   };
 }
+
+/**
+ * One wallet's history for its investor page: the fills it made through
+ * Solera (which carry the note) and the stock swaps read from the chain,
+ * newest first. A Solera live fill and its own on-chain transaction share a
+ * signature and appear once, as the Solera row.
+ */
+export function mergeWalletHistory(solera: PublicFill[], chain: PublicFill[]): PublicFill[] {
+  const seen = new Set(solera.map((f) => f.signature).filter((s): s is string => !!s));
+  const extra = chain.filter((f) => !(f.signature && seen.has(f.signature)));
+  return [...solera, ...extra].sort((a, b) => b.createdAt - a.createdAt);
+}
